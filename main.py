@@ -71,7 +71,11 @@ def run_game():
             # Обновление экрана
             gf.update_screen(ai_settings, screen, mc, enemies, timer)
         elif st.state == Stats.SUBMENU:
+            # Меню паузы
             gf.update_submenu_screen(screen, ai_settings, mc, enemies, buttons)
+        elif st.state == Stats.SAVEFILES_SAVEMODE:
+            # Меню файлов сохранения в режиме сохранения
+            gf.update_savefiles_screen(screen, buttons)
         elif st.state == Stats.GAMEOVER:
             # Конец игры (проигрыш)
             if st.restart_flag:

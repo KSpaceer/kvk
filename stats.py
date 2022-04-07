@@ -10,10 +10,12 @@ class Stats():
     INTRO = 2
     MAINMENU = 3
     SUBMENU = 4
+    SAVEFILES_SAVEMODE = 5
 
     def __init__(self):
         '''Инициализация статистических данных'''
         self.state = Stats.INTRO # состояние игры
+        self.pr_state = None # предшествующее состояние игры
         self.restart_flag = False # флаг рестарта игры
         self.level = 0
         self.current_wave = 0

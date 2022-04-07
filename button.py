@@ -9,13 +9,19 @@ class Button():
     LOAD = 1
     OPTIONS = 2
     EXIT = 3
-    MENU = 4
+    SAVE = 4
+    MENU = 5
+    SAVEFILE = 6
+    EMPTY = 7
     # Словарь для того, чтобы соотнести численные значения с именами файлов
     image_names_dict = {NEWGAME : 'new_game',
                         LOAD : 'load',
                         OPTIONS : 'options',
                         EXIT : 'exit',
-                        MENU : 'menu'}
+                        MENU : 'menu',
+                        SAVE : 'save',
+                        SAVEFILE : 'savefile',
+                        EMPTY : 'empty'}
 
     def __init__(self, screen, name_number) -> None:
         '''Инициализация параметров'''
@@ -29,6 +35,8 @@ class Button():
         self.rect.centerx = self.screen_rect.centerx
         # Выбрана ли кнопка
         self.is_chosen = False
+        # Данные из файлов сохранения для кнопок выбора файла
+        self.saved_data = None
 
     def blitme(self):
         '''Отображение изображения кнопки на экране'''
