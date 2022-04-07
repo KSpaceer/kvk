@@ -124,20 +124,8 @@ def select_button(buttons, event, do_reverse = False):
 
 def keydown_in_mainmenu(event, st, buttons):
     '''Обрабатывает нажатия клавиш в главном меню'''
-    if event.key == pygame.K_DOWN:
-        for i in range(len(buttons)):
-            if buttons[i].is_chosen and i != len(buttons) - 1:
-                # Смена выбранной клавиши
-                buttons[i].is_chosen = False
-                buttons[i + 1].is_chosen = True
-                break
-    elif event.key == pygame.K_UP:
-        for i in range(len(buttons)):
-            # Смена выбранной клавиши
-            if buttons[i].is_chosen and i != 0:
-                buttons[i].is_chosen = False
-                buttons[i - 1].is_chosen = True
-                break
+    if event.key == pygame.K_DOWN or event.key == pygame.K_UP:
+        select_button(buttons, event)
     elif event.key == pygame.K_RETURN:
         for i in range(len(buttons)):
             if buttons[i].is_chosen:
@@ -184,20 +172,8 @@ def keydown_in_submenu(event, st, buttons, screen,
         buttons.clear()
         update_time(cur_time, timer, mc, enemies)
         st.state = st.GAMEACTIVE
-    elif event.key == pygame.K_DOWN:
-        for i in range(len(buttons)):
-            if buttons[i].is_chosen and i != 0:
-                # Смена выбранной кнопки
-                buttons[i].is_chosen = False
-                buttons[i - 1].is_chosen = True
-                break
-    elif event.key == pygame.K_UP:
-        for i in range(len(buttons)):
-            if buttons[i].is_chosen and i != len(buttons) - 1:
-                # Смена кнопки
-                buttons[i].is_chosen = False
-                buttons[i + 1].is_chosen = True
-                break
+    elif event.key == pygame.K_DOWN or event.key == pygame.K_UP:
+        select_button(buttons, event, True)
     elif event.key == pygame.K_RETURN:
         for i in range(len(buttons)):
             if buttons[i].is_chosen:
@@ -230,8 +206,8 @@ def keydown_in_savefiles(event, st, buttons, screen):
             buttons.clear()
             create_mainmenu_buttons(buttons, screen)
             st.state = st.MAINMENU
-    elif event.key == pygame.K_DOWN:
-        pass
+    elif event.key == pygame.K_DOWN or event.key == pygame.K_UP:
+        select_button(buttons, event, True)
 def create_savefiles_buttons(buttons, screen):
     '''Создает кнопки меню сохранения файлов'''
     for i in range(3):
