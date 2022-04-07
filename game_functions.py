@@ -208,6 +208,8 @@ def keydown_in_savefiles(event, st, buttons, screen):
             st.state = st.MAINMENU
     elif event.key == pygame.K_DOWN or event.key == pygame.K_UP:
         select_button(buttons, event, True)
+        #### Доделать
+        для ошибки
 def create_savefiles_buttons(buttons, screen):
     '''Создает кнопки меню сохранения файлов'''
     for i in range(3):
