@@ -1,6 +1,8 @@
 from time import monotonic
 import pygame
 from pygame.sprite import Sprite
+import enemy_animation as an
+
 
 class Enemy(Sprite):
 
@@ -81,6 +83,178 @@ class Enemy(Sprite):
             self.rect.right = 0
         elif self.mc.centerx <= self.ai_settings.screen_width/2:
             self.rect.left = self.ai_settings.screen_width
+
+    def update(self, fist, enemies, en_fists):
+        '''Обновление состояния врага(перемещение, оглушение, атака или смерть)'''
+        # Если враг жив (т.е. здоровье больше нуля):
+        if self.health > 0:
+            # Если враг не оглушен:
+            if not self.is_stunned:
+                # Если враг не бьет?
+                if not self.is_punching:
+                    if self.rect.colliderect(fist.rect):
+                        self.get_damage()
+                        return
+                    # Переменные для условий определения положения
+                    where_am_i_y = self.rect.centery in range(
+                        self.mc.rect.centery - 5,self.mc.rect.centery + 6)
+                    where_am_i_x = self.rect.left in range(
+                        self.mc.rect.right - 5, self.mc.rect.right + 6)  \
+                        or self.rect.right in range(
+                        self.mc.rect.left - 5, self.mc.rect.left + 6)
+                    # Сначала идет перемещение по вертикали
+                    
+                    if not where_am_i_y:
+                        self.vertical_movement()
+                    # Затем по горизонтали
+                    elif not where_am_i_x:
+                        self.horizontal_movement()
+                    # Конвертируем вещественное значение в целочисленное
+                    self.rect.centerx = self.centerx
+                    self.rect.centery = self.centery
+                    # Если враг в зоне досягаемости, он начинает атаку
+                    if where_am_i_x and where_am_i_y and \
+                    self.cur_time.time - self.cooldown_timer >= \
+                    self.cooldown:
+                        self.initiate_punch()
+
+                else:
+                   self.attack(en_fists)
+            else:
+                an.stunning_animation(self, self.ai_settings)      
+        else:
+            if not self.is_dead:
+                self.timer = monotonic()
+                self.is_dead = True
+            self.death_animation(enemies)
+
+    def get_damage(self):
+        '''Получение урона и оглушение'''
+        self.health -= self.ai_settings.mc_damage
+        self.is_stunned = True
+        self.image = pygame.image.load(
+            f'images/KSEnemies/{self.name}/stunned.png')
+        self.change_rect()
+        self.timer = monotonic()
+
+    def vertical_movement(self):
+        '''Перемещение врага по вертикали'''
+        if self.rect.centery < self.mc.rect.centery:
+            an.going_vertical_animation(self, self.ai_settings)
+            exec(f'self.centery += self.ai_settings.{self.name}_speed_factor')
+        else:
+            an.going_vertical_animation(self, self.ai_settings)
+            exec(f'self.centery -= self.ai_settings.{self.name}_speed_factor')
+
+    def horizontal_movement(self):
+        '''Перемещение врага по горизонтали'''
+        if self.rect.left > self.mc.rect.right:
+            an.going_left_animation(self, self.ai_settings)
+            exec(f'self.centerx -= self.ai_settings.{self.name}_speed_factor')
+        elif self.rect.right < self.mc.rect.left:
+            an.going_right_animation(self, self.ai_settings)
+            exec(f'self.centerx += self.ai_settings.{self.name}_speed_factor')
+        else:
+            if self.rect.centerx > self.mc.rect.centerx:
+                an.going_right_animation(self, self.ai_settings)
+                exec(f'self.centerx += self.ai_settings.{self.name}_speed_factor')
+            else:
+                an.going_left_animation(self, self.ai_settings)
+                exec(f'self.centerx -= self.ai_settings.{self.name}_speed_factor')
+
+    def initiate_punch(self):
+        '''Активирует флаги атаки'''
+        self.is_punching = True
+        if self.rect.centerx > self.mc.rect.centerx:
+            self.right_punch = False
+        else:
+            self.right_punch = True          
+        self.timer = monotonic()
+
+    def attack(self, en_fists):
+        '''Обработка атаки'''
+        file_end_name, sign, rect_side = self.define_attack_vars()
+        
+
+        # self.frames - количество кадров
+        for i in range(self.frames):
+            # Кадры сменяются по времени:
+            if (i+1) * self.ats >= self.cur_time.time - self.timer > i * self.ats:
+                # Кадров (изображений именно) всего половина от общего количества, 
+                # в случае нечетного кол-ва - с округлением в большую сторону
+                if i in range(round(self.frames/2) + 1):
+                    if i == 0:
+                        self.create_new_rect()
+                        en_fists.add(self.fist)
+                        
+                    
+                    self.image = pygame.image.load(
+                        f'images/KSEnemies/{self.name}' +
+                        f'/punching{i + 1}_{file_end_name}.png')                    
+                    if i <= self.noload_fr:
+                        # Т.к. в первом и втором кадрах рука расположена
+                        # за телом, то центр этих кадров размещаются
+                        # чуть дальше боковой стороны прямоугольника
+                        self.an_rect = self.image.get_rect()
+                        self.an_rect.centery = self.rect.centery
+                        exec(f'self.an_rect.centerx = self.rect.{rect_side}'
+                            + sign + self.pos_correction)
+                    else:
+                        self.correlate_rect_image(self.right_punch)
+                        # Перемещает ударную поверхность:
+                        exec(f'self.fist.change_position(' +
+                            f'self.an_rect.{rect_side} {sign}' +
+                            f'self.frl_side[i-{self.noload_fr}],' +
+                            f'self.an_rect.top + self.frl_top[i-{self.noload_fr}])')
+                        
+                        
+                else:
+                    if i == round(self.frames/2) + 1 and self.fist in en_fists:
+                        # Удаляем ударную поверхность:
+                        en_fists.remove(self.fist)
+                        
+                    # Кадры идут в обратном порядке
+                    self.image = pygame.image.load(
+                        f'images/KSEnemies/{self.name}/'+
+                        f'punching{self.frames + 1 - i}_{file_end_name}.png')
+                    self.correlate_rect_image(self.right_punch)
+                    if i == self.frames - 1:
+                        # Атака закончена, начинается перезарядка
+                        self.is_punching = False
+                        self.cooldown_timer = monotonic()
+
+    def define_attack_vars(self):
+        '''Определяет значение переменных для метода атаки'''
+        # Атака идет вправо или влево?
+        if self.right_punch:
+            file_end_name = 'right' # конец названия файлов кадров
+            sign = '+'  # знак для уравнения определения положения первых кадров
+            rect_side = 'left' # сторона, относительно которой располагаются
+                               # первые кадры
+        else:
+            file_end_name = 'left'
+            sign = '-'
+            rect_side = 'right'
+        return file_end_name, sign, rect_side
+
+    def create_new_rect(self):
+        '''Создает новый прямоугольник для удобной анимации атаки'''
+        # Ширина прямоугольника - ширина самого тонкого кадра
+        fake_rect = pygame.Rect((0,0), self.smallest_frame)
+        fake_rect.centerx = self.rect.centerx
+        fake_rect.centery = self.rect.centery
+        self.rect = fake_rect
+
+    def correlate_rect_image(self, side):
+        '''Соотносит изначальный прямоугольник с измененным изображением
+        True - анимация вправо, т.е. у прямоугольников одинаковое расположение левой стороны.
+        False - влево, соответственно одинаковое расположение правой стороны'''
+        self.an_rect = self.image.get_rect()
+        self.an_rect.top = self.rect.top
+        if side:
+            self.an_rect.left = self.rect.left
+        else:
+            self.an_rect.right = self.rect.right
     
     
         
