@@ -9,7 +9,6 @@ from pygame.sprite import Group
 from etimer import Timer
 import graphic as gr
 import game_functions as gf
-from state_changing_function import restart
 from stats import Stats
 from Tarzan import Tarzan
 
@@ -49,7 +48,8 @@ def run_game():
         
         
         # Обработка событий
-        gf.check_events(mc, st, buttons, screen, cur_time, timer, enemies)
+        gf.check_events(mc, st, buttons, screen, cur_time,
+             timer, enemies)
         if st.state == Stats.INTRO:
             # Заставка
             tarzan.update_intro()
@@ -73,13 +73,21 @@ def run_game():
         elif st.state == Stats.SUBMENU:
             # Меню паузы
             gf.update_submenu_screen(screen, ai_settings, mc, enemies, buttons)
-        elif st.state == Stats.SAVEFILES_SAVEMODE:
+        elif st.state in (Stats.SAVEFILES_SAVEMODE, Stats.SAVEFILES_LOADMODE):
             # Меню файлов сохранения в режиме сохранения
             gf.update_savefiles_screen(screen, buttons)
         elif st.state == Stats.GAMEOVER:
             # Конец игры (проигрыш)
             if st.restart_flag:
-                timer, mc, mc_fist = restart(screen, ai_settings, enemies, en_fists, st, cur_time)
+                timer, mc, mc_fist = gf.restart(
+                    screen, ai_settings, enemies, en_fists, st, cur_time)
+        elif st.state == Stats.LOADING:
+            # Загрузка: это состояние нужно для перезапуска всех объектов, 
+            # т.к. из модуля game_functions функции режима загрузки не 
+            # позволяют это сделать (я лох).
+            timer, mc, mc_fist = gf.restart(
+                    screen, ai_settings, enemies, en_fists, st, cur_time)
+            st.state = Stats.GAMEACTIVE
         
         
         

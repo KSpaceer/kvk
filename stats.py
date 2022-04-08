@@ -11,6 +11,8 @@ class Stats():
     MAINMENU = 3
     SUBMENU = 4
     SAVEFILES_SAVEMODE = 5
+    SAVEFILES_LOADMODE = 6
+    LOADING = 7
 
     def __init__(self):
         '''Инициализация статистических данных'''
