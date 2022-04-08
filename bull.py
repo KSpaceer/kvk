@@ -1,8 +1,7 @@
-from time import monotonic
+
 import pygame
 from enemy import Enemy
 from fist import Fist
-import bull_animation as an
 
 
 
