@@ -13,6 +13,7 @@ class Stats():
     SAVEFILES_SAVEMODE = 5
     SAVEFILES_LOADMODE = 6
     LOADING = 7
+    SELECTMODE = 8
 
     def __init__(self):
         '''Инициализация статистических данных'''

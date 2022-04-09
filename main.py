@@ -37,6 +37,8 @@ def run_game():
     tarzan = Tarzan(screen, ai_settings)
     # Кнопки
     buttons = []
+    # Иконки меню выбора персонажа
+    selecticons = []
     
     
     
@@ -49,12 +51,16 @@ def run_game():
         
         # Обработка событий
         gf.check_events(mc, st, buttons, screen, cur_time,
-             timer, enemies)
+             timer, enemies, selecticons)
         if st.state == Stats.INTRO:
             # Заставка
             tarzan.update_intro()
         elif st.state == Stats.MAINMENU:
+            # Главное меню
             gf.update_mainmenu_screen(ai_settings, screen, buttons)
+        elif st.state == Stats.SELECTMODE:
+            # Меню выбора персонажа
+            gf.update_selectmode_screen(ai_settings, screen, selecticons)
         elif st.state == Stats.GAMEACTIVE:
             # Сама игра
             # Обновление текущего времени
@@ -80,13 +86,13 @@ def run_game():
             # Конец игры (проигрыш)
             if st.restart_flag:
                 timer, mc, mc_fist = gf.restart(
-                    screen, ai_settings, enemies, en_fists, st, cur_time)
+                    screen, ai_settings, enemies, en_fists, st, cur_time, mc)
         elif st.state == Stats.LOADING:
             # Загрузка: это состояние нужно для перезапуска всех объектов, 
             # т.к. из модуля game_functions функции режима загрузки не 
             # позволяют это сделать (я лох).
             timer, mc, mc_fist = gf.restart(
-                    screen, ai_settings, enemies, en_fists, st, cur_time)
+                    screen, ai_settings, enemies, en_fists, st, cur_time, mc)
             st.state = Stats.GAMEACTIVE
         
         

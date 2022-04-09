@@ -11,37 +11,41 @@ from bull import Bull
 from enemy import Enemy
 from button import Button
 from fist import Fist
+from selecticon import SelectIcon
 
 
 ### ОБЩИЙ БЛОК ###
 
 def check_events(mc, st, buttons, screen, 
-    cur_time, timer, enemies):
+    cur_time, timer, enemies, selecticons):
     '''Обрабатывает нажатия клавиш и мыши'''
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
         elif event.type == pygame.KEYDOWN:
             keydown_events(event, mc, st, buttons, 
-            screen, cur_time, timer, enemies)
+            screen, cur_time, timer, enemies, selecticons)
             change_state(st, buttons, screen)
         elif event.type == pygame.KEYUP:
             keyup_events(event, mc)
 
 def keydown_events(event, mc, st, buttons, screen, 
-    cur_time, timer, enemies):
+    cur_time, timer, enemies, selecticons):
     '''Обрабатывает события нажатия клавиш'''
     if event.key == pygame.K_q:
         sys.exit()
     elif st.state == st.GAMEACTIVE:
         keydown_in_game(event, mc, st, buttons, screen)
     elif st.state == st.MAINMENU:
-        keydown_in_mainmenu(event, st, buttons, screen)
+        keydown_in_mainmenu(event, st, buttons, screen, selecticons)
+    elif st.state == st.SELECTMODE:
+        keydown_in_selectmode(event, st, selecticons, mc, buttons, screen)
     elif st.state == st.SUBMENU:
         keydown_in_submenu(event, st, buttons, screen, 
         cur_time, timer, mc, enemies)
     elif st.state in (st.SAVEFILES_SAVEMODE, st.SAVEFILES_LOADMODE):
-        keydown_in_savefiles(event, st, buttons, screen)
+        keydown_in_savefiles(event, st, buttons, screen, mc)
+    
 
 def keyup_events(event, mc):
     '''Обрабатывает события отжатия клавиш'''
@@ -105,7 +109,7 @@ def update_mainmenu_screen(ai_settings, screen, buttons):
     # Обновление экрана
     pygame.display.flip()
 
-def keydown_in_mainmenu(event, st, buttons, screen):
+def keydown_in_mainmenu(event, st, buttons, screen, selecticons):
     '''Обрабатывает нажатия клавиш в главном меню'''
     if event.key == pygame.K_DOWN or event.key == pygame.K_UP:
         select_button(buttons, event)
@@ -114,7 +118,8 @@ def keydown_in_mainmenu(event, st, buttons, screen):
             if buttons[i].is_chosen:
                 if buttons[i].name_number == Button.NEWGAME:
                     buttons.clear()
-                    st.state = st.GAMEACTIVE
+                    create_selecticons(selecticons, screen)
+                    st.state = st.SELECTMODE
                     break
                 elif buttons[i].name_number == Button.LOAD:
                     buttons.clear()
@@ -124,6 +129,49 @@ def keydown_in_mainmenu(event, st, buttons, screen):
                     break
                 elif buttons[i].name_number == Button.EXIT:
                     sys.exit()
+
+### БЛОК ВЫБОРА ПЕРСОНАЖА (st.state = Stats.SELECTMODE) ###
+
+def create_selecticons(selecticons, screen):
+    '''Создает иконки выбора персонажа'''
+    selecticons.extend((SelectIcon('S', screen), SelectIcon('Z', screen)))
+
+def update_selectmode_screen(ai_settings, screen, selecticons):
+    '''Обновляет изображение на экране во время выбора персонажа'''
+    # Перерисовка экрана
+    screen.fill(ai_settings.bg_color)
+    # Вывод надписи 
+    screen.blit(pygame.image.load('images/syf.png'), (450, 100))
+    # Отображение иконок персонажей
+    for selecticon in selecticons:
+        selecticon.blitme()
+    # Обновление экрана
+    pygame.display.flip()
+
+def keydown_in_selectmode(event, st, selecticons, mc, buttons, screen):
+    '''Обрабатывает нажатия клавиш в меню выбора персонажа'''
+    if event.key == pygame.K_ESCAPE:
+        # Выход в меню по нажатию ESC
+        selecticons.clear()
+        create_mainmenu_buttons(buttons, screen)
+        st.state = st.MAINMENU
+    # Смена выбранного персонажа по нажатию стрелок
+    elif event.key == pygame.K_LEFT:
+        if selecticons[1].is_selected:
+            selecticons[1].is_selected = False
+            selecticons[0].is_selected = True
+    elif event.key == pygame.K_RIGHT:
+        if selecticons[0].is_selected:
+            selecticons[0].is_selected = False
+            selecticons[1].is_selected = True
+    elif event.key == pygame.K_RETURN:
+        # Выбор персонажа по нажатию ENTER и запуск игры
+        for selecticon in selecticons:
+            if selecticon.is_selected:
+                mc.surname = selecticon.surname
+                selecticons.clear()
+                st.state = st.LOADING
+                break 
 
 ### БЛОК ИГРЫ (st.state = Stats.GAMEACTIVE) ###
 
@@ -296,7 +344,7 @@ def update_savefiles_screen(screen, buttons):
     # Обновление экрана
     pygame.display.flip()
 
-def keydown_in_savefiles(event, st, buttons, screen):
+def keydown_in_savefiles(event, st, buttons, screen, mc):
     '''Обрабатывает нажатия клавиш в меню файлов сохранения'''
     if event.key == pygame.K_ESCAPE:
         if st.pr_state == st.SUBMENU:
@@ -317,7 +365,7 @@ def keydown_in_savefiles(event, st, buttons, screen):
             for i in range(len(buttons)):
                 if buttons[i].is_chosen:
                     with open(f'save/save{i + 1}.txt', 'w') as f:
-                        f.write(str(st.level))
+                        f.write(str(st.level) + '\n' + mc.surname)
                     break
             # Возвращает в меню паузы
             buttons.clear()
@@ -330,6 +378,7 @@ def keydown_in_savefiles(event, st, buttons, screen):
                 if buttons[i].is_chosen and \
                 buttons[i].name_number == Button.SAVEFILE:
                     st.level = int(buttons[i].saved_data[0])
+                    mc.surname = buttons[i].saved_data[1]
                     buttons.clear()
                     st.state = st.LOADING
                     break
@@ -358,21 +407,25 @@ def open_savefile(number, buttons):
                     pygame.image.load(
                         f'images/Buttons/{reversed_level[i]}.png'),
                     (179 - 20 * i, 13))
+        # Добавим на кнопку иконку персонажа
+        buttons[number].image.blit(pygame.image.load(
+            f'images/K{buttons[number].saved_data[1]}_health.png'), (157, 40))
 
 ### БЛОК ПРОИГРЫША (st.state = Stats.GAMEOVER) ###
 
-def restart(screen, ai_settings, enemies, en_fists, st, cur_time):
+def restart(screen, ai_settings, enemies, en_fists, st, cur_time, mc):
     '''Функция рестарта'''
     timer = Timer(monotonic())
-    mc = MainCharacter(screen, ai_settings, cur_time)
+    m_c = MainCharacter(screen, ai_settings, cur_time, mc.surname)
     mc_fist = Fist(screen)
     enemies.empty()
     en_fists.empty()
     Enemy.deaths = 0
     Enemy.c_deaths = 0
     Enemy.summons = 0
+    st.current_wave = 0
     st.state = st.GAMEACTIVE
-    return timer, mc, mc_fist 
+    return timer, m_c, mc_fist 
 
 
 
