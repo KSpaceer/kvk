@@ -21,20 +21,23 @@ def check_events(mc, st, buttons, screen,
     '''Обрабатывает нажатия клавиш и мыши'''
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            # Выход по нажатии крестика
             sys.exit()
         elif event.type == pygame.KEYDOWN:
+            # Проверка событий нажатия
             keydown_events(event, mc, st, buttons, 
             screen, cur_time, timer, enemies, selecticons)
+            # Если текущее состояние - заставка или проигрыш, меняет состояние
             change_state(st, buttons, screen)
         elif event.type == pygame.KEYUP:
+            # Проверка событий отпускания кнопок
             keyup_events(event, mc)
 
 def keydown_events(event, mc, st, buttons, screen, 
     cur_time, timer, enemies, selecticons):
     '''Обрабатывает события нажатия клавиш'''
-    if event.key == pygame.K_q:
-        sys.exit()
-    elif st.state == st.GAMEACTIVE:
+    # В зависимости от состояния игры - различная реакция на нажатия
+    if st.state == st.GAMEACTIVE:
         keydown_in_game(event, mc, st, buttons, screen)
     elif st.state == st.MAINMENU:
         keydown_in_mainmenu(event, st, buttons, screen, selecticons)
@@ -49,7 +52,10 @@ def keydown_events(event, mc, st, buttons, screen,
 
 def keyup_events(event, mc):
     '''Обрабатывает события отжатия клавиш'''
+    # Т.к. отпускание важно только во время состояния активной игры,
+    # можно не создавать отдельные функции, как для нажатия
     if event.key == pygame.K_RIGHT:
+        # Обнуление таймера анимации и отмена флага ходьбы
         mc.timer = 0
         mc.moving_right = False
     elif event.key == pygame.K_LEFT:
@@ -62,6 +68,7 @@ def keyup_events(event, mc):
         mc.timer = 0
         mc.moving_down = False
     elif event.key == pygame.K_SPACE:
+        # Выключение флага зажатого пробела
         mc.space_active = False
 
 def select_button(buttons, event, do_reverse = False):
@@ -71,10 +78,15 @@ def select_button(buttons, event, do_reverse = False):
     key_vars = {pygame.K_DOWN : ('+', lower),
             pygame.K_UP : ('-', upper)} 
     if do_reverse:
+        # Если при создании набора кнопок они создавались снизу вверх,
+        # то меняет местами реакцию на нажатие стрелки вниз или вверх
         key_vars[pygame.K_DOWN], key_vars[pygame.K_UP] = \
             key_vars[pygame.K_UP], key_vars[pygame.K_DOWN]
     for i in range(len(buttons)):
+        # Если кнопка выбрана и это не граничная кнопка (т.е. например,
+        # не верхняя кнопка при нажатии клавиши вверх)
         if buttons[i].is_chosen and i != key_vars[event.key][1]:
+            # Меняет выбранную кнопку на другую (выше или ниже)
             buttons[i].is_chosen = False
             exec('buttons[i' + key_vars[event.key][0] + '1].is_chosen = True')
             break 
@@ -82,10 +94,12 @@ def select_button(buttons, event, do_reverse = False):
 def change_state(st, buttons, screen):
     '''Изменяет состояние игры'''
     if st.state == st.INTRO:
+        # Переход с заставки в главное меню
         buttons.clear()
         create_mainmenu_buttons(buttons, screen)
         st.state = st.MAINMENU
     elif st.state == st.GAMEOVER:
+        # Рестарт после проигрыша
         st.restart_flag = True
 
 ### БЛОК ГЛАВНОГО МЕНЮ (st.state = Stats.MAINMENU) ###
@@ -114,20 +128,25 @@ def keydown_in_mainmenu(event, st, buttons, screen, selecticons):
     if event.key == pygame.K_DOWN or event.key == pygame.K_UP:
         select_button(buttons, event)
     elif event.key == pygame.K_RETURN:
+        # Активация кнопки по нажатии Enter
         for i in range(len(buttons)):
             if buttons[i].is_chosen:
                 if buttons[i].name_number == Button.NEWGAME:
+                    # Переход из главного меню в меню выбора персонажа
                     buttons.clear()
                     create_selecticons(selecticons, screen)
                     st.state = st.SELECTMODE
                     break
                 elif buttons[i].name_number == Button.LOAD:
+                    # Переход из главного меню в меню файлов сохранения 
+                    # в режиме загрузки
                     buttons.clear()
                     create_savefiles_buttons(buttons, screen)
                     st.state = st.SAVEFILES_LOADMODE
                     st.pr_state = st.MAINMENU
                     break
                 elif buttons[i].name_number == Button.EXIT:
+                    # Выход из игры
                     sys.exit()
 
 ### БЛОК ВЫБОРА ПЕРСОНАЖА (st.state = Stats.SELECTMODE) ###
@@ -175,13 +194,14 @@ def keydown_in_selectmode(event, st, selecticons, mc, buttons, screen):
 
 ### БЛОК ИГРЫ (st.state = Stats.GAMEACTIVE) ###
 
-def update_screen(ai_settings, screen, mc, enemies, timer):
+def update_screen(ai_settings, screen, mc, enemies):
     '''Обновляет изображение на экране'''
     # Перерисовка экрана
     screen.fill(ai_settings.bg_color)
     # Отображение здоровья и неуязвимости
     gr.draw_health(mc, ai_settings)
     gr.draw_invincibility(mc)
+    # Отображение главного персонажа и врагов
     mc.blitme()
     for enemy in enemies:
         enemy.blitme()
@@ -191,6 +211,7 @@ def update_screen(ai_settings, screen, mc, enemies, timer):
 def keydown_in_game(event, mc, st, buttons, screen):
     '''Обрабатывает нажатия клавиш во время самой игры'''
     if event.key == pygame.K_RIGHT:
+        # Обнуление таймера анимации и включение флага ходьбы
         mc.timer = 0
         mc.moving_right = True
     elif event.key == pygame.K_LEFT:
@@ -203,22 +224,27 @@ def keydown_in_game(event, mc, st, buttons, screen):
         mc.timer = 0
         mc.moving_down = True
     elif event.key == pygame.K_SPACE:
+        # Включение флага зажатого пробела
         mc.space_active = True
     elif event.key == pygame.K_ESCAPE:
+        # Переход в меню паузы
         create_submenu_buttons(buttons, screen)
         st.state = st.SUBMENU
 
 def check_hits(mc, en_fists):
     '''Проверка получения удара'''
     if not mc.invincible:
+        # Если персонаж неуязвим, проверяет коллизии персонажа с вражескими
+        # ударными поверхностями
         touching_fist = pygame.sprite.spritecollideany(mc, en_fists)
         if touching_fist:
+            # В случае коллизии персонаж получает урон
             mc.get_damage(touching_fist)
 
 def wave(screen, ai_settings, mc, enemies, timer, cur_time, st, adversaries):
     '''Создает волну противников'''
     for i in range(len(adversaries)):
-        # Враги появляются по времени. Если кто-то умер, новые появляться не будут
+        # Враги появляются по времени. 
         if cur_time.time - timer.time >= 5 * (i + 1) and len(enemies) == i \
             and Enemy.summons < len(adversaries):
             if adversaries[i] == 0:
@@ -238,6 +264,7 @@ def create_submenu_buttons(buttons, screen, selected_button = Button.MENU):
     for i in range(3, 6):
         buttons.append(Button(screen, i))
         if i == selected_button:
+            # Избранная кнопка
             buttons[i - 3].is_chosen = True
         buttons[i - 3].rect.centery = 580 - 2 * (i - 3) * 90
 
@@ -289,6 +316,7 @@ def keydown_in_submenu(event, st, buttons, screen,
 
 def obscure_screen(ai_settings, screen):
     '''Затемняет экран'''
+    # Добавляет частично прозрачную черную заслонку на экран
     damper = pygame.Surface((ai_settings.screen_width, 
     ai_settings.screen_height))
     damper.set_alpha(100)
@@ -331,6 +359,7 @@ def create_savefiles_buttons(buttons, screen):
             # Если файла сохранения нет
             buttons.append(Button(screen, Button.EMPTY))
         if i == 0:
+            # Верхняя кнопка изначально выбрана
             buttons[i].is_chosen = True
         buttons[i].rect.centery = 220 + 2 * i * 90
 
@@ -350,7 +379,7 @@ def keydown_in_savefiles(event, st, buttons, screen, mc):
         if st.pr_state == st.SUBMENU:
             # Если предыдущим состоянием игры было меню паузы, возвращает туда
             buttons.clear()
-            create_submenu_buttons(buttons, screen)
+            create_submenu_buttons(buttons, screen, Button.SAVE)
             st.state = st.SUBMENU
         elif st.pr_state == st.MAINMENU:
             # Если пред. состоянием игры было главное меню, возвращает туда
@@ -369,16 +398,17 @@ def keydown_in_savefiles(event, st, buttons, screen, mc):
                     break
             # Возвращает в меню паузы
             buttons.clear()
-            create_submenu_buttons(buttons, screen)
+            create_submenu_buttons(buttons, screen, Button.SAVE)
             st.state = st.SUBMENU
         elif st.state == st.SAVEFILES_LOADMODE:
             # Если активен режим загрузки, передает данные файла, сохраненные
-            # в объекте кнопки, объекту игровой статистики
+            # в объекте кнопки, объекту игровой статистики и персонажу
             for i in range(len(buttons)):
                 if buttons[i].is_chosen and \
                 buttons[i].name_number == Button.SAVEFILE:
                     st.level = int(buttons[i].saved_data[0])
                     mc.surname = buttons[i].saved_data[1]
+                    # Запуск игры
                     buttons.clear()
                     st.state = st.LOADING
                     break
