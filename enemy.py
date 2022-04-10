@@ -23,6 +23,7 @@ class Enemy(Sprite):
         self.st = st
         self.main_timer = timer # Таймер из основного модуля
         self.image = ''
+        self.define_surname()
         # Текущее время
         self.cur_time = cur_time
         # Переменные для анимаций
@@ -36,6 +37,16 @@ class Enemy(Sprite):
         self.right_punch = False
         # Таймер для перезарядки атаки
         self.cooldown_timer = 0
+
+    def define_surname(self):
+        '''Определяет тип врагов в зависимости от главного персонажа.'''
+        # Если главный персонаж - я, то враги - З.
+        if self.mc.surname == 'S':
+            self.surname = 'Z'
+        # И наоборот
+        else:
+            self.surname = 'S'
+
 
     def __del__(self):
         '''Срабатывает при смерти'''
@@ -133,7 +144,7 @@ class Enemy(Sprite):
         self.health -= self.ai_settings.mc_damage
         self.is_stunned = True
         self.image = pygame.image.load(
-            f'images/KSEnemies/{self.name}/stunned.png')
+            f'images/K{self.surname}Enemies/{self.name}/stunned.png')
         self.change_rect()
         self.timer = monotonic()
 
@@ -189,7 +200,7 @@ class Enemy(Sprite):
                         
                     
                     self.image = pygame.image.load(
-                        f'images/KSEnemies/{self.name}' +
+                        f'images/K{self.surname}Enemies/{self.name}' +
                         f'/punching{i + 1}_{file_end_name}.png')                    
                     if i <= self.noload_fr:
                         # Т.к. в первом и втором кадрах рука расположена
@@ -215,7 +226,7 @@ class Enemy(Sprite):
                         
                     # Кадры идут в обратном порядке
                     self.image = pygame.image.load(
-                        f'images/KSEnemies/{self.name}/'+
+                        f'images/K{self.surname}Enemies/{self.name}/'+
                         f'punching{self.frames + 1 - i}_{file_end_name}.png')
                     self.correlate_rect_image(self.right_punch)
                     if i == self.frames - 1:

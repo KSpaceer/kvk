@@ -12,12 +12,14 @@ def going_vertical_animation(enemy, ai_settings):
         if enemy.is_right_leg:
             enemy.is_right_leg = False
             enemy.image = pygame.image.load(
-                    f'images/KSEnemies/{enemy.name}/going_vertical(left_leg).png')
+                    f'images/K{enemy.surname}Enemies/{enemy.name}' + 
+                    '/going_vertical(left_leg).png')
             enemy.change_rect()
         else:
             enemy.is_right_leg = True
             enemy.image = pygame.image.load(
-                f'images/KSEnemies/{enemy.name}/going_vertical(right_leg).png')
+                f'images/K{enemy.surname}Enemies/{enemy.name}' +
+                '/going_vertical(right_leg).png')
             enemy.change_rect()
 
 def going_right_animation(enemy, ai_settings):
@@ -29,12 +31,14 @@ def going_right_animation(enemy, ai_settings):
         if enemy.is_right_leg:
             enemy.is_right_leg = False
             enemy.image = pygame.image.load(
-                f'images/KSEnemies/{enemy.name}/going_right(left_leg).png')
+                f'images/K{enemy.surname}Enemies/{enemy.name}' +
+                '/going_right(left_leg).png')
             enemy.change_rect()
         else:
             enemy.is_right_leg = True
             enemy.image = pygame.image.load(
-                f'images/KSEnemies/{enemy.name}/going_right(right_leg).png')
+                f'images/K{enemy.surname}Enemies/{enemy.name}' +
+                '/going_right(right_leg).png')
             enemy.change_rect()
 
 def going_left_animation(enemy, ai_settings):
@@ -46,12 +50,14 @@ def going_left_animation(enemy, ai_settings):
         if enemy.is_right_leg:
             enemy.is_right_leg = False
             enemy.image = pygame.image.load(
-                f'images/KSEnemies/{enemy.name}/going_left(left_leg).png')
+                f'images/K{enemy.surname}Enemies/{enemy.name}' +
+                '/going_left(left_leg).png')
             enemy.change_rect()
         else:
             enemy.is_right_leg = True
             enemy.image = pygame.image.load(
-                f'images/KSEnemies/{enemy.name}/going_left(right_leg).png')
+                f'images/K{enemy.surname}Enemies/{enemy.name}' +
+                '/going_left(right_leg).png')
             enemy.change_rect()
 
 def stunning_animation(enemy, ai_settings):

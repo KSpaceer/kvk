@@ -38,13 +38,20 @@ class Bull(Enemy):
         # а сам кулак или что там еще находится за телом
         self.noload_fr = 2
         # Число для корректировки положения изображения и поверхности:
-        self.pos_correction = '20'
+        self.define_pos_correction()
         # Размеры самого маленького кадра для корректировки анимации атаки
         self.smallest_frame = (77, 238)
         # Список координат верха прямоугольника ударной поверхности
         # относительно верха прямоугольника анимаций для 4 последних кадров
         self.frl_top = [16, 15, 12, 15] # frl - fist relative location
         self.frl_side = [63, 87, 104, 114]
+        
+
+    def define_pos_correction(self):
+        if self.surname == 'S':
+            self.pos_correction = '20'
+        else:
+            self.pos_correction = '40'
 
 
 
@@ -54,18 +61,23 @@ class Bull(Enemy):
         '''Анимация смерти'''
         if self.cur_time.time - self.timer < 6 * self.ai_settings.animation_change:
             for i in range(6):
-                # Появление ангельских атрибутов
+                # Появление ангельских/дьявольских атрибутов
                 if (i+1) * self.ai_settings.animation_change > \
                     self.cur_time.time - self.timer >= \
                         i * self.ai_settings.animation_change:
                     self.image = pygame.image.load(
-                        f'images/KSEnemies/bull/death{i + 1}.png')
+                        f'images/K{self.surname}Enemies/bull/death{i + 1}.png')
                     self.change_rect()
         else:
-            # Полетели
-            self.rect.centery -= 5
-            if self.rect.bottom <= self.screen_rect.top:
-                pygame.sprite.Group.remove(enemies, self)
-
+            # Полетели вверх, если ангел
+            if self.surname == 'S':
+                self.rect.centery -= 5
+                if self.rect.bottom <= self.screen_rect.top:
+                    pygame.sprite.Group.remove(enemies, self)
+            # Полетели вниз, если дьявол
+            else:
+                self.rect.centery += 5
+                if self.rect.top >= self.screen_rect.bottom:
+                    pygame.sprite.Group.remove(enemies, self)
 
     
