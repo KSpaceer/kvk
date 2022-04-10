@@ -2,7 +2,7 @@ from time import monotonic
 import pygame
 from pygame.sprite import Sprite
 import enemy_animation as an
-
+from fist import Fist
 
 class Enemy(Sprite):
 
@@ -26,6 +26,8 @@ class Enemy(Sprite):
         self.define_surname()
         # Текущее время
         self.cur_time = cur_time
+        # Создаем ударную поверхность
+        self.fist = Fist(screen)
         # Переменные для анимаций
         self.timer = monotonic()
         self.is_right_leg = True
@@ -70,6 +72,8 @@ class Enemy(Sprite):
             Enemy.summons = 0
             # Таймер тоже
             self.main_timer.time = monotonic()
+
+        
         
         
 
@@ -141,6 +145,11 @@ class Enemy(Sprite):
 
     def get_damage(self):
         '''Получение урона и оглушение'''
+        if self.surname == 'D':
+            # Не надо бить Диану
+            self.mc.health = 0
+            self.mc.tf = self
+            return
         self.health -= self.ai_settings.mc_damage
         self.is_stunned = True
         self.image = pygame.image.load(

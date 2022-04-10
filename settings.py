@@ -28,3 +28,4 @@ class Settings():
         self.bull_speed_factor = 0.25
         self.bull_attack_speed = 0.2
         self.bull_cooldown = 2
+        self.diana_appearance_chance = 50 # переменная для шанса появления Дианы

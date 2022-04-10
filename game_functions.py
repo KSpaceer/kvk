@@ -231,7 +231,7 @@ def keydown_in_game(event, mc, st, buttons, screen):
         create_submenu_buttons(buttons, screen)
         st.state = st.SUBMENU
 
-def check_hits(mc, en_fists):
+def check_hits(mc, en_fists, enemies):
     '''Проверка получения удара'''
     if not mc.invincible:
         # Если персонаж неуязвим, проверяет коллизии персонажа с вражескими
@@ -239,7 +239,7 @@ def check_hits(mc, en_fists):
         touching_fist = pygame.sprite.spritecollideany(mc, en_fists)
         if touching_fist:
             # В случае коллизии персонаж получает урон
-            mc.get_damage(touching_fist)
+            mc.get_damage(touching_fist, en_fists, enemies)
 
 def wave(screen, ai_settings, mc, enemies, timer, cur_time, st, adversaries):
     '''Создает волну противников'''

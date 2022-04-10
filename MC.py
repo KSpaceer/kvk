@@ -244,17 +244,27 @@ class MainCharacter(Sprite):
             self.right_punch = right_punch
             self.attack_timer = 0
 
-    def get_damage(self, touching_fist):
+    def get_damage(self, touching_fist, en_fists, enemies):
         '''Активирует флаги получения урона'''
+        self.tf = touching_fist
+        # Если ударивший противник - Диана, то она не выносит греха 
+        # нанесенного ущерба и покидает поле боя.
+        for enemy in enemies:
+            if enemy.surname == 'D' and enemy.fist is self.tf:
+                enemy.health = 0
+                enemy.is_punching = False
+                en_fists.remove(self.tf)
+                if self.rect.centerx > enemy.rect.centerx:
+                    enemy.leaving_left = True
         self.health -= 1
         self.invincible = True
         self.is_stunned = True
         self.attack_timer = 0
         self.invin_timer = monotonic()
-        self.tf = touching_fist
+        
 
     def death(self, st):
-        ''' "Анимация" смерти, смена состояния игры'''
+        ''' "Анимация" смерти, смена состояния игры'''        
         if self.tf.rect.centerx >= self.rect.centerx:
             self.death_side = 'right'
         else:

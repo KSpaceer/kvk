@@ -70,7 +70,7 @@ def run_game():
             # Обновление врагов
             enemies.update(mc_fist, enemies, en_fists)
             # Проверка получения ударов
-            gf.check_hits(mc, en_fists)
+            gf.check_hits(mc, en_fists, enemies)
             # Обновление волн
             gf.update_waves(screen, ai_settings, mc, enemies, 
             timer, cur_time, st)
