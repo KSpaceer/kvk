@@ -47,11 +47,12 @@ class Bull(Enemy):
         # относительно верха прямоугольника анимаций для 4 последних кадров
         self.frl_top = [16, 15, 12, 15] # frl - fist relative location
         self.frl_side = [63, 87, 104, 114]
-        # Уйдет ли Диана налево?
+        # Уйдет ли Диана в левую сторону?
         self.leaving_left = False
         
 
     def define_pos_correction(self):
+        '''Определяет корректировку положения изображения'''
         if self.surname == 'S':
             self.pos_correction = '20'
         else:
@@ -92,6 +93,7 @@ class Bull(Enemy):
     def diana_leaving(self, enemies):
         '''Анимация ухода Дианы'''
         if self.leaving_left:
+            # Уходит направо
             if self.rect.right <= self.screen_rect.left:
                 del self.fist
                 pygame.sprite.Group.remove(enemies, self)
@@ -100,6 +102,7 @@ class Bull(Enemy):
                 going_left_animation(self, self.ai_settings)
                 self.rect.centerx = self.centerx
         else:
+            # Уходит налево
             if self.rect.left >= self.screen_rect.right:
                 del self.fist
                 pygame.sprite.Group.remove(enemies, self)
