@@ -1,11 +1,11 @@
 import pygame
 import time
 
-def going_right_animation(mc, ai_settings):
+def going_right_animation(mc):
     '''Анимация ходьбы вправо'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if mc.cur_time.time - mc.timer >= ai_settings.animation_change:
+    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -16,11 +16,11 @@ def going_right_animation(mc, ai_settings):
             mc.image = pygame.image.load(
                 f'images/K{mc.surname}Main/going_right(right_leg).png')
 
-def going_left_animation(mc, ai_settings):
+def going_left_animation(mc,):
     '''Анимация ходьбы влево'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if mc.cur_time.time - mc.timer >= ai_settings.animation_change:
+    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -31,11 +31,11 @@ def going_left_animation(mc, ai_settings):
             mc.image = pygame.image.load(
                 f'images/K{mc.surname}Main/going_left(right_leg).png')
 
-def going_down_animation(mc, ai_settings):
+def going_down_animation(mc):
     '''Анимация ходьбы вниз'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if mc.cur_time.time - mc.timer >= ai_settings.animation_change:
+    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -46,11 +46,11 @@ def going_down_animation(mc, ai_settings):
             mc.image = pygame.image.load(
                 f'images/K{mc.surname}Main/going_down(right_leg).png')
 
-def going_up_animation(mc, ai_settings):
+def going_up_animation(mc):
     '''Анимация ходьбы вверх'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if mc.cur_time.time - mc.timer >= ai_settings.animation_change:
+    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -61,9 +61,9 @@ def going_up_animation(mc, ai_settings):
             mc.image = pygame.image.load(
                 f'images/K{mc.surname}Main/going_up(right_leg).png')
 
-def standing_animation(mc, ai_settings):
+def standing_animation(mc):
     '''Анимация при отсутствии движения'''
-    if mc.cur_time.time - mc.timer >= ai_settings.animation_change*1.5:
+    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change*1.5:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -74,15 +74,15 @@ def standing_animation(mc, ai_settings):
             mc.image = pygame.image.load(
                 f'images/K{mc.surname}Main/standing2.png')
 
-def stunning_animation(mc, ai_settings, file_endname, move_direction):
+def stunning_animation(mc, file_endname: str, move_direction: str):
     '''Анимация оглушения'''
     if mc.attack_timer == 0:
         mc.image = pygame.image.load(
             f'images/K{mc.surname}Main/stunned_{file_endname}.png')
         mc.attack_timer = time.monotonic()
-    elif mc.cur_time.time  - mc.attack_timer <= ai_settings.stun_duration:
+    elif mc.cur_time.time  - mc.attack_timer <= mc.ai_settings.stun_duration:
         # Откидывание:
-        exec(f'mc.centerx {move_direction}= ai_settings.mc_speed_factor/2')
+        exec(f'mc.centerx {move_direction}= mc.ai_settings.mc_speed_factor/2')
     else:
         mc.is_stunned = False
     

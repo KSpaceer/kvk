@@ -7,7 +7,7 @@ class Fist(Sprite):
 
     
     
-    def __init__(self, screen):
+    def __init__(self, screen: pygame.Surface):
         '''Инициализация параметров ударной поверхности'''
         super().__init__()
         self.screen = screen

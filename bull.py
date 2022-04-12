@@ -4,11 +4,16 @@ from enemy import Enemy
 from fist import Fist
 from random import randint
 from enemy_animation import going_left_animation, going_right_animation
+from settings import Settings
+from MC import MainCharacter
+from stats import Stats
+from etimer import Timer
 
 class Bull(Enemy):
     '''Класс первого типа врагов - бугаев'''
 
-    def __init__(self, screen, ai_settings, mc, st, timer, cur_time):
+    def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
+    mc: MainCharacter, st: Stats, timer: Timer, cur_time: Timer):
         '''Инициализация параметров, начального положения и изображения'''
         super().__init__(screen, ai_settings, mc, st, timer, cur_time)
         # Инициализация имени для подстановки в файлы и имена переменных
@@ -62,7 +67,7 @@ class Bull(Enemy):
 
         
     
-    def death_animation(self, enemies):
+    def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
         # Если враг не Диана:
         if self.surname != 'D':
@@ -90,7 +95,7 @@ class Bull(Enemy):
             # Диана уходит
             self.diana_leaving(enemies)
 
-    def diana_leaving(self, enemies):
+    def diana_leaving(self, enemies: pygame.sprite.Group):
         '''Анимация ухода Дианы'''
         if self.leaving_left:
             # Уходит направо
@@ -99,7 +104,7 @@ class Bull(Enemy):
                 pygame.sprite.Group.remove(enemies, self)
             else:
                 self.centerx -= self.ai_settings.bull_speed_factor
-                going_left_animation(self, self.ai_settings)
+                going_left_animation(self)
                 self.rect.centerx = self.centerx
         else:
             # Уходит налево
@@ -108,5 +113,5 @@ class Bull(Enemy):
                 pygame.sprite.Group.remove(enemies, self)
             else:
                 self.centerx += self.ai_settings.bull_speed_factor
-                going_right_animation(self, self.ai_settings)
+                going_right_animation(self)
                 self.rect.centerx = self.centerx

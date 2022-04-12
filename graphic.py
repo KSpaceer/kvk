@@ -1,5 +1,7 @@
 
 import pygame
+from MC import MainCharacter
+from settings import Settings
 
 def set_caption_and_icon():
     '''Устанавливает иконку и название игры'''
@@ -7,7 +9,7 @@ def set_caption_and_icon():
     pygame.display.set_caption('KvK')
     pygame.display.set_icon(icon)
 
-def draw_health(mc, ai_settings):
+def draw_health(mc: MainCharacter, ai_settings: Settings):
     '''Визуальное отображение здоровья главного персонажа'''
     # Рисуем полосу вверху для вывода здоровья
     stripe_width = 35 * (1 + 2 * ai_settings.mc_health)

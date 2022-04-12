@@ -2,12 +2,15 @@ from time import monotonic
 import mc_animation as an
 import pygame
 from pygame.sprite import Sprite
-
-
+from settings import Settings
+from etimer import Timer
+from fist import Fist
+from stats import Stats
 
 class MainCharacter(Sprite):
     '''Класс главного персонажа'''
-    def __init__(self, screen, ai_settings, cur_time, surname = None):
+    def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
+        cur_time: Timer, surname: str = None):
         '''Инициализация главного персонажа и задание его начальной позиции'''
         super().__init__()
         self.screen = screen
@@ -58,7 +61,7 @@ class MainCharacter(Sprite):
         else:
             self.screen.blit(self.image, self.an_rect)
     
-    def update(self, enemies, fist, st):
+    def update(self, enemies: pygame.sprite.Group, fist: Fist, st: Stats):
         '''Обновляет позицию главного персонажа'''
         # Если персонаж жив
         if self.health > 0:
@@ -75,7 +78,7 @@ class MainCharacter(Sprite):
                     if not (self.moving_right or self.moving_left or 
                     self.moving_down or self.moving_up):
                         # если персонаж не двигается. то он будет анимация стояния
-                        an.standing_animation(self, self.ai_settings)
+                        an.standing_animation(self)
                     else:
                         if self.moving_right and self.rect.right < self.screen_rect.right:
                             self.going_right(enemies)
@@ -97,10 +100,10 @@ class MainCharacter(Sprite):
             else:
                 # Удар был справа
                 if self.tf.rect.centerx >= self.rect.centerx:
-                    an.stunning_animation(self, self.ai_settings, 'right', '-')
+                    an.stunning_animation(self, 'right', '-')
                 # Удар был слева
                 else:
-                    an.stunning_animation(self, self.ai_settings, 'left', '+')
+                    an.stunning_animation(self, 'left', '+')
             
         else:
             self.death(st)
@@ -112,7 +115,7 @@ class MainCharacter(Sprite):
     
 
 
-    def right_attack(self, fist):
+    def right_attack(self, fist: Fist):
         '''Процесс атаки на правую сторону'''
         if self.attack_timer == 0:
             # Загружаем изображение
@@ -148,7 +151,7 @@ class MainCharacter(Sprite):
         elif self.cur_time.time - self.attack_timer > 5 * self.ats:
             self.is_punching = False # Атака закончена
 
-    def left_attack(self, fist):                   
+    def left_attack(self, fist: Fist):                   
         '''Процесс атаки на левую сторону'''
         if self.attack_timer == 0:
             self.image = pygame.image.load(
@@ -188,7 +191,7 @@ class MainCharacter(Sprite):
             self.is_punching = False
                     
     
-    def going_right(self, enemies):
+    def going_right(self, enemies: pygame.sprite.Group):
         '''Если персонаж ни с кем не столкнулся из врагов, он делает движение 
         вправо'''
         for enemy in enemies:
@@ -200,9 +203,9 @@ class MainCharacter(Sprite):
                     return
         
         self.centerx += self.ai_settings.mc_speed_factor
-        an.going_right_animation(self,self.ai_settings)
+        an.going_right_animation(self)
 
-    def going_left(self, enemies):
+    def going_left(self, enemies: pygame.sprite.Group):
         '''Если персонаж ни с кем не столкнулся из врагов, он делает движение 
         влево'''
         for enemy in enemies:
@@ -213,9 +216,9 @@ class MainCharacter(Sprite):
                 enemy.rect.bottom - int(enemy.rect.height/3)):
                     return
         self.centerx -= self.ai_settings.mc_speed_factor
-        an.going_left_animation(self, self.ai_settings)
+        an.going_left_animation(self)
 
-    def going_down(self, enemies):
+    def going_down(self, enemies: pygame.sprite.Group):
         '''Если персонаж ни с кем не столкнулся из врагов, он делает движение
         вниз'''
         for enemy in enemies:
@@ -224,9 +227,9 @@ class MainCharacter(Sprite):
                 enemy.rect.left, enemy.rect.left + enemy.rect.width):               
                     return
         self.centery += self.ai_settings.mc_speed_factor
-        an.going_down_animation(self, self.ai_settings)
+        an.going_down_animation(self)
 
-    def going_up(self, enemies):
+    def going_up(self, enemies: pygame.sprite.Group):
         '''Если персонаж ни с кем не столкнулся из врагов, он делает движение
         вверх'''
         for enemy in enemies:
@@ -235,9 +238,9 @@ class MainCharacter(Sprite):
                 enemy.rect.left, enemy.rect.left + enemy.rect.width):                
                     return
         self.centery -= self.ai_settings.mc_speed_factor
-        an.going_up_animation(self, self.ai_settings)
+        an.going_up_animation(self)
 
-    def initiate_punch(self, is_punching, right_punch):
+    def initiate_punch(self, is_punching: bool, right_punch: bool):
         '''Активирует флаги атаки'''
         if self.space_active:
             self.is_punching = is_punching
@@ -263,7 +266,7 @@ class MainCharacter(Sprite):
         self.invin_timer = monotonic()
         
 
-    def death(self, st):
+    def death(self, st: Stats):
         ''' "Анимация" смерти, смена состояния игры'''        
         if self.tf.rect.centerx >= self.rect.centerx:
             self.death_side = 'right'
@@ -278,7 +281,7 @@ class MainCharacter(Sprite):
         st.state = st.GAMEOVER 
 
     
-    def correlate_rect_image(self, side):
+    def correlate_rect_image(self, side: bool):
         '''Соотносит изначальный прямоугольник с измененным изображением
         True - анимация вправо, т.е. у прямоугольников одинаковое расположение левой стороны.
         False - влево, соответственно одинаковое расположение правой стороны'''

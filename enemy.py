@@ -1,8 +1,13 @@
+from sqlite3 import Time
 from time import monotonic
 import pygame
 from pygame.sprite import Sprite
 import enemy_animation as an
 from fist import Fist
+from settings import Settings
+from MC import MainCharacter
+from stats import Stats
+from etimer import Timer
 
 class Enemy(Sprite):
 
@@ -12,7 +17,8 @@ class Enemy(Sprite):
     c_deaths = 0 # Текущие смерти, нужны для волн и уровней
     summons = 0 # Кол-во призывов врагов
 
-    def __init__(self, screen, ai_settings, mc, st, timer, cur_time):
+    def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
+        mc: MainCharacter, st: Stats, timer: Timer, cur_time: Timer):
         '''Инициализирует параметры'''
         super().__init__()
         Enemy.summons += 1
@@ -136,7 +142,7 @@ class Enemy(Sprite):
                 else:
                    self.attack(en_fists)
             else:
-                an.stunning_animation(self, self.ai_settings)      
+                an.stunning_animation(self)      
         else:
             if not self.is_dead:
                 self.timer = monotonic()
@@ -160,26 +166,26 @@ class Enemy(Sprite):
     def vertical_movement(self):
         '''Перемещение врага по вертикали'''
         if self.rect.centery < self.mc.rect.centery:
-            an.going_vertical_animation(self, self.ai_settings)
+            an.going_vertical_animation(self)
             exec(f'self.centery += self.ai_settings.{self.name}_speed_factor')
         else:
-            an.going_vertical_animation(self, self.ai_settings)
+            an.going_vertical_animation(self)
             exec(f'self.centery -= self.ai_settings.{self.name}_speed_factor')
 
     def horizontal_movement(self):
         '''Перемещение врага по горизонтали'''
         if self.rect.left > self.mc.rect.right:
-            an.going_left_animation(self, self.ai_settings)
+            an.going_left_animation(self)
             exec(f'self.centerx -= self.ai_settings.{self.name}_speed_factor')
         elif self.rect.right < self.mc.rect.left:
-            an.going_right_animation(self, self.ai_settings)
+            an.going_right_animation(self)
             exec(f'self.centerx += self.ai_settings.{self.name}_speed_factor')
         else:
             if self.rect.centerx > self.mc.rect.centerx:
-                an.going_right_animation(self, self.ai_settings)
+                an.going_right_animation(self)
                 exec(f'self.centerx += self.ai_settings.{self.name}_speed_factor')
             else:
-                an.going_left_animation(self, self.ai_settings)
+                an.going_left_animation(self)
                 exec(f'self.centerx -= self.ai_settings.{self.name}_speed_factor')
 
     def initiate_punch(self):
@@ -265,7 +271,7 @@ class Enemy(Sprite):
         fake_rect.centery = self.rect.centery
         self.rect = fake_rect
 
-    def correlate_rect_image(self, side):
+    def correlate_rect_image(self, side: bool):
         '''Соотносит изначальный прямоугольник с измененным изображением
         True - анимация вправо, т.е. у прямоугольников одинаковое расположение левой стороны.
         False - влево, соответственно одинаковое расположение правой стороны'''

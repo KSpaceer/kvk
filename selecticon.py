@@ -5,7 +5,7 @@ import pygame
 class SelectIcon():
     '''Класс для иконок выбора персонажа'''
 
-    def __init__(self, surname, screen) -> None:
+    def __init__(self, surname: str, screen: pygame.Surface) -> None:
         '''Инициализация параметров по первой букве фамилии персонажа'''
         # Добавление изображение, прямоугольника, первой буквы фамилии
         self.image = pygame.image.load(f'images/K{surname}Main/selection.png')

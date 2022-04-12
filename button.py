@@ -23,7 +23,7 @@ class Button():
                         SAVEFILE : 'savefile',
                         EMPTY : 'empty'}
 
-    def __init__(self, screen, name_number) -> None:
+    def __init__(self, screen: pygame.Surface, name_number: int) -> None:
         '''Инициализация параметров'''
         self.screen = screen
         self.screen_rect = self.screen.get_rect()

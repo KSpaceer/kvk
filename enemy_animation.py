@@ -3,11 +3,12 @@ from time import monotonic
 
 
 
-def going_vertical_animation(enemy, ai_settings):
+def going_vertical_animation(enemy):
     '''Анимация вертикального перемещения'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if enemy.cur_time.time - enemy.timer >= ai_settings.animation_change/2:
+    if enemy.cur_time.time - enemy.timer >= \
+        enemy.ai_settings.animation_change/2:
         enemy.timer = monotonic()
         if enemy.is_right_leg:
             enemy.is_right_leg = False
@@ -22,11 +23,12 @@ def going_vertical_animation(enemy, ai_settings):
                 '/going_vertical(right_leg).png')
             enemy.change_rect()
 
-def going_right_animation(enemy, ai_settings):
+def going_right_animation(enemy):
     '''Анимация ходьбы вправо'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if enemy.cur_time.time - enemy.timer >= ai_settings.animation_change:
+    if enemy.cur_time.time - enemy.timer >= \
+        enemy.ai_settings.animation_change:
         enemy.timer = monotonic()
         if enemy.is_right_leg:
             enemy.is_right_leg = False
@@ -41,11 +43,12 @@ def going_right_animation(enemy, ai_settings):
                 '/going_right(right_leg).png')
             enemy.change_rect()
 
-def going_left_animation(enemy, ai_settings):
+def going_left_animation(enemy):
     '''Анимация ходьбы влево'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if enemy.cur_time.time - enemy.timer >= ai_settings.animation_change:
+    if enemy.cur_time.time - enemy.timer >= \
+        enemy.ai_settings.animation_change:
         enemy.timer = monotonic()
         if enemy.is_right_leg:
             enemy.is_right_leg = False
@@ -60,12 +63,12 @@ def going_left_animation(enemy, ai_settings):
                 '/going_left(right_leg).png')
             enemy.change_rect()
 
-def stunning_animation(enemy, ai_settings):
+def stunning_animation(enemy):
     '''Анимация оглушения'''
     for i in range(8):
-        if (i+1) * (ai_settings.animation_change/2) > \
+        if (i+1) * (enemy.ai_settings.animation_change/2) > \
             enemy.cur_time.time - enemy.timer >= i * (
-                ai_settings.animation_change/2):
+            enemy.ai_settings.animation_change/2):
             # Происходит шатание:
             if i % 2 == 0:
                 enemy.rect.centerx = enemy.centerx - 5
