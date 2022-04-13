@@ -47,16 +47,19 @@ class Shockwave(Sprite):
 
     def update(self, en_fists: Group) -> None:
         '''Обновляет положение волны'''
+        # В какую сторону летит волна
         if self.to_right:
             self.centerx += self.ai_settings.shockwave_speed
         else:
             self.centerx -= self.ai_settings.shockwave_speed
+        # Анимация
         if self.cur_time - self.timer >= 0.25:
             self.image = pygame.image.load('images/Shockwave/shockwave' + 
                 f'{int(self.current_image_number) + 1}_' + 
                 f'{Shockwave.direction[self.to_right]}.png')
             self.timer.time = monotonic()
             self.current_image_number = not self.current_image_number
+        # Действительные значения в целочисленные
         self.rect.centerx = int(self.centerx)
         self.rect.centery = int(self.centery)
         # Если волна вышла за пределы экрана, удаляет ее из группы ударных поверхностей врагов
