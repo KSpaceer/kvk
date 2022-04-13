@@ -6,6 +6,7 @@ import enemy_animation as an
 from fist import Fist
 from settings import Settings
 from MC import MainCharacter
+from shockwave import Shockwave
 from stats import Stats
 from etimer import Timer
 
@@ -45,6 +46,10 @@ class Enemy(Sprite):
         self.right_punch = False
         # Таймер для перезарядки атаки
         self.cooldown_timer = 0
+        # Призывает ли враг во время атаки ударную волну?
+        self.summon_shockwave = False
+        # Дальность атаки противника (по умолчанию ближний бой)
+        self.attack_range = 5
 
     def define_surname(self):
         '''Определяет тип врагов в зависимости от главного персонажа.'''
@@ -105,7 +110,8 @@ class Enemy(Sprite):
         elif self.mc.centerx <= self.ai_settings.screen_width/2:
             self.rect.left = self.ai_settings.screen_width
 
-    def update(self, fist, enemies, en_fists):
+    def update(self, fist: Fist, enemies: pygame.sprite.Group, 
+        en_fists: pygame.sprite.Group):
         '''Обновление состояния врага(перемещение, оглушение, атака или смерть)'''
         # Если враг жив (т.е. здоровье больше нуля):
         if self.health > 0:
@@ -117,14 +123,8 @@ class Enemy(Sprite):
                         self.get_damage()
                         return
                     # Переменные для условий определения положения
-                    where_am_i_y = self.rect.centery in range(
-                        self.mc.rect.centery - 5,self.mc.rect.centery + 6)
-                    where_am_i_x = self.rect.left in range(
-                        self.mc.rect.right - 5, self.mc.rect.right + 6)  \
-                        or self.rect.right in range(
-                        self.mc.rect.left - 5, self.mc.rect.left + 6)
+                    where_am_i_y, where_am_i_x = self.check_attack_possibility()
                     # Сначала идет перемещение по вертикали
-                    
                     if not where_am_i_y:
                         self.vertical_movement()
                     # Затем по горизонтали
@@ -148,6 +148,19 @@ class Enemy(Sprite):
                 self.timer = monotonic()
                 self.is_dead = True
             self.death_animation(enemies)
+
+    def check_attack_possibility(self) -> tuple[bool, bool]:
+        '''Возвращает флаги возможности атаки'''
+        where_am_i_y = self.rect.centery in range(
+                        self.mc.rect.centery - 5,self.mc.rect.centery + 6)
+        where_am_i_x = self.rect.left in range(
+                        self.mc.rect.right - self.attack_range, 
+                        self.mc.rect.right + self.attack_range + 1)  \
+                        or self.rect.right in range(
+                        self.mc.rect.left - self.attack_range, 
+                        self.mc.rect.left + self.attack_range + 1)
+            
+        return where_am_i_y,where_am_i_x
 
     def get_damage(self):
         '''Получение урона и оглушение'''
@@ -197,7 +210,7 @@ class Enemy(Sprite):
             self.right_punch = True          
         self.timer = monotonic()
 
-    def attack(self, en_fists):
+    def attack(self, en_fists: pygame.sprite.Group):
         '''Обработка атаки'''
         file_end_name, sign, rect_side = self.define_attack_vars()
         
@@ -212,8 +225,6 @@ class Enemy(Sprite):
                     if i == 0:
                         self.create_new_rect()
                         en_fists.add(self.fist)
-                        
-                    
                     self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies/{self.name}' +
                         f'/punching{i + 1}_{file_end_name}.png')                    
@@ -228,10 +239,17 @@ class Enemy(Sprite):
                     else:
                         self.correlate_rect_image(self.right_punch)
                         # Перемещает ударную поверхность:
-                        exec(f'self.fist.change_position(' +
+                        exec('self.fist.change_position(' +
                             f'self.an_rect.{rect_side} {sign}' +
                             f'self.frl_side[i-{self.noload_fr}],' +
                             f'self.an_rect.top + self.frl_top[i-{self.noload_fr}])')
+                        if self.summon_shockwave and not self.shockwave_active \
+                            and i == round(self.frames/2):
+                            # Вызывает ударную волну, если такое предусмотрено типом врага
+                            new_shockwave = Shockwave(self.screen, self.cur_time, 
+                            self.fist, self.ai_settings, self.right_punch)
+                            en_fists.add(new_shockwave)
+                            self.shockwave_active = True
                         
                         
                 else:
@@ -247,6 +265,7 @@ class Enemy(Sprite):
                     if i == self.frames - 1:
                         # Атака закончена, начинается перезарядка
                         self.is_punching = False
+                        self.shockwave_active = False
                         self.cooldown_timer = monotonic()
 
     def define_attack_vars(self):

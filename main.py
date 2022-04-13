@@ -75,7 +75,7 @@ def run_game():
             gf.update_waves(screen, ai_settings, mc, enemies, 
             timer, cur_time, st)
             # Обновление экрана
-            gf.update_screen(ai_settings, screen, mc, enemies)
+            gf.update_screen(ai_settings, screen, mc, enemies, en_fists)
         elif st.state == Stats.SUBMENU:
             # Меню паузы
             gf.update_submenu_screen(screen, ai_settings, mc, enemies, buttons)

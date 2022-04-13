@@ -10,6 +10,7 @@ import graphic as gr
 from settings import Settings
 from stats import Stats
 from bull import Bull
+from sumo import Sumo
 from enemy import Enemy
 from button import Button
 from fist import Fist
@@ -205,7 +206,8 @@ def keydown_in_selectmode(event, st: Stats, selecticons: list[SelectIcon],
 ### БЛОК ИГРЫ (st.state = Stats.GAMEACTIVE) ###
 
 def update_screen(ai_settings: Settings, screen: pygame.Surface, 
-    mc: MainCharacter, enemies: pygame.sprite.Group):
+    mc: MainCharacter, enemies: pygame.sprite.Group, 
+    en_fists: pygame.sprite.Group):
     '''Обновляет изображение на экране'''
     # Перерисовка экрана
     screen.fill(ai_settings.bg_color)
@@ -216,6 +218,8 @@ def update_screen(ai_settings: Settings, screen: pygame.Surface,
     mc.blitme()
     for enemy in enemies:
         enemy.blitme()
+    for en_fist in en_fists:
+        en_fist.update(en_fists)
     # Обновление экрана
     pygame.display.flip()
 
@@ -264,6 +268,9 @@ def wave(screen: pygame.Surface, ai_settings: Settings, mc: MainCharacter,
             and Enemy.summons < len(adversaries):
             if adversaries[i] == 0:
                 new_enemy = Bull(screen, ai_settings, mc, st, timer, cur_time)
+                enemies.add(new_enemy)
+            elif adversaries[i] == 1:
+                new_enemy = Sumo(screen, ai_settings, mc, st, timer, cur_time)
                 enemies.add(new_enemy)
 
 def update_waves(screen: pygame.Surface, ai_settings: Settings, 

@@ -18,7 +18,6 @@ class Bull(Enemy):
         super().__init__(screen, ai_settings, mc, st, timer, cur_time)
         # Инициализация имени для подстановки в файлы и имена переменных
         self.name = 'bull'
-        
         # Инициализация здоровья
         self.health = 10 * self.ai_settings.h_multiplier
         # Случайное превращение в Диану
