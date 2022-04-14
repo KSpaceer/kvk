@@ -38,5 +38,9 @@ class Settings():
         self.eater_speed_factor = 0.5
         self.eater_attack_speed = 0.2
         self.eater_cooldown = 1.5
+        # Гуру
+        self.guru_speed_factor = 0.5
+        self.guru_attack_speed = 0.5
+        self.guru_cooldown = 1.5
         # Ударные волны
         self.shockwave_speed = 0.75

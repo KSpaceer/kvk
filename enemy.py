@@ -194,6 +194,7 @@ class Enemy(Sprite):
             an.going_right_animation(self)
             exec(f'self.centerx += self.ai_settings.{self.name}_speed_factor')
         else:
+            # Если враг внутри главного персонажа, он пытается выйти из него
             if self.rect.centerx > self.mc.rect.centerx:
                 an.going_right_animation(self)
                 exec(f'self.centerx += self.ai_settings.{self.name}_speed_factor')
@@ -231,10 +232,7 @@ class Enemy(Sprite):
                     if i <= self.noload_fr - 1:
                         # Корректирует изображение на "неатакующих" кадрах, если такое предусмотрено
                         if self.pos_correction != '0':
-                            self.an_rect = self.image.get_rect()
-                            self.an_rect.centery = self.rect.centery
-                            exec(f'self.an_rect.centerx = self.rect.{rect_side}'
-                                + sign + self.pos_correction)
+                            self.correct_position(sign, rect_side)
                         else:
                             self.correlate_rect_image(self.right_punch)
                     else:
@@ -244,13 +242,7 @@ class Enemy(Sprite):
                             f'self.an_rect.{rect_side} {sign}' +
                             f'self.frl_side[i-{self.noload_fr}],' +
                             f'self.an_rect.top + self.frl_top[i-{self.noload_fr}])')
-                        if self.summon_shockwave and not self.shockwave_active \
-                            and i == round(self.frames/2):
-                            # Вызывает ударную волну, если такое предусмотрено типом врага
-                            new_shockwave = Shockwave(self.screen, self.cur_time, 
-                            self.fist, self.ai_settings, self.right_punch)
-                            en_fists.add(new_shockwave)
-                            self.shockwave_active = True
+                        self.shockwave_check(en_fists, i)
                         
                         
                 else:
@@ -268,6 +260,24 @@ class Enemy(Sprite):
                         self.is_punching = False
                         self.shockwave_active = False
                         self.cooldown_timer = monotonic()
+
+    def shockwave_check(self, en_fists, i):
+        '''Вызывает ударную волну, 
+        если такое предусмотрено типом врага и другой волны нет'''
+        if self.summon_shockwave and not self.shockwave_active \
+            and i == round(self.frames/2):
+            # Вызывает ударную волну, если такое предусмотрено типом врага
+            new_shockwave = Shockwave(self.screen, self.cur_time, 
+                            self.fist, self.ai_settings, self.right_punch)
+            en_fists.add(new_shockwave)
+            self.shockwave_active = True
+
+    def correct_position(self, sign, rect_side):
+        '''Корректирует положение на неатакующих кадрах'''
+        self.an_rect = self.image.get_rect()
+        self.an_rect.centery = self.rect.centery
+        exec(f'self.an_rect.centerx = self.rect.{rect_side}'
+                                + sign + self.pos_correction)
 
     def define_attack_vars(self):
         '''Определяет значение переменных для метода атаки'''

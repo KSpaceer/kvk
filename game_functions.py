@@ -7,6 +7,7 @@ from MC import MainCharacter
 from eater import Eater
 from etimer import Timer
 import graphic as gr
+from guru import Guru
 
 from settings import Settings
 from stats import Stats
@@ -267,15 +268,24 @@ def wave(screen: pygame.Surface, ai_settings: Settings, mc: MainCharacter,
         # Враги появляются по времени. 
         if cur_time.time - timer.time >= 5 * (i + 1) and len(enemies) == i \
             and Enemy.summons < len(adversaries):
-            if adversaries[i] == 0:
-                new_enemy = Bull(screen, ai_settings, mc, st, timer, cur_time)
-                enemies.add(new_enemy)
-            elif adversaries[i] == 1:
-                new_enemy = Sumo(screen, ai_settings, mc, st, timer, cur_time)
-                enemies.add(new_enemy)
-            elif adversaries[i] == 2:
-                new_enemy = Eater(screen, ai_settings, mc, st, timer, cur_time)
-                enemies.add(new_enemy)
+            enemy_summon(screen, ai_settings, mc, enemies, timer, 
+                cur_time, st, adversaries, i)
+
+def enemy_summon(screen, ai_settings, mc, enemies, timer, cur_time, st, adversaries, i):
+    '''Вызывает врага'''
+    if adversaries[i] == 0:
+        new_enemy = Bull(screen, ai_settings, mc, st, timer, cur_time)
+        enemies.add(new_enemy)
+    elif adversaries[i] == 1:
+        new_enemy = Sumo(screen, ai_settings, mc, st, timer, cur_time)
+        enemies.add(new_enemy)
+    elif adversaries[i] == 2:
+        if mc.surname == 'Z':
+            new_enemy = Eater(screen, ai_settings, mc, st, timer, cur_time)
+            enemies.add(new_enemy)
+        else:
+            new_enemy = Guru(screen, ai_settings, mc, st, timer, cur_time)
+            enemies.add(new_enemy)
 
 def update_waves(screen: pygame.Surface, ai_settings: Settings, 
     mc: MainCharacter, enemies: pygame.sprite.Group, 
