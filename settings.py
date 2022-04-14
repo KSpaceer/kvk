@@ -19,7 +19,7 @@ class Settings():
         self.stun_duration = 1
         self.inv_duration = 2
         # Настройки волн и уровней
-        self.waves = [ [ (0, 0), (0, 0, 1), (1, 0, 1) ],
+        self.waves = [ [ (2, 2), (2, 2, 1), (1, 0, 1) ],
                         ]
         self.max_level = 0
         # Настройки врагов
@@ -31,7 +31,12 @@ class Settings():
         self.diana_appearance_chance = 50 # переменная для шанса появления Дианы
         # Сумоисты:
         self.sumo_speed_factor = 0.2
-        self.sumo_attack_speed = 0.15
+        self.sumo_attack_speed = 0.25
         self.sumo_cooldown = 3
+        self.sumo_attack_range = 150
+        # Пожиратели
+        self.eater_speed_factor = 0.5
+        self.eater_attack_speed = 0.2
+        self.eater_cooldown = 1.5
         # Ударные волны
         self.shockwave_speed = 0.75

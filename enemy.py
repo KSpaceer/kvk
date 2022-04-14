@@ -46,7 +46,7 @@ class Enemy(Sprite):
         self.right_punch = False
         # Таймер для перезарядки атаки
         self.cooldown_timer = 0
-        # Призывает ли враг во время атаки ударную волну?
+        # Призывает ли враг во время атаки ударную волну? (по умолчанию нет)
         self.summon_shockwave = False
         # Дальность атаки противника (по умолчанию ближний бой)
         self.attack_range = 5
@@ -214,7 +214,7 @@ class Enemy(Sprite):
         '''Обработка атаки'''
         file_end_name, sign, rect_side = self.define_attack_vars()
         
-
+        
         # self.frames - количество кадров
         for i in range(self.frames):
             # Кадры сменяются по времени:
@@ -228,14 +228,15 @@ class Enemy(Sprite):
                     self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies/{self.name}' +
                         f'/punching{i + 1}_{file_end_name}.png')                    
-                    if i <= self.noload_fr:
-                        # Т.к. в первом и втором кадрах рука расположена
-                        # за телом, то центр этих кадров размещаются
-                        # чуть дальше боковой стороны прямоугольника
-                        self.an_rect = self.image.get_rect()
-                        self.an_rect.centery = self.rect.centery
-                        exec(f'self.an_rect.centerx = self.rect.{rect_side}'
-                            + sign + self.pos_correction)
+                    if i <= self.noload_fr - 1:
+                        # Корректирует изображение на "неатакующих" кадрах, если такое предусмотрено
+                        if self.pos_correction != '0':
+                            self.an_rect = self.image.get_rect()
+                            self.an_rect.centery = self.rect.centery
+                            exec(f'self.an_rect.centerx = self.rect.{rect_side}'
+                                + sign + self.pos_correction)
+                        else:
+                            self.correlate_rect_image(self.right_punch)
                     else:
                         self.correlate_rect_image(self.right_punch)
                         # Перемещает ударную поверхность:

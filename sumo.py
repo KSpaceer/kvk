@@ -32,7 +32,7 @@ class Sumo(Enemy):
         self.ats = self.ai_settings.sumo_attack_speed
         self.cooldown = self.ai_settings.sumo_cooldown
         # Дальность атаки
-        self.attack_range = 150
+        self.attack_range = self.ai_settings.sumo_attack_range
         # Сумоист во время атаки вызывает ударную волну, причем только одну
         self.summon_shockwave = True
         self.shockwave_active = False
@@ -47,8 +47,8 @@ class Sumo(Enemy):
         self.smallest_frame = (87, 220)
         # Список координат верха прямоугольника ударной поверхности
         # относительно верха прямоугольника анимаций для 4 последних кадров
-        self.frl_top = [31, 83, 123] # frl - fist relative location
-        self.frl_side = [94, 109, 119]
+        self.frl_top = [94, 109, 119] # frl - fist relative location
+        self.frl_side = [31, 83, 123]
 
 
 

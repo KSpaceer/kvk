@@ -4,6 +4,7 @@ from time import monotonic
 import pygame
 import sys
 from MC import MainCharacter
+from eater import Eater
 from etimer import Timer
 import graphic as gr
 
@@ -271,6 +272,9 @@ def wave(screen: pygame.Surface, ai_settings: Settings, mc: MainCharacter,
                 enemies.add(new_enemy)
             elif adversaries[i] == 1:
                 new_enemy = Sumo(screen, ai_settings, mc, st, timer, cur_time)
+                enemies.add(new_enemy)
+            elif adversaries[i] == 2:
+                new_enemy = Eater(screen, ai_settings, mc, st, timer, cur_time)
                 enemies.add(new_enemy)
 
 def update_waves(screen: pygame.Surface, ai_settings: Settings, 
