@@ -101,6 +101,17 @@ class Enemy(Sprite):
         self.rect.centerx = int(self.centerx)
         self.rect.centery = int(self.centery)
 
+    def change_stun_rect(self, fist: Fist):
+        '''Замена прямоугольника при получении удара для анимации оглушения'''
+        relative_position = fist.rect.right < self.rect.centerx
+        self.rect = self.image.get_rect()
+        self.rect.centery = int(self.centery)
+        if relative_position:
+            self.rect.left = fist.rect.right - 10
+        else:
+            self.rect.right = fist.rect.left + 10
+
+
     def spawning_point(self):
         '''Определяет начальное положение врага'''
         
@@ -120,7 +131,7 @@ class Enemy(Sprite):
                 # Если враг не бьет?
                 if not self.is_punching:
                     if self.rect.colliderect(fist.rect):
-                        self.get_damage()
+                        self.get_damage(fist)
                         return
                     # Переменные для условий определения положения
                     where_am_i_y, where_am_i_x = self.check_attack_possibility()
@@ -162,7 +173,7 @@ class Enemy(Sprite):
             
         return where_am_i_y,where_am_i_x
 
-    def get_damage(self):
+    def get_damage(self, fist):
         '''Получение урона и оглушение'''
         if self.surname == 'D':
             # Не надо бить Диану
@@ -173,7 +184,7 @@ class Enemy(Sprite):
         self.is_stunned = True
         self.image = pygame.image.load(
             f'images/K{self.surname}Enemies/{self.name}/stunned.png')
-        self.change_rect()
+        self.change_stun_rect(fist)
         self.timer = monotonic()
 
     def vertical_movement(self):
@@ -214,52 +225,59 @@ class Enemy(Sprite):
     def attack(self, en_fists: pygame.sprite.Group):
         '''Обработка атаки'''
         file_end_name, sign, rect_side = self.define_attack_vars()
-        
-        
         # self.frames - количество кадров
         for i in range(self.frames):
             # Кадры сменяются по времени:
             if (i+1) * self.ats >= self.cur_time.time - self.timer > i * self.ats:
                 # Кадров (изображений именно) всего половина от общего количества, 
                 # в случае нечетного кол-ва - с округлением в большую сторону
-                if i in range(round(self.frames/2) + 1):
-                    if i == 0:
-                        self.create_new_rect()
-                        en_fists.add(self.fist)
-                    self.image = pygame.image.load(
+                if i in range(int(self.frames/2) + 1):
+                    self.working_stroke(en_fists, file_end_name, sign, rect_side, i)
+                else:
+                    self.idling(en_fists, file_end_name, i)
+
+    def idling(self, en_fists: pygame.sprite.Group , file_end_name: str, i: int):
+        '''Холостой ход атаки'''
+        if i == round(self.frames/2) + 1 and self.fist in en_fists:
+                        # Удаляем ударную поверхность:
+            en_fists.remove(self.fist)
+                        
+                    # Кадры идут в обратном порядке
+        self.image = pygame.image.load(
+                        f'images/K{self.surname}Enemies/{self.name}/'+
+                        f'punching{self.frames + 1 - i}_{file_end_name}.png')
+        self.correlate_rect_image(self.right_punch)
+        if i == self.frames - 1:
+                        # Атака закончена, начинается перезарядка
+            self.is_punching = False
+            self.shockwave_active = False
+            self.cooldown_timer = monotonic()
+            if hasattr(self, 'is_new_rect_created'):
+                self.is_new_rect_created = False
+
+    def working_stroke(self, en_fists: pygame.sprite.Group, 
+        file_end_name: str, sign: str, rect_side: str, i: int):
+        '''Рабочий ход атаки'''
+        if i == 0:
+            self.create_new_rect()
+            en_fists.add(self.fist)
+        self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies/{self.name}' +
                         f'/punching{i + 1}_{file_end_name}.png')                    
-                    if i <= self.noload_fr - 1:
+        if i <= self.noload_fr - 1:
                         # Корректирует изображение на "неатакующих" кадрах, если такое предусмотрено
-                        if self.pos_correction != '0':
-                            self.correct_position(sign, rect_side)
-                        else:
-                            self.correlate_rect_image(self.right_punch)
-                    else:
-                        self.correlate_rect_image(self.right_punch)
+            if self.pos_correction != '0':
+                self.correct_position(sign, rect_side)
+            else:
+                self.correlate_rect_image(self.right_punch)
+        else:
+            self.correlate_rect_image(self.right_punch)
                         # Перемещает ударную поверхность:
-                        exec('self.fist.change_position(' +
+            exec('self.fist.change_position(' +
                             f'self.an_rect.{rect_side} {sign}' +
                             f'self.frl_side[i-{self.noload_fr}],' +
                             f'self.an_rect.top + self.frl_top[i-{self.noload_fr}])')
-                        self.shockwave_check(en_fists, i)
-                        
-                        
-                else:
-                    if i == round(self.frames/2) + 1 and self.fist in en_fists:
-                        # Удаляем ударную поверхность:
-                        en_fists.remove(self.fist)
-                        
-                    # Кадры идут в обратном порядке
-                    self.image = pygame.image.load(
-                        f'images/K{self.surname}Enemies/{self.name}/'+
-                        f'punching{self.frames + 1 - i}_{file_end_name}.png')
-                    self.correlate_rect_image(self.right_punch)
-                    if i == self.frames - 1:
-                        # Атака закончена, начинается перезарядка
-                        self.is_punching = False
-                        self.shockwave_active = False
-                        self.cooldown_timer = monotonic()
+            self.shockwave_check(en_fists, i)
 
     def shockwave_check(self, en_fists, i):
         '''Вызывает ударную волну, 

@@ -19,7 +19,7 @@ class Settings():
         self.stun_duration = 1
         self.inv_duration = 2
         # Настройки волн и уровней
-        self.waves = [ [ (2, 2), (2, 2, 1), (1, 0, 1) ],
+        self.waves = [ [ (3, 3), (2, 2, 1), (1, 0, 1) ],
                         ]
         self.max_level = 0
         # Настройки врагов
@@ -42,5 +42,10 @@ class Settings():
         self.guru_speed_factor = 0.5
         self.guru_attack_speed = 0.5
         self.guru_cooldown = 1.5
+        # Ниндзя
+        self.ninja_speed_factor = 0.4
+        self.ninja_attack_speed = 0.2
+        self.ninja_cooldown = 2
+        self.ninja_launch_range = 500
         # Ударные волны
         self.shockwave_speed = 0.75

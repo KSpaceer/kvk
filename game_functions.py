@@ -8,6 +8,7 @@ from eater import Eater
 from etimer import Timer
 import graphic as gr
 from guru import Guru
+from ninja import Ninja
 
 from settings import Settings
 from stats import Stats
@@ -286,6 +287,9 @@ def enemy_summon(screen, ai_settings, mc, enemies, timer, cur_time, st, adversar
         else:
             new_enemy = Guru(screen, ai_settings, mc, st, timer, cur_time)
             enemies.add(new_enemy)
+    elif adversaries[i] == 3:
+        new_enemy = Ninja(screen, ai_settings, mc, st, timer, cur_time)
+        enemies.add(new_enemy)
 
 def update_waves(screen: pygame.Surface, ai_settings: Settings, 
     mc: MainCharacter, enemies: pygame.sprite.Group, 
