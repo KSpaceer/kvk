@@ -312,7 +312,8 @@ def create_submenu_buttons(buttons: list[Button],
         buttons[i - 3].rect.centery = 580 - 2 * (i - 3) * 90
 
 def update_submenu_screen(screen: pygame.Surface, ai_settings: Settings, 
-    mc: MainCharacter, enemies: pygame.sprite.Group, buttons: list[Button]):
+    mc: MainCharacter, enemies: pygame.sprite.Group, 
+    en_fists: pygame.sprite.Group, buttons: list[Button]):
     '''Обновляет изображение в меню паузы'''
     # Аналогично функции update_screen(), чтобы во время паузы было видно игру
     screen.fill(ai_settings.bg_color)
@@ -321,6 +322,8 @@ def update_submenu_screen(screen: pygame.Surface, ai_settings: Settings,
     mc.blitme()
     for enemy in enemies:
         enemy.blitme()
+    for en_fist in en_fists:
+        en_fist.update(en_fists)
     # Затемняем экран игры
     obscure_screen(ai_settings, screen)
     # Прорисовка кнопок:
@@ -492,10 +495,11 @@ def open_savefile(number: int, buttons: list[Button]):
 
 def restart(screen: pygame.Surface, ai_settings: Settings, 
     enemies: pygame.sprite.Group, en_fists: pygame.sprite.Group, 
-    st: Stats, cur_time: Timer, mc: MainCharacter):
+    st: Stats, cur_time: Timer, mc: MainCharacter) \
+    -> tuple[Timer, MainCharacter, Fist]:
     '''Функция рестарта'''
     timer = Timer(monotonic())
-    m_c = MainCharacter(screen, ai_settings, cur_time, mc.surname)
+    new_mc = MainCharacter(screen, ai_settings, cur_time, mc.surname)
     mc_fist = Fist(screen)
     enemies.empty()
     en_fists.empty()
@@ -504,7 +508,7 @@ def restart(screen: pygame.Surface, ai_settings: Settings,
     Enemy.summons = 0
     st.current_wave = 0
     st.state = st.GAMEACTIVE
-    return timer, m_c, mc_fist 
+    return timer, new_mc, mc_fist 
 
 
 

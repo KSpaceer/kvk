@@ -25,9 +25,9 @@ class Shockwave(Sprite):
         self.cur_time = cur_time
         self.current_image_number = False # потом из bool в int
         self.timer = Timer(monotonic())
-        # Действительные значения координат центра
+        # Действительные значения координаты X центра
         self.centerx = float(self.rect.centerx)
-        self.centery = float(self.rect.centery)
+        
         
 
     
@@ -53,7 +53,7 @@ class Shockwave(Sprite):
         else:
             self.centerx -= self.ai_settings.shockwave_speed
         # Анимация
-        if self.cur_time - self.timer >= 0.25:
+        if self.cur_time - self.timer >= self.ai_settings.animation_change:
             self.image = pygame.image.load('images/Shockwave/shockwave' + 
                 f'{int(self.current_image_number) + 1}_' + 
                 f'{Shockwave.direction[self.to_right]}.png')
@@ -61,9 +61,7 @@ class Shockwave(Sprite):
             self.current_image_number = not self.current_image_number
         # Действительные значения в целочисленные
         self.rect.centerx = int(self.centerx)
-        self.rect.centery = int(self.centery)
         # Если волна вышла за пределы экрана, удаляет ее из группы ударных поверхностей врагов
-        if self.rect.centerx not in range(-int(self.rect.width/2), 
-            self.screen_rect.width + int(self.rect.width/2)):
+        if not self.screen_rect.colliderect(self.rect):
             en_fists.remove(self)
         self.blitme()

@@ -48,6 +48,9 @@ class Enemy(Sprite):
         self.cooldown_timer = 0
         # Призывает ли враг во время атаки ударную волну? (по умолчанию нет)
         self.summon_shockwave = False
+        # Выпускает ли враг сюрикены? (по умолчанию нет)
+        self.launch_shuriken = False
+        self.is_launching = False
         # Дальность атаки противника (по умолчанию ближний бой)
         self.attack_range = 5
 
@@ -65,6 +68,10 @@ class Enemy(Sprite):
         '''Срабатывает при смерти'''
         Enemy.deaths += 1
         Enemy.c_deaths += 1
+        self.change_wave()
+
+    def change_wave(self):
+        '''Смена волны/уровня'''
         # Если вся волна умерла:
         if Enemy.c_deaths == len(self.ai_settings.waves[self.st.level]
         [self.st.current_wave]):
@@ -128,8 +135,8 @@ class Enemy(Sprite):
         if self.health > 0:
             # Если враг не оглушен:
             if not self.is_stunned:
-                # Если враг не бьет?
-                if not self.is_punching:
+                # Если враг не бьет и не мечет?
+                if not self.is_punching and not self.is_launching:
                     if self.rect.colliderect(fist.rect):
                         self.get_damage(fist)
                         return
@@ -149,9 +156,19 @@ class Enemy(Sprite):
                     self.cur_time.time - self.cooldown_timer >= \
                     self.cooldown:
                         self.initiate_punch()
+                    elif self.launch_shuriken:
+                        # Если враг умеет метать сюрикены, проверяет 
+                        # возможность это сделать
+                        where_am_i_y, where_am_i_x = self.check_launch_possibility()
+                        if where_am_i_x and where_am_i_y and \
+                            self.cur_time.time - self.launch_cooldown_timer \
+                            >= self.launch_cooldown:
+                            self.initiate_launch()
 
-                else:
+                elif self.is_punching:
                    self.attack(en_fists)
+                else:
+                    self.launch(en_fists)
             else:
                 an.stunning_animation(self)      
         else:
@@ -173,7 +190,22 @@ class Enemy(Sprite):
             
         return where_am_i_y,where_am_i_x
 
-    def get_damage(self, fist):
+    def check_launch_possibility(self) -> tuple[bool, bool]:
+        '''Возвращает флаги возможности запуска сюрикена'''
+        where_am_i_y = self.rect.centery in range(
+                        self.mc.rect.centery - 15,self.mc.rect.centery + 16)
+        # Для запуска враг должен быть на расстоянии от половины дальности 
+        # запуска до дальности запуска. 
+        where_am_i_x = self.rect.left in range(
+                        self.mc.rect.right + int(self.launch_range/2), 
+                        self.mc.rect.right + self.launch_range + 1)  \
+                        or self.rect.right in range(
+                        self.mc.rect.left - self.launch_range - 1, 
+                        self.mc.rect.left - int(self.launch_range/2))
+        return where_am_i_y, where_am_i_x
+
+
+    def get_damage(self, fist: Fist):
         '''Получение урона и оглушение'''
         if self.surname == 'D':
             # Не надо бить Диану
@@ -222,6 +254,32 @@ class Enemy(Sprite):
             self.right_punch = True          
         self.timer = monotonic()
 
+    def initiate_launch(self):
+        '''Активирует флаги запуска сюрикена'''
+        self.is_launching = True
+        if self.rect.centerx > self.mc.rect.centerx:
+            self.right_punch = False
+        else:
+            self.right_punch = True
+        self.timer = monotonic()
+
+    def launch(self, en_fists: pygame.sprite.Group):
+        '''Обработка запуска сюрикена'''
+        if not self.shuriken_active:
+            self.shuriken_active = True
+            file_end_name = self.define_attack_vars()[0]
+            self.image = pygame.image.load(f'images/K{self.surname}Enemies/' +
+            f'{self.name}/launching_{file_end_name}.png')
+            self.change_rect()
+            from shuriken import Shuriken
+            new_shuriken = Shuriken(self.screen, self.cur_time, self, 
+                self.ai_settings, self.right_punch)
+            en_fists.add(new_shuriken)
+        if self.cur_time.time - self.timer >= self.ai_settings.animation_change:
+            self.is_launching = False
+            self.shuriken_active = False
+            self.launch_cooldown_timer = monotonic()
+    
     def attack(self, en_fists: pygame.sprite.Group):
         '''Обработка атаки'''
         file_end_name, sign, rect_side = self.define_attack_vars()
@@ -239,16 +297,16 @@ class Enemy(Sprite):
     def idling(self, en_fists: pygame.sprite.Group , file_end_name: str, i: int):
         '''Холостой ход атаки'''
         if i == round(self.frames/2) + 1 and self.fist in en_fists:
-                        # Удаляем ударную поверхность:
+            # Удаляем ударную поверхность:
+            self.fist.change_position(-50, -50)
             en_fists.remove(self.fist)
-                        
-                    # Кадры идут в обратном порядке
+        # Кадры идут в обратном порядке
         self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies/{self.name}/'+
                         f'punching{self.frames + 1 - i}_{file_end_name}.png')
         self.correlate_rect_image(self.right_punch)
         if i == self.frames - 1:
-                        # Атака закончена, начинается перезарядка
+            # Атака закончена, начинается перезарядка
             self.is_punching = False
             self.shockwave_active = False
             self.cooldown_timer = monotonic()
@@ -265,7 +323,7 @@ class Enemy(Sprite):
                         f'images/K{self.surname}Enemies/{self.name}' +
                         f'/punching{i + 1}_{file_end_name}.png')                    
         if i <= self.noload_fr - 1:
-                        # Корректирует изображение на "неатакующих" кадрах, если такое предусмотрено
+        # Корректирует изображение на "неатакующих" кадрах, если такое предусмотрено
             if self.pos_correction != '0':
                 self.correct_position(sign, rect_side)
             else:

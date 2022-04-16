@@ -48,6 +48,13 @@ class Ninja(Enemy):
         self.frl_side = [180 for i in range(4)]
         # Флаг для начала анимации атаки
         self.is_new_rect_created = False
+        # Ниндзя метает сюрикены
+        self.launch_shuriken = True
+        self.is_launching = False
+        self.shuriken_active = False
+        self.launch_range = self.ai_settings.ninja_launch_range
+        self.launch_cooldown = self.ai_settings.ninja_launch_cooldown
+        self.launch_cooldown_timer = 0
 
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
@@ -69,8 +76,8 @@ class Ninja(Enemy):
             pos_dict = {'S': 50, 'Z' : 20}
             # Новый прямоугольник - самый маленький кадр
             fake_rect = pygame.Rect((0,0), self.smallest_frame)
-            # Отличие от метода в классе Enemy - вместо одинаковых центров 
-            # одинаковое расположение нижнего и левого ребра
+            # Отличие от аналогичного метода класса Enemy - центр нового 
+            # прямоугольника находится не в центре старого, а чуть дальше от него
             if self.right_punch:
                 fake_rect.centerx = self.rect.centerx + pos_dict[self.surname]
             else:

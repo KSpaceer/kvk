@@ -47,5 +47,8 @@ class Settings():
         self.ninja_attack_speed = 0.2
         self.ninja_cooldown = 2
         self.ninja_launch_range = 500
+        self.ninja_launch_cooldown = 5
         # Ударные волны
         self.shockwave_speed = 0.75
+        # Сюрикены
+        self.shuriken_speed = 1

@@ -23,7 +23,7 @@ def draw_health(mc: MainCharacter, ai_settings: Settings):
         rect.left = rect.width + i * 2 * rect.width
         mc.screen.blit(new_healthbar, rect)
 
-def draw_invincibility(mc):
+def draw_invincibility(mc: MainCharacter):
     '''Визуальное отображение неуязвимости'''
     if mc.invincible:
         # Рисуем прямоугольник вверху для вывода значка неуязвимости

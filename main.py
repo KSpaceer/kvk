@@ -78,7 +78,7 @@ def run_game():
             gf.update_screen(ai_settings, screen, mc, enemies, en_fists)
         elif st.state == Stats.SUBMENU:
             # Меню паузы
-            gf.update_submenu_screen(screen, ai_settings, mc, enemies, buttons)
+            gf.update_submenu_screen(screen, ai_settings, mc, enemies, en_fists, buttons)
         elif st.state in (Stats.SAVEFILES_SAVEMODE, Stats.SAVEFILES_LOADMODE):
             # Меню файлов сохранения в режиме сохранения
             gf.update_savefiles_screen(screen, buttons)
