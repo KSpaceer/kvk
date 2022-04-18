@@ -48,6 +48,12 @@ class Settings():
         self.ninja_cooldown = 2
         self.ninja_launch_range = 500
         self.ninja_launch_cooldown = 5
+        # Босс
+        self.boss_speed_factor = 0.3
+        self.boss_attack_speed = 0.5
+        self.boss_cooldown = 15
+        self.boss_ultimate_cooldown = 40
+        self.boss_invincibility_duration = 0.5
         # Ударные волны
         self.shockwave_speed = 0.75
         # Сюрикены
