@@ -4,6 +4,7 @@ from time import monotonic
 import pygame
 import sys
 from MC import MainCharacter
+from boss import Boss
 from eater import Eater
 from etimer import Timer
 import graphic as gr
@@ -222,7 +223,7 @@ def update_screen(ai_settings: Settings, screen: pygame.Surface,
     for enemy in enemies:
         enemy.blitme()
     for en_fist in en_fists:
-        en_fist.update(en_fists)
+        en_fist.blitme()
     # Обновление экрана
     pygame.display.flip()
 
@@ -290,6 +291,9 @@ def enemy_summon(screen, ai_settings, mc, enemies, timer, cur_time, st, adversar
     elif adversaries[i] == 3:
         new_enemy = Ninja(screen, ai_settings, mc, st, timer, cur_time)
         enemies.add(new_enemy)
+    elif adversaries[i] == 4:
+        new_enemy = Boss(screen, ai_settings, mc, st, timer, cur_time)
+        enemies.add(new_enemy)
 
 def update_waves(screen: pygame.Surface, ai_settings: Settings, 
     mc: MainCharacter, enemies: pygame.sprite.Group, 
@@ -323,7 +327,7 @@ def update_submenu_screen(screen: pygame.Surface, ai_settings: Settings,
     for enemy in enemies:
         enemy.blitme()
     for en_fist in en_fists:
-        en_fist.update(en_fists)
+        en_fist.blitme()
     # Затемняем экран игры
     obscure_screen(ai_settings, screen)
     # Прорисовка кнопок:
@@ -394,6 +398,14 @@ def update_time(cur_time: Timer, timer: Timer,
                 object.timer += delta
             if object.cooldown_timer:
                 object.cooldown_timer += delta
+            if object.launch_cooldown_timer:
+                object.launch_cooldown_timer += delta
+            if isinstance(object, Boss):
+                if object.invin_timer:
+                    object.invin_timer += delta
+                if object.ultimate_cooldown_timer:
+                    object.ultimate_cooldown_timer += delta
+            
 
 ### БЛОК МЕНЮ ФАЙЛОВ СОХРАНЕНИЯ (st.state = Stats.SAVEFILES_...) ###
 

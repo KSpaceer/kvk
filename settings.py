@@ -19,7 +19,7 @@ class Settings():
         self.stun_duration = 1
         self.inv_duration = 2
         # Настройки волн и уровней
-        self.waves = [ [ (3, 3), (2, 2, 1), (1, 0, 1) ],
+        self.waves = [ [ (4,), (2, 2, 1), (1, 0, 1) ],
                         ]
         self.max_level = 0
         # Настройки врагов
@@ -58,3 +58,5 @@ class Settings():
         self.shockwave_speed = 0.75
         # Сюрикены
         self.shuriken_speed = 1
+        # Призывающие круги (summoning circle - sc)
+        self.sc_speed = 1.5

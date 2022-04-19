@@ -54,7 +54,7 @@ class Ninja(Enemy):
         self.shuriken_active = False
         self.launch_range = self.ai_settings.ninja_launch_range
         self.launch_cooldown = self.ai_settings.ninja_launch_cooldown
-        self.launch_cooldown_timer = 0
+        
 
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''

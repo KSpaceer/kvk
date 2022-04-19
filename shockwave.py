@@ -45,7 +45,7 @@ class Shockwave(Sprite):
         '''Отображает волну на экране'''
         self.screen.blit(self.image, self.rect)
 
-    def update(self, en_fists: Group) -> None:
+    def update(self, en_fists: Group, *args) -> None:
         '''Обновляет положение волны'''
         # В какую сторону летит волна
         if self.to_right:
@@ -64,4 +64,4 @@ class Shockwave(Sprite):
         # Если волна вышла за пределы экрана, удаляет ее из группы ударных поверхностей врагов
         if not self.screen_rect.colliderect(self.rect):
             en_fists.remove(self)
-        self.blitme()
+        

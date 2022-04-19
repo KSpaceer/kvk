@@ -23,4 +23,6 @@ class Fist(Sprite):
         self.rect.left = left
         self.rect.top = top
         
+    def blitme(self):
+        pass
     

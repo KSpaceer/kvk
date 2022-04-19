@@ -13,9 +13,11 @@ class Bull(Enemy):
     '''Класс первого типа врагов - бугаев'''
 
     def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
-    mc: MainCharacter, st: Stats, timer: Timer, cur_time: Timer):
+    mc: MainCharacter, st: Stats, timer: Timer, 
+    cur_time: Timer, is_native: bool = True):
         '''Инициализация параметров, начального положения и изображения'''
-        super().__init__(screen, ai_settings, mc, st, timer, cur_time)
+        super().__init__(screen, ai_settings, mc, 
+            st, timer, cur_time, is_native)
         # Инициализация имени для подстановки в файлы и имена переменных
         self.name = 'bull'
         # Инициализация здоровья

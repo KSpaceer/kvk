@@ -43,7 +43,7 @@ class Boss(Enemy):
         self.invin_timer = 0
         # Таймер перезарядки для ультимативной атаки
         # (изначально на середине перезарядки)
-        self.ultimate_cooldown_timer = monotonic() + self.ultimate_cooldown/2
+        self.ultimate_cooldown_timer = monotonic() - self.ultimate_cooldown/2
         # Таймер перезарядки обычной атаки изначально на середине перезарядки
         self.cooldown_timer = self.cooldown/2
         # Номер ультимативной и обычной способности
@@ -101,13 +101,17 @@ class Boss(Enemy):
                 # Если нет перезарядки, применяет обычную атаку
                 elif self.cur_time.time - self.cooldown_timer >= \
                     self.cooldown:
-                    self.initiate_common_attack()
-                    return
+                    pass
+                    #self.initiate_common_attack()
+                    #return
             else:
                 if self.using_ultimate:
-                    self.ultimate()
+                    self.ultimate(en_fists)
                 else:
                     self.common_attack()
+        self.blitme()
+        
+        
             
 
 
@@ -116,7 +120,7 @@ class Boss(Enemy):
     def not_attack_movement(self):
         '''Перемещение босса к центру в отсутствие атаки'''
         where_am_i_x, where_am_i_y = self.check_position(
-                    self.screen_rect.centerx, self.screen_rect.centery)
+                    self.screen_rect.centerx, self.screen_rect.centery) 
                 # Сначала идет перемещение по вертикали
         if not where_am_i_y:
             self.vertical_movement(self.screen_rect.centery)
@@ -157,8 +161,8 @@ class Boss(Enemy):
         else:
             self.centery -= self.ai_settings.boss_speed_factor
         # Конвертируем вещественное значение в целочисленное
-            self.rect.centerx = self.centerx
-            self.rect.centery = self.centery
+        self.rect.centerx = int(self.centerx)
+        self.rect.centery = int(self.centery)
 
     def horizontal_movement(self, x: int, multiplier: int = 1):
         '''Перемещение босса по горизонтали'''
@@ -169,14 +173,14 @@ class Boss(Enemy):
             an.going_right_animation(self)
             self.centerx += self.ai_settings.boss_speed_factor * multiplier
         # Конвертируем вещественное значение в целочисленное
-            self.rect.centerx = self.centerx
-            self.rect.centery = self.centery
+        self.rect.centerx = int(self.centerx)
+        self.rect.centery = int(self.centery)
 
     def initiate_ultimate(self):
         '''Начинает применение ультимативной атаки'''
         self.using_ultimate = True
         self.is_punching = True
-        self.ultimate_number = randint(0, 2)
+        self.ultimate_number = randint(0, 0)
 
     def initiate_common_attack(self):
         '''Начинает применение обычной атаки'''
@@ -184,44 +188,52 @@ class Boss(Enemy):
         self.is_punching = True
         self.common_attack_number = randint(0, 1)
 
-    def ultimate(self):
+    def ultimate(self, en_fists):
         '''Применение ультимативной атаки'''
         if self.ultimate_number == 0:
             # Призывает врагов
-            self.summon_enemies()
+            self.summon_enemies(en_fists)
         elif self.ultimate_number == 1:
             if self.surname == 'S':
+                self.finish_ultimate()
                 # Запуск молний
-                self.launch_lightnings()
+                #self.launch_lightnings()
             else:
+                self.finish_ultimate()
                 # Запуск копий
-                self.launch_spears()
+                #self.launch_spears()
         else:
             if self.surname == 'S':
+                self.finish_ultimate()
                 # Добежать от босса через лезвия
-                self.blade_runner()
+                #self.blade_runner()
             else:
+                self.finish_ultimate()
                 # Убежать от босса через пилы
-                self.maze_runner()
+                #self.maze_runner()
 
     def common_attack(self):
         '''Применение обычной атаки'''
         if self.common_attack_number:
             if self.surname == 'S':
+                self.finish_common_attack()
                 # Притягивающее вращение
-                self.pulling_spin()
+                #self.pulling_spin()
             else:
+                self.finish_common_attack()
                 # Залп ударных волн
-                self.shockwave_barrage()
+                #self.shockwave_barrage()
         else:
             if self.surname == 'S':
+                self.finish_common_attack()
                 # Преследующее торнадо
-                self.chasing_tornado()
+                #self.chasing_tornado()
             else:
+                self.finish_common_attack()
                 # Создание трещины
-                self.create_crack()
+                #self.create_crack()
 
-    def summon_enemies(self):
+    def summon_enemies(self, en_fists: pygame.sprite.Group):
         '''Призывает врагов'''
         if not self.ultimate_position:
             self.timer = monotonic()
@@ -236,7 +248,25 @@ class Boss(Enemy):
                     else:
                         self.image = pygame.image.load(
                             f'images/K{self.surname}Enemies/boss/summon{i - 2}.png')
-        # ДОДЕЛАТЬ
+        if self.cur_time.time - self.timer >= 6 * self.ats:
+            from boss_projectiles import SummoningCircle
+            summoning_circle1 = SummoningCircle(self, True)
+            summoning_circle2 = SummoningCircle(self, False)
+            en_fists.add(summoning_circle1, summoning_circle2)
+            self.finish_ultimate()
+            
+    def finish_ultimate(self):
+        '''Заканчивает применение ультимативной атаки'''
+        self.is_punching = False
+        self.using_ultimate = False
+        self.ultimate_cooldown_timer = monotonic()
+
+    def finish_common_attack(self):
+        '''Заканчивает применение обычной атаки'''
+        self.is_punching = False
+        self.using_common_attack = False
+        self.cooldown_timer = False
+        
             
 
 

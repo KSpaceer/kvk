@@ -63,19 +63,22 @@ def run_game():
             gf.update_selectmode_screen(ai_settings, screen, selecticons)
         elif st.state == Stats.GAMEACTIVE:
             # Сама игра
+            # Обновление экрана
+            gf.update_screen(ai_settings, screen, mc, enemies, en_fists)
             # Обновление текущего времени
             cur_time.time = monotonic()
             # Обновление главного персонажа
             mc.update(enemies, mc_fist, st)
             # Обновление врагов
             enemies.update(mc_fist, enemies, en_fists)
+            # Обновление ударных поверхностей врагов
+            en_fists.update(en_fists, enemies)
             # Проверка получения ударов
             gf.check_hits(mc, en_fists, enemies)
             # Обновление волн
             gf.update_waves(screen, ai_settings, mc, enemies, 
             timer, cur_time, st)
-            # Обновление экрана
-            gf.update_screen(ai_settings, screen, mc, enemies, en_fists)
+            
         elif st.state == Stats.SUBMENU:
             # Меню паузы
             gf.update_submenu_screen(screen, ai_settings, mc, enemies, en_fists, buttons)

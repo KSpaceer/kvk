@@ -19,10 +19,13 @@ class Enemy(Sprite):
     summons = 0 # Кол-во призывов врагов
 
     def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
-        mc: MainCharacter, st: Stats, timer: Timer, cur_time: Timer):
+        mc: MainCharacter, st: Stats, timer: Timer, 
+        cur_time: Timer, is_native: bool = True):
         '''Инициализирует параметры'''
         super().__init__()
-        Enemy.summons += 1
+        self.is_native = is_native
+        if self.is_native:
+            Enemy.summons += 1
         self.screen = screen
         self.screen_rect = self.screen.get_rect()
         self.ai_settings = ai_settings
@@ -51,6 +54,7 @@ class Enemy(Sprite):
         # Выпускает ли враг сюрикены? (по умолчанию нет)
         self.launch_shuriken = False
         self.is_launching = False
+        self.launch_cooldown_timer = 0
         # Дальность атаки противника (по умолчанию ближний бой)
         self.attack_range = 5
 
@@ -66,9 +70,10 @@ class Enemy(Sprite):
 
     def __del__(self):
         '''Срабатывает при смерти'''
-        Enemy.deaths += 1
-        Enemy.c_deaths += 1
-        self.change_wave()
+        if self.is_native:
+            Enemy.deaths += 1
+            Enemy.c_deaths += 1
+            self.change_wave()
 
     def change_wave(self):
         '''Смена волны/уровня'''

@@ -43,7 +43,7 @@ class Shuriken(Sprite):
         '''Отображает сюрикен на экране'''
         self.screen.blit(self.image, self.rect)
 
-    def update(self, en_fists: Group) -> None:
+    def update(self, en_fists: Group, *args) -> None:
         '''Обновляет положение сюрикена'''
         # В какую сторону летит сюрикен
         if self.to_right:
@@ -61,4 +61,4 @@ class Shuriken(Sprite):
         # Если сюрикен за пределами экрана - удаляет его из группы ударных поверхностей
         if not self.screen_rect.colliderect(self.rect):
             en_fists.remove(self)
-        self.blitme()
+        
