@@ -23,14 +23,14 @@ class Boss(Enemy):
         # Загрузка изображения
         self.image = pygame.image.load(
             f'images/K{self.surname}Enemies/boss/standing.png') 
-        self.rect = self.image.get_rect()
+        # Руки на картинке не учитываются, поэтому основной прямоугольник
+        # задаем сами 
+        self.rect = pygame.Rect(-500, -500, 110, 414)
         # Враг появляется сверху
         self.spawning_point()
-        # Прямоугольник для анимаций
-        self.an_rect = self.rect
         # Сохранение координат центра в виде вещественных чисел
-        self.centerx = self.rect.centerx
-        self.centery = self.rect.centery
+        self.centerx = float(self.rect.centerx)
+        self.centery = float(self.rect.centery)
         # Сохраняем скорость атаки и время перезарядки из настроек
         self.ats = ai_settings.boss_attack_speed
         self.cooldown = ai_settings.boss_cooldown
@@ -54,8 +54,13 @@ class Boss(Enemy):
         self.using_ultimate = False
         # Иногда врагу нужно переместиться на позицию, чтобы
         # начать применение способности. Следующий флаг
-        # отслеживает то, находится ли он в нужной позиции
-        self.ultimate_position = False
+        # отслеживает то, выбрана ли нужная позиция
+        self.position_is_chosen = False
+        # Флаг отслеживания того, что враг на позиции
+        self.in_position = False
+        # Координаты позиции
+        self.positionx = None
+        self.positiony = None
         # Определяем количество кадров для различных атак
         self.define_attack_frames()
 
@@ -64,6 +69,7 @@ class Boss(Enemy):
         '''Определяет начальное положение врага'''
         self.rect.centerx = self.screen_rect.centerx
         self.rect.centery = -int(self.rect.width/2)
+        self.change_rect()
 
     def define_attack_frames(self):
         '''Определяет количество кадров в атаках'''
@@ -92,7 +98,13 @@ class Boss(Enemy):
         if self.health > 0:
             self.damage_invin_processing(fist)
             if not self.is_punching:
-                self.not_attack_movement()
+                # Функция движения находится в условии, т.к. если
+                # босс на нужном месте, то должна проигрываться какая-то анимация
+                # в данном случае это анимация вертикального движения.
+                if self.movement(self.screen_rect.centerx, 
+                    self.screen_rect.centery):
+                    an.going_vertical_animation(self)
+                
                 # Если нет перезарядки, применяет ультимативную атаку
                 if self.cur_time.time - self.ultimate_cooldown_timer \
                     >= self.ultimate_cooldown:
@@ -117,16 +129,18 @@ class Boss(Enemy):
 
         
 
-    def not_attack_movement(self):
-        '''Перемещение босса к центру в отсутствие атаки'''
-        where_am_i_x, where_am_i_y = self.check_position(
-                    self.screen_rect.centerx, self.screen_rect.centery) 
-                # Сначала идет перемещение по вертикали
+    def movement(self, x, y, multiplier: int = 1):
+        '''Перемещение босса. 
+        Возвращает bool, соответствующий нахождению босса в нужном месте'''
+        where_am_i_x, where_am_i_y = self.check_position(x, y) 
+            # Сначала идет перемещение по вертикали
         if not where_am_i_y:
-            self.vertical_movement(self.screen_rect.centery)
+            self.vertical_movement(y)
                 # Затем по горизонтали
         elif not where_am_i_x:
-            self.horizontal_movement(self.screen_rect.centerx)
+            self.horizontal_movement(x, multiplier)
+        # Для использования в условии
+        return where_am_i_x and where_am_i_y
 
     def damage_invin_processing(self, fist: Fist):
         '''Обработка получения урона и неуязвимости'''
@@ -150,7 +164,7 @@ class Boss(Enemy):
         '''Определяет то, находится ли босс в нужном положении. 
         Возвращает два флага для координат.'''
         where_am_i_x = self.rect.centerx in range(x - 10, x + 10)
-        where_am_i_y = self.rect.centery in range(y - 10, y - 10)
+        where_am_i_y = self.rect.centery in range(y - 10, y + 10)
         return where_am_i_x, where_am_i_y
 
     def vertical_movement(self, y: int):
@@ -161,7 +175,6 @@ class Boss(Enemy):
         else:
             self.centery -= self.ai_settings.boss_speed_factor
         # Конвертируем вещественное значение в целочисленное
-        self.rect.centerx = int(self.centerx)
         self.rect.centery = int(self.centery)
 
     def horizontal_movement(self, x: int, multiplier: int = 1):
@@ -174,13 +187,12 @@ class Boss(Enemy):
             self.centerx += self.ai_settings.boss_speed_factor * multiplier
         # Конвертируем вещественное значение в целочисленное
         self.rect.centerx = int(self.centerx)
-        self.rect.centery = int(self.centery)
 
     def initiate_ultimate(self):
         '''Начинает применение ультимативной атаки'''
         self.using_ultimate = True
         self.is_punching = True
-        self.ultimate_number = randint(0, 0)
+        self.ultimate_number = randint(1, 1)
 
     def initiate_common_attack(self):
         '''Начинает применение обычной атаки'''
@@ -195,13 +207,11 @@ class Boss(Enemy):
             self.summon_enemies(en_fists)
         elif self.ultimate_number == 1:
             if self.surname == 'S':
-                self.finish_ultimate()
-                # Запуск молний
-                #self.launch_lightnings()
+                #Запуск молний
+                self.launch_lightnings(en_fists)
             else:
-                self.finish_ultimate()
                 # Запуск копий
-                #self.launch_spears()
+                self.launch_spears(en_fists)
         else:
             if self.surname == 'S':
                 self.finish_ultimate()
@@ -235,9 +245,10 @@ class Boss(Enemy):
 
     def summon_enemies(self, en_fists: pygame.sprite.Group):
         '''Призывает врагов'''
-        if not self.ultimate_position:
+        if not self.in_position:
+            # Призыв может начаться в любой позиции
             self.timer = monotonic()
-            self.ultimate_position = True
+            self.in_position = True
         for i in range(self.ultimate_frames):
                 if (i + 1) * self.ats > self.cur_time.time - self.timer\
                     >= i * self.ats:
@@ -254,11 +265,84 @@ class Boss(Enemy):
             summoning_circle2 = SummoningCircle(self, False)
             en_fists.add(summoning_circle1, summoning_circle2)
             self.finish_ultimate()
+
+    def launch_lightnings(self, en_fists: pygame.sprite.Group):
+        '''Запуск шаровых молний'''
+        self.define_position(self.screen_rect.centerx, 
+            self.screen_rect.centery)
+        if self.movement(self.positionx, self.positiony):
+            if not self.in_position:
+                self.timer = monotonic()
+                self.in_position = True
+                # Выпуск молний происходит с задержкой в 1/4 секунды
+                self.delay = 0.25
+                self.launch_cooldown_timer = monotonic() + 6 * self.ats
+            for i in range(self.ultimate_frames):
+                if (i + 1) * self.ats > self.cur_time.time - self.timer\
+                    >= i * self.ats:
+                    if i < 3:
+                        self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/boss/ultimate{i + 1}.png')
+                        self.change_rect()
+                    else:
+                        self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/boss/lightning{i - 2}.png')
+            if self.cur_time.time - self.launch_cooldown_timer >= 0:
+                from boss_projectiles import BallLightning
+                new_ball_lightning = BallLightning(self)
+                en_fists.add(new_ball_lightning)
+                self.launch_cooldown_timer += self.delay
+            # Выпуск молний продолжается пять секунд
+            if self.cur_time.time - self.timer >= 6 * self.ats + 5:
+                self.finish_ultimate()
+
+    
+
+    def launch_spears(self, en_fists: pygame.sprite.Group):
+        '''Запуск копий'''
+        self.define_position(self.screen_rect.centerx, 
+            self.screen_rect.centery)
+        if self.movement(self.positionx, self.positiony):
+            if not self.in_position:
+                self.timer = monotonic()
+                self.in_position = True
+                # Запуск копий происходит с задержкой в 1/3 секунды
+                self.delay = 0.33
+                self.launch_cooldown_timer = monotonic() + 6 * self.ats
+            for i in range(self.ultimate_frames):
+                if (i + 1) * self.ats > self.cur_time.time - self.timer\
+                    >= i * self.ats:
+                    if i < 3:
+                        self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/boss/ultimate{i + 1}.png')
+                        self.change_rect()
+                    else:
+                        self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/boss/spears{i - 2}.png')
+            if self.cur_time.time - self.launch_cooldown_timer >= 0:
+                from boss_projectiles import SpearTip
+                new_spear_tip = SpearTip(self)
+                en_fists.add(new_spear_tip)
+                self.launch_cooldown_timer += self.delay
+            # Запуск копьев продолжается пять секунд
+            if self.cur_time.time - self.timer >= 6 * self.ats + 5:
+                self.finish_ultimate()
+
+
+
+    def define_position(self, x, y):
+        '''Определяет позицию, выбранную для проведения атаки'''
+        if not self.position_is_chosen:
+            self.positionx = x
+            self.positiony = y
+            self.position_is_chosen = True 
             
     def finish_ultimate(self):
         '''Заканчивает применение ультимативной атаки'''
         self.is_punching = False
         self.using_ultimate = False
+        self.position_is_chosen = False
+        self.in_position = False
         self.ultimate_cooldown_timer = monotonic()
 
     def finish_common_attack(self):

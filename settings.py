@@ -49,7 +49,7 @@ class Settings():
         self.ninja_launch_range = 500
         self.ninja_launch_cooldown = 5
         # Босс
-        self.boss_speed_factor = 0.3
+        self.boss_speed_factor = 0.7
         self.boss_attack_speed = 0.5
         self.boss_cooldown = 15
         self.boss_ultimate_cooldown = 40
@@ -60,3 +60,7 @@ class Settings():
         self.shuriken_speed = 1
         # Призывающие круги (summoning circle - sc)
         self.sc_speed = 1.5
+        # Шаровые молнии (ball lightning - bl)
+        self.bl_speed = 2
+        # Копья
+        self.spear_speed = 4
