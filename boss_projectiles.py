@@ -1,5 +1,6 @@
 from math import radians, sin, cos
-from random import randint
+from random import randint, randrange
+from secrets import choice
 from time import monotonic
 from pygame.sprite import Sprite
 import pygame
@@ -245,21 +246,28 @@ class SpearShaft(Sprite):
     def define_starting_position(self):
         '''Определяет начальное положение древка'''
         if self.cardinal_direction == 0:
-            self.rect.centerx = self.spear_tip.rect.centerx
-            self.rect.top = self.the_next_in_spear.rect.bottom
             self.dir_sign = -1
+            self.rect.centerx = self.spear_tip.rect.centerx
+            # Поскольку после появления новой части копья произойдет обновление старых,
+            # необходимо скорректировать позицию новой части копья на скорость копья
+            self.rect.top = self.the_next_in_spear.rect.bottom\
+                 + self.speed * self.dir_sign
         elif self.cardinal_direction == 1:
-            self.rect.centery = self.spear_tip.rect.centery
-            self.rect.left = self.the_next_in_spear.rect.right
             self.dir_sign = -1
-        elif self.cardinal_direction == 2:
-            self.rect.centerx = self.spear_tip.rect.centerx
-            self.rect.bottom = self.the_next_in_spear.rect.top
-            self.dir_sign = 1
-        else:
             self.rect.centery = self.spear_tip.rect.centery
-            self.rect.right = self.the_next_in_spear.rect.left
+            self.rect.left = self.the_next_in_spear.rect.right\
+                 + self.speed * self.dir_sign
+        elif self.cardinal_direction == 2:
             self.dir_sign = 1
+            self.rect.centerx = self.spear_tip.rect.centerx
+            self.rect.bottom = self.the_next_in_spear.rect.top\
+                 + self.speed * self.dir_sign
+        else:
+            self.dir_sign = 1
+            self.rect.centery = self.spear_tip.rect.centery
+            self.rect.right = self.the_next_in_spear.rect.left\
+                 + self.speed * self.dir_sign
+            
 
     def update(self, *args) -> None:
         '''Обновление древка копья'''
@@ -274,4 +282,51 @@ class SpearShaft(Sprite):
                 self.rect.centery -= self.dir_sign * self.speed
             else:
                 self.rect.centerx -= self.dir_sign * self.speed
+
+
+class Blade(Sprite):
+    '''Класс лезвий, выпускаемых боссом'''
+
+    def __init__(self, boss: Boss) -> None:
+        super().__init__()
+        self.boss = boss
+        self.screen = boss.screen
+        self.screen_rect = boss.screen_rect
+        self.speed = boss.ai_settings.blade_speed
+        self.image = pygame.image.load('images/KSEnemies/boss/blade.png')
+        self.rect = self.image.get_rect()
+        self.define_starting_position()
+        self.timer = monotonic()
+        
+
+    def define_starting_position(self):
+        '''Определяет начальную позицию лезвия'''
+        # В зависимости от выбранной боссом стороны,
+        # пределы местонахождения кинжала по Х меняются
+        if self.boss.side:
+            allowed_x = (self.screen_rect.left + self.boss.mc.rect.width * 2, 
+                self.screen_rect.right - self.boss.rect.width)
+        else:
+            allowed_x = (self.screen_rect.left + self.boss.rect.width, 
+                self.screen_rect.right - self.boss.mc.rect.width * 2)
+        self.rect.centerx = randrange(allowed_x[0], allowed_x[1], 10)
+        # Положение по Y (сверху или снизу) выбирается случайно
+        self.rect.bottom, self.direction = choice(
+            [(self.screen_rect.top + self.rect.height, 1), 
+            (self.screen_rect.bottom, -1)])
+
+    def blitme(self):
+        '''Отображает лезвие'''
+        self.screen.blit(self.image, self.rect)
+
+    def update(self, *args) -> None:
+        '''Обновление лезвия'''
+        if self.screen_rect.colliderect(self.rect):
+            if self.boss.cur_time.time - self.timer >= 1:
+                self.rect.centery += self.direction * self.speed
+        else:
+            self.kill()
+            
+        
+        
         

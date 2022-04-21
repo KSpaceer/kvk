@@ -64,3 +64,5 @@ class Settings():
         self.bl_speed = 2
         # Копья
         self.spear_speed = 4
+        # Лезвия
+        self.blade_speed = 3

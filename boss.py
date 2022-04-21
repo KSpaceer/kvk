@@ -16,6 +16,8 @@ class Boss(Enemy):
     def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
         mc: MainCharacter, st: Stats, timer: Timer, cur_time: Timer):
         super().__init__(screen, ai_settings, mc, st, timer, cur_time)
+        # Повышение скорости главного персонажа
+        self.ai_settings.mc_speed_factor *= 2
         # Инициализация имени для подстановки в файлы и имена переменных
         self.name = 'boss'
         # Инициализация здоровья
@@ -64,7 +66,10 @@ class Boss(Enemy):
         # Определяем количество кадров для различных атак
         self.define_attack_frames()
 
-
+    def __del__(self):
+        self.ai_settings.mc_speed_factor /= 2
+        return super().__del__()
+    
     def spawning_point(self):
         '''Определяет начальное положение врага'''
         self.rect.centerx = self.screen_rect.centerx
@@ -129,7 +134,7 @@ class Boss(Enemy):
 
         
 
-    def movement(self, x, y, multiplier: int = 1):
+    def movement(self, x, y, multiplier: int = 1) -> bool:
         '''Перемещение босса. 
         Возвращает bool, соответствующий нахождению босса в нужном месте'''
         where_am_i_x, where_am_i_y = self.check_position(x, y) 
@@ -192,7 +197,7 @@ class Boss(Enemy):
         '''Начинает применение ультимативной атаки'''
         self.using_ultimate = True
         self.is_punching = True
-        self.ultimate_number = randint(1, 1)
+        self.ultimate_number = randint(2, 2)
 
     def initiate_common_attack(self):
         '''Начинает применение обычной атаки'''
@@ -214,13 +219,11 @@ class Boss(Enemy):
                 self.launch_spears(en_fists)
         else:
             if self.surname == 'S':
-                self.finish_ultimate()
                 # Добежать от босса через лезвия
-                #self.blade_runner()
+                self.blade_runner(en_fists)
             else:
-                self.finish_ultimate()
                 # Убежать от босса через пилы
-                #self.maze_runner()
+                self.saw_runner(en_fists)
 
     def common_attack(self):
         '''Применение обычной атаки'''
@@ -268,8 +271,9 @@ class Boss(Enemy):
 
     def launch_lightnings(self, en_fists: pygame.sprite.Group):
         '''Запуск шаровых молний'''
-        self.define_position(self.screen_rect.centerx, 
-            self.screen_rect.centery)
+        if not self.position_is_chosen:
+            self.define_position(self.screen_rect.centerx, 
+                self.screen_rect.centery)
         if self.movement(self.positionx, self.positiony):
             if not self.in_position:
                 self.timer = monotonic()
@@ -300,8 +304,9 @@ class Boss(Enemy):
 
     def launch_spears(self, en_fists: pygame.sprite.Group):
         '''Запуск копий'''
-        self.define_position(self.screen_rect.centerx, 
-            self.screen_rect.centery)
+        if not self.position_is_chosen:
+            self.define_position(self.screen_rect.centerx, 
+                self.screen_rect.centery)
         if self.movement(self.positionx, self.positiony):
             if not self.in_position:
                 self.timer = monotonic()
@@ -328,14 +333,101 @@ class Boss(Enemy):
             if self.cur_time.time - self.timer >= 6 * self.ats + 5:
                 self.finish_ultimate()
 
+    def blade_runner(self, en_fists: pygame.sprite.Group):
+        '''Забег с лезвиями'''
+        if not self.position_is_chosen:
+            x = self.define_direction()
+            self.define_position(x, self.screen_rect.centery)
+        if self.movement(self.positionx, self.positiony, 2):
+            if not self.in_position:
+                self.timer = monotonic()
+                self.in_position = True
+                # Запуск лезвий происходит с задержкой в секунду
+                self.delay = 1
+                self.launch_cooldown_timer = monotonic() + 3 * self.ats
+                # Данная ультимативная способность прерывается при нанесении боссу урона
+                # поэтому нужно запомнить здоровье на время начала применения
+                self.ultimate_starting_health = self.health
+            for i in range(self.ultimate_frames):
+                if (i + 1)/2 * self.ats > self.cur_time.time - self.timer\
+                    >= i/2 * self.ats:
+                    if i < 3:
+                        self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/boss/ultimate{i + 1}.png')
+                        self.change_rect()
+                    else:
+                        self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/boss/' +
+                            f'blades{i - 2}_{int(not self.side)}.png')
+            # Условие построено так, что персонажа переносит только после того,
+            # как анимация босса проигралась
+            if self.cur_time.time - self.launch_cooldown_timer >= 0 \
+                and self.moving_mc():
+                from boss_projectiles import Blade
+                for n in range(3):
+                    new_blade = Blade(self)
+                    en_fists.add(new_blade)
+                self.launch_cooldown_timer += self.delay
+            if self.health != self.ultimate_starting_health:
+                self.finish_ultimate()
+
+    def saw_runner(self, en_fists: pygame.sprite.Group):
+        '''Забег с пилами'''
+        if not self.position_is_chosen:
+            x = self.define_direction(-1)
+            self.define_position(x, self.screen_rect.centery)
+        if self.movement(self.positionx, self.positiony, 2):
+            if not self.in_position:
+                self.timer = monotonic()
+                self.in_position = True
+                self.is_invincible = True
+            for i in range(self.ultimate_frames):
+                if (i + 1) * self.ats > self.cur_time.time - self.timer\
+                    >= i/2 * self.ats:
+                    if i < 3:
+                        self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/boss/ultimate{i + 1}.png')
+                        self.change_rect()
+                    else:
+                        self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/boss/maze{i - 2}.png')
+            # ДОДЕЛАТЬ
+
+    def moving_mc(self) -> bool:
+        '''Отталкивание главного персонажа'''
+        if self.mc_achieved_position:
+            # Для подстановки в условие
+            return True
+        self.mc.centerx += 2 * self.ai_settings.mc_speed_factor \
+            * self.mc_dir_sign
+        if not self.screen_rect.contains(self.mc.rect):
+            self.mc_achieved_position = True
+        return False
+
+    def define_direction(self, kind_of_action: int = 1):
+        '''Определяет то, в какую сторону полетит босс
+        и отлетит главный персонаж'''
+        # Сторона, в которую полетит босс
+        self.side = randint(0, 1)
+        if self.side:
+            x = self.screen_rect.right - int(self.rect.width/2)
+                # В какую сторону отбросит главного персонажа
+                # kind_of_action определяет, что происходит с персонажем:
+                # его притягивает или отталкивает от босса
+            self.mc_dir_sign = -1 * kind_of_action
+        else:
+            x = self.screen_rect.left + int(self.rect.width/2)
+            self.mc_dir_sign = 1 * kind_of_action
+            # Флаг достижения главным персонажем 
+        self.mc_achieved_position = False
+        return x
 
 
     def define_position(self, x, y):
         '''Определяет позицию, выбранную для проведения атаки'''
-        if not self.position_is_chosen:
-            self.positionx = x
-            self.positiony = y
-            self.position_is_chosen = True 
+        self.positionx = x
+        self.positiony = y
+        self.position_is_chosen = True 
             
     def finish_ultimate(self):
         '''Заканчивает применение ультимативной атаки'''
