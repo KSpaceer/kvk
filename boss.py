@@ -87,6 +87,7 @@ class Boss(Enemy):
     def blitme(self):
         '''Рисует врага в текущей позиции'''
         self.screen.blit(self.image, self.an_rect)
+        self.additional_draw()
 
     def change_rect(self):
         '''Заменяет прямоугольник анимаций.
@@ -147,6 +148,26 @@ class Boss(Enemy):
         # Для использования в условии
         return where_am_i_x and where_am_i_y
 
+    @staticmethod
+    def zubkov_third_ultimate_decorator(method):
+        '''
+        Декоратор для функции обработки неуязвимости,
+        поскольку во время третьей ультимативной атаки 
+        Зубкова неуязвимость не должна
+        спадать.
+        '''
+        def wrapper(self, *args, **kwargs):
+            a = bool(self.using_ultimate)
+            b = bool(self.ultimate_number == 2)
+            c = bool(self.surname == 'Z')
+            if not (a and b and c):
+                method(self, *args, **kwargs)
+            else:
+                
+                return None
+        return wrapper
+    
+    @zubkov_third_ultimate_decorator.__func__
     def damage_invin_processing(self, fist: Fist):
         '''Обработка получения урона и неуязвимости'''
         # Если босс не неуязвим и в него попал кулак главного персонажа, он получает урон
@@ -155,7 +176,7 @@ class Boss(Enemy):
         # Если босс неуязвим и уже прошло время его неуязвимости, он ее теряет
         elif self.is_invincible and self.cur_time.time - self.invin_timer \
                 >= self.ai_settings.boss_invincibility_duration:
-            self.is_invincible = False
+                    self.is_invincible = False
                 
 
 
@@ -197,7 +218,7 @@ class Boss(Enemy):
         '''Начинает применение ультимативной атаки'''
         self.using_ultimate = True
         self.is_punching = True
-        self.ultimate_number = randint(2, 2)
+        self.ultimate_number = randint(0, 2)
 
     def initiate_common_attack(self):
         '''Начинает применение обычной атаки'''
@@ -381,8 +402,9 @@ class Boss(Enemy):
                 self.timer = monotonic()
                 self.in_position = True
                 self.is_invincible = True
+                self.summoned_saws = False
             for i in range(self.ultimate_frames):
-                if (i + 1) * self.ats > self.cur_time.time - self.timer\
+                if (i + 1)/2 * self.ats > self.cur_time.time - self.timer\
                     >= i/2 * self.ats:
                     if i < 3:
                         self.image = pygame.image.load(
@@ -391,8 +413,52 @@ class Boss(Enemy):
                     else:
                         self.image = pygame.image.load(
                             f'images/K{self.surname}Enemies/boss/maze{i - 2}.png')
-            # ДОДЕЛАТЬ
+            # После конца времени персонаж перемещается. Когда персонаж
+            # переместился, призываются пилы и цель, которую нужно достичь
+            if self.cur_time.time - self.timer >= 3 * self.ats and self.moving_mc():
+                from boss_projectiles import Saw
+                # Призыв пил происходит единожды, также инициализируется цель
+                if not self.summoned_saws:
+                    self.summoned_saws = True
+                    self.create_target_surface()
+                    saw_amount = randint(self.ai_settings.saw_amount - 2, 
+                        self.ai_settings.saw_amount + 2) + 1
+                    for saw in range(saw_amount):
+                        new_saw = Saw(self)
+                        en_fists.add(new_saw)
+                
+                elif self.mc.rect.colliderect(self.target_rect):
+                    Saw.vertical_positions.clear()
+                    Saw.horizontal_positions.clear()
+                    del self.target_surface
+                    del self.target_rect
+                    self.is_invincible = False
+                    self.finish_ultimate()
+                
+        
+                    
 
+    def create_target_surface(self):
+        '''Создает поверхность цели, которую главному персонажу
+        нужно достичь.'''
+        self.target_surface = pygame.Surface((
+                        self.mc.rect.width, self.mc.rect.height))
+        self.target_surface.fill((8, 255, 251))
+        self.target_surface.set_alpha(127)
+        self.target_rect = self.target_surface.get_rect()
+        # Цель в противоположной стороне от босса
+        if self.positionx > self.screen_rect.centerx:
+            self.target_rect.left = self.screen_rect.left
+        else:
+            self.target_rect.right = self.screen_rect.right
+        self.target_rect.centery = self.screen_rect.centery
+
+    def additional_draw(self):
+        '''Отображение дополнительных элементов на экране'''
+        if hasattr(self, 'target_surface'):
+            self.screen.blit(self.target_surface, self.target_rect)
+
+    
     def moving_mc(self) -> bool:
         '''Отталкивание главного персонажа'''
         if self.mc_achieved_position:
@@ -414,10 +480,10 @@ class Boss(Enemy):
                 # В какую сторону отбросит главного персонажа
                 # kind_of_action определяет, что происходит с персонажем:
                 # его притягивает или отталкивает от босса
-            self.mc_dir_sign = -1 * kind_of_action
+            self.mc_dir_sign = -kind_of_action
         else:
             x = self.screen_rect.left + int(self.rect.width/2)
-            self.mc_dir_sign = 1 * kind_of_action
+            self.mc_dir_sign = kind_of_action
             # Флаг достижения главным персонажем 
         self.mc_achieved_position = False
         return x

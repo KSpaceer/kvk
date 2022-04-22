@@ -66,3 +66,7 @@ class Settings():
         self.spear_speed = 4
         # Лезвия
         self.blade_speed = 3
+        # Пилы
+        self.saw_speed = 2
+        self.maze_narrowing = 200 # Сужение лабиринта пил относительно экрана
+        self.saw_amount = 10

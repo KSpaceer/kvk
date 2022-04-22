@@ -328,5 +328,117 @@ class Blade(Sprite):
             self.kill()
             
         
-        
+class Saw(Sprite):
+    '''Класс пил, вызываемых боссом'''
+
+    vertical_positions = [0,]
+    horizontal_positions = [0,]
+    
+    def __init__(self, boss: Boss) -> None:
+        super().__init__()
+        self.boss = boss
+        self.screen = boss.screen
+        self.screen_rect = boss.screen_rect
+        self.speed = boss.ai_settings.saw_speed
+        self.image = pygame.image.load('images/KZEnemies/boss/saw1.png')
+        self.rect = self.image.get_rect()
+        self.is_vertical = randint(0, 1) # пила двигается вертикально или горизонтально
+        self.define_starting_position(boss)
+        # Атрибуты для анимации
+        self.timer = monotonic()
+        self.cur_time = boss.cur_time
+        self.animation_change = boss.ai_settings.animation_change/2
+        self.animation_number = True # bool -> int
+
+    def define_starting_position(self, boss: Boss):
+        '''Определяет начальное положение пилы'''
+        self.rect.center = 0, 0
+        left_border = self.screen_rect.left + boss.ai_settings.maze_narrowing
+        right_border = self.screen_rect.right - boss.ai_settings.maze_narrowing
+        if self.is_vertical:
+            self.vertical_starting_position(left_border, right_border)
+        else:
+            self.horisontal_starting_position(left_border, right_border)
+
+    def horisontal_starting_position(self, left_border, right_border):
+        '''Начальная позиция для горизонтально движущейся пилы'''
+        # Пилы не могут быть на одной высоте
+        while self.rect.centery in Saw.horizontal_positions:
+            self.rect.centery = randrange(25, 
+                    self.screen_rect.height - 25, 25)
+        Saw.horizontal_positions.append(self.rect.centery)
+        self.border1 = self.border2 = 0
+        while abs(self.border1 - self.border2) < 100:
+            self.border1 = randrange(left_border, right_border, 25)
+            self.border2 = randrange(left_border, right_border, 25)
+            # Изначально пила идет влево или вправо
+        if self.border1 > self.border2:
+                # Влево
+            self.dir_sign = -1
+            self.rect.right = self.border1
+        else:
+                # Вправо
+            self.dir_sign = 1
+            self.rect.left = self.border1
+
+    def vertical_starting_position(self, left_border, right_border):
+        '''Начальная позиция для вертикально движущейся пилы'''
+        # Пилы не могут быть на одной ширине
+        while self.rect.centerx in Saw.vertical_positions:
+            self.rect.centerx = randrange(left_border, right_border, 25)
+        Saw.vertical_positions.append(self.rect.centerx)
+        self.border1 = self.border2 = 0
+            # Случайный выбор границ (должны различаться как минимум на 100 пикселей)
+        while abs(self.border1 - self.border2) < 100:
+            self.border1 = randrange(0, self.screen_rect.height, 25)
+            self.border2 = randrange(0, self.screen_rect.height, 25)
+            # Изначально пила идет вверх или вниз
+        if self.border1 > self.border2:
+                # Вверх
+            self.dir_sign = -1
+            self.rect.bottom = self.border1
+        else:
+                # Вниз
+            self.dir_sign = 1
+            self.rect.top = self.border1
+    
+    def blitme(self):
+        '''Отображение пилы'''
+        self.screen.blit(self.image, self.rect)
+
+    def update(self, *args) -> None:
+        '''Обновление пилы'''
+        self.movement()
+        self.animation()
+        if not self.boss.using_ultimate:
+            self.kill()
+
+    def animation(self):
+        '''Анимация пилы'''
+        if self.cur_time.time - self.timer >= self.animation_change:
+            self.image = pygame.image.load(
+                f'images/KZEnemies/boss/saw{int(self.animation_number) + 1}.png')
+            self.timer = monotonic()
+            self.animation_number = not self.animation_number
+
+    def movement(self):
+        '''Движение пилы'''
+        if self.is_vertical:
+            # Если пила вышла за пределы границ
+            if all((self.rect.top < self.border1, 
+                self.rect.top < self.border2)) or all(
+                (self.rect.bottom > self.border1, 
+                self.rect.bottom > self.border2)):
+                self.dir_sign *= -1
+            self.rect.centery += self.dir_sign * self.speed
+        else:
+            # Если пила вышла за пределы границ
+            if all((self.rect.right > self.border1, 
+                self.rect.right > self.border2)) or all(
+                (self.rect.left < self.border1, 
+                self.rect.left < self.border2)):
+                self.dir_sign *= -1
+            self.rect.centerx += self.dir_sign * self.speed
+
+
         
