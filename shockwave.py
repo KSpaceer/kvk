@@ -1,3 +1,4 @@
+from random import randint
 from time import monotonic
 import pygame
 from pygame.sprite import Sprite, Group
@@ -8,10 +9,14 @@ from settings import Settings
 class Shockwave(Sprite):
     '''Класс ударной волны, вызываемой врагами'''
 
+    
+
     direction = {True : 'right', False : 'left'}
     
+    
     def __init__(self, screen: pygame.Surface, cur_time: Timer, 
-        en_fist: Fist, ai_settings: Settings, to_right: bool = True) -> None:
+        ai_settings: Settings, to_right: bool = True, 
+        *, en_fist: Fist = None, boss = None) -> None:
         '''Инициализация ударной волны'''
         super().__init__()
         self.ai_settings = ai_settings
@@ -21,7 +26,7 @@ class Shockwave(Sprite):
         self.image = pygame.image.load(
             f'images/Shockwave/shockwave1_{Shockwave.direction[to_right]}.png')
         self.rect = self.image.get_rect()
-        self.starting_location(en_fist)
+        self.starting_location(en_fist=en_fist, boss=boss)
         self.cur_time = cur_time
         self.current_image_number = False # потом из bool в int
         self.timer = Timer(monotonic())
@@ -33,13 +38,21 @@ class Shockwave(Sprite):
     
         
 
-    def starting_location(self, en_fist):
+    def starting_location(self, en_fist: Fist, boss):
         '''Начальное положение волны'''
-        self.rect.bottom = en_fist.rect.bottom
-        if self.to_right:
-            self.rect.left = en_fist.rect.right
+        if en_fist:
+            self.rect.bottom = en_fist.rect.bottom
+            if self.to_right:
+                self.rect.left = en_fist.rect.right
+            else:
+                self.rect.right = en_fist.rect.left
+        elif boss:
+            exec(f'self.rect.{Shockwave.direction[not self.to_right]}' +
+                f'= boss.an_rect.{Shockwave.direction[self.to_right]}')
+            self.rect.centery = randint(boss.an_rect.top, boss.an_rect.bottom)
         else:
-            self.rect.right = en_fist.rect.left
+            raise TypeError
+        
 
     def blitme(self):
         '''Отображает волну на экране'''

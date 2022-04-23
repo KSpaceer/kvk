@@ -70,7 +70,7 @@ class Enemy(Sprite):
 
     def __del__(self):
         '''Срабатывает при смерти'''
-        if self.is_native:
+        if self.st.state == self.st.GAMEACTIVE and self.is_native:
             Enemy.deaths += 1
             Enemy.c_deaths += 1
             self.change_wave()
@@ -349,7 +349,7 @@ class Enemy(Sprite):
             and i == round(self.frames/2):
             # Вызывает ударную волну, если такое предусмотрено типом врага
             new_shockwave = Shockwave(self.screen, self.cur_time, 
-                            self.fist, self.ai_settings, self.right_punch)
+                self.ai_settings, self.right_punch, en_fist=self.fist)
             en_fists.add(new_shockwave)
             self.shockwave_active = True
 

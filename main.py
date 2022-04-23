@@ -1,7 +1,6 @@
 
 import pygame
 from time import monotonic
-from enemy import Enemy
 from settings import Settings
 from MC import MainCharacter
 from fist import Fist

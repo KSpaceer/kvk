@@ -54,6 +54,7 @@ class Settings():
         self.boss_cooldown = 15
         self.boss_ultimate_cooldown = 40
         self.boss_invincibility_duration = 0.5
+        self.boss_health = 100 * self.h_multiplier
         # Ударные волны
         self.shockwave_speed = 0.75
         # Сюрикены
@@ -69,4 +70,4 @@ class Settings():
         # Пилы
         self.saw_speed = 2
         self.maze_narrowing = 200 # Сужение лабиринта пил относительно экрана
-        self.saw_amount = 10
+        self.saw_amount = 7

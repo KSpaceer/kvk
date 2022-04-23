@@ -15,6 +15,7 @@ class MainCharacter(Sprite):
         super().__init__()
         self.screen = screen
         self.ai_settings = ai_settings
+        self.speed = self.ai_settings.mc_speed_factor
         # Первая буква фамилии персонажа
         self.surname = surname
         # Загрузка изображения
@@ -202,7 +203,7 @@ class MainCharacter(Sprite):
                 enemy.rect.bottom - int(enemy.rect.height/3)):
                     return
         
-        self.centerx += self.ai_settings.mc_speed_factor
+        self.centerx += self.speed
         an.going_right_animation(self)
 
     def going_left(self, enemies: pygame.sprite.Group):
@@ -215,7 +216,7 @@ class MainCharacter(Sprite):
                 enemy.rect.bottom - enemy.rect.height, 
                 enemy.rect.bottom - int(enemy.rect.height/3)):
                     return
-        self.centerx -= self.ai_settings.mc_speed_factor
+        self.centerx -= self.speed
         an.going_left_animation(self)
 
     def going_down(self, enemies: pygame.sprite.Group):
@@ -226,7 +227,7 @@ class MainCharacter(Sprite):
                 if self.rect.centerx in range(
                 enemy.rect.left, enemy.rect.left + enemy.rect.width):               
                     return
-        self.centery += self.ai_settings.mc_speed_factor
+        self.centery += self.speed
         an.going_down_animation(self)
 
     def going_up(self, enemies: pygame.sprite.Group):
@@ -237,7 +238,7 @@ class MainCharacter(Sprite):
                 if self.rect.centerx in range(
                 enemy.rect.left, enemy.rect.left + enemy.rect.width):                
                     return
-        self.centery -= self.ai_settings.mc_speed_factor
+        self.centery -= self.speed
         an.going_up_animation(self)
 
     def initiate_punch(self, is_punching: bool, right_punch: bool):
