@@ -1,15 +1,18 @@
 
+from itertools import cycle
 from random import randint
 from time import monotonic
-from itertools import cycle
+
 import pygame
+
 import enemy_animation as an
 from enemy import Enemy
-from settings import Settings
-from MC import MainCharacter
-from stats import Stats
 from etimer import Timer
 from fist import Fist
+from MC import MainCharacter
+from settings import Settings
+from stats import Stats
+
 
 class Boss(Enemy):
     '''Пятый тип врагов - босс'''
@@ -19,6 +22,8 @@ class Boss(Enemy):
         super().__init__(screen, ai_settings, mc, st, timer, cur_time)
         # Повышение скорости главного персонажа
         self.mc.speed *= 2
+        # Скорость босса
+        self.speed = ai_settings.boss_speed_factor
         # Инициализация имени для подстановки в файлы и имена переменных
         self.name = 'boss'
         # Инициализация здоровья и панели здоровья
@@ -88,6 +93,18 @@ class Boss(Enemy):
         else:
             self.common_attack_frames = 2
 
+    @staticmethod
+    def lava_blit_decorator(method):
+        '''Декоратор для прорисовки лавы во время смерти'''
+        def wrapper(self, *args, **kwargs):
+            if self.is_dead:
+                self.screen.blit(self.backlava, self.bl_rect)
+            method(self, *args, **kwargs)
+            if self.is_dead:
+                self.screen.blit(self.frontlava, self.fl_rect)
+        return wrapper
+    
+    @lava_blit_decorator.__func__
     def blitme(self):
         '''Рисует врага в текущей позиции'''
         self.screen.blit(self.image, self.an_rect)
@@ -116,12 +133,12 @@ class Boss(Enemy):
                     an.going_vertical_animation(self)
                 
                 # Если нет перезарядки, применяет ультимативную атаку
-                if self.cur_time.time - self.ultimate_cooldown_timer \
+                if self.cur_time - self.ultimate_cooldown_timer \
                     >= self.ultimate_cooldown:
                     self.initiate_ultimate()
                     return
                 # Если нет перезарядки, применяет обычную атаку
-                elif self.cur_time.time - self.cooldown_timer >= \
+                elif self.cur_time - self.cooldown_timer >= \
                     self.cooldown:
                     self.initiate_common_attack()
                     return
@@ -130,14 +147,11 @@ class Boss(Enemy):
                     self.ultimate(en_fists)
                 else:
                     self.common_attack(en_fists)
+        else:    
+            self.death_animation()
         self.blitme()
-        
-        
-            
-
 
         
-
     def movement(self, x, y, multiplier: int = 1) -> bool:
         '''Перемещение босса. 
         Возвращает bool, соответствующий нахождению босса в нужном месте'''
@@ -169,6 +183,8 @@ class Boss(Enemy):
                 
                 return None
         return wrapper
+
+    
     
     @zubkov_third_ultimate_decorator.__func__
     def damage_invin_processing(self, fist: Fist):
@@ -177,7 +193,7 @@ class Boss(Enemy):
         if not self.is_invincible and self.rect.colliderect(fist.rect):
             self.get_damage()
         # Если босс неуязвим и уже прошло время его неуязвимости, он ее теряет
-        elif self.is_invincible and self.cur_time.time - self.invin_timer \
+        elif self.is_invincible and self.cur_time - self.invin_timer \
                 >= self.ai_settings.boss_invincibility_duration:
                     self.is_invincible = False
                 
@@ -200,9 +216,9 @@ class Boss(Enemy):
         '''Перемещение босса по вертикали'''
         an.going_vertical_animation(self)
         if self.rect.centery < y:
-            self.centery += self.ai_settings.boss_speed_factor
+            self.centery += self.speed
         else:
-            self.centery -= self.ai_settings.boss_speed_factor
+            self.centery -= self.speed
         # Конвертируем вещественное значение в целочисленное
         self.rect.centery = int(self.centery)
 
@@ -210,10 +226,10 @@ class Boss(Enemy):
         '''Перемещение босса по горизонтали'''
         if self.rect.centerx > x:
             an.going_left_animation(self)
-            self.centerx -= self.ai_settings.boss_speed_factor * multiplier
+            self.centerx -= self.speed * multiplier
         else:
             an.going_right_animation(self)
-            self.centerx += self.ai_settings.boss_speed_factor * multiplier
+            self.centerx += self.speed * multiplier
         # Конвертируем вещественное значение в целочисленное
         self.rect.centerx = int(self.centerx)
 
@@ -227,7 +243,7 @@ class Boss(Enemy):
         '''Начинает применение обычной атаки'''
         self.using_common_attack = True
         self.is_punching = True
-        self.common_attack_number = randint(1, 1)
+        self.common_attack_number = randint(0, 1)
 
     def ultimate(self, en_fists):
         '''Применение ультимативной атаки'''
@@ -261,13 +277,11 @@ class Boss(Enemy):
                 self.shockwave_barrage(en_fists)
         else:
             if self.surname == 'S':
-                self.finish_common_attack()
                 # Преследующее торнадо
-                #self.chasing_tornado()
+                self.chasing_tornado()
             else:
-                self.finish_common_attack()
                 # Создание трещины
-                #self.create_crack()
+                self.create_crack(en_fists)
 
     def pulling_spin(self):
         '''Атака, при которой босс вращается и притягивает главного персонажа'''
@@ -280,30 +294,70 @@ class Boss(Enemy):
             self.cooldown_timer = monotonic()
             self.frame_cycler = cycle(
                 [i for i in range(self.common_attack_frames)])
-        if self.ats/3 >= self.cur_time.time - self.timer:
-            self.image = pygame.image.load(f'images/K{self.surname}Enemies/' +
-                f'boss/spinning{self.frame_cycler.__next__() + 1}.png')
-            self.change_rect()
-            self.timer = monotonic()
-        if self.cur_time.time - self.cooldown_timer >= 1.5:
+        self.spinning_animation()
+        if self.cur_time - self.cooldown_timer >= 1.5:
             # Притяжение персонажа
             if not self.mc.rect.colliderect(self.an_rect):
-                if self.mc.centerx < self.rect.centerx:
-                    self.mc.centerx += self.ai_settings.mc_speed_factor/2
-                else:
-                    self.mc.centerx -= self.ai_settings.mc_speed_factor/2
-                if self.mc.centery < self.rect.centery:
-                    self.mc.centery += self.ai_settings.mc_speed_factor/2
-                else:
-                    self.mc.centery -= self.ai_settings.mc_speed_factor/2
+                self.pulling_mc()
             elif not self.mc.invincible:
-                self.mc.health -= 1
-                self.mc.invincible = True
-                self.mc.invin_timer = monotonic()
-                self.mc.attack_timer = 0
-        if self.cur_time.time - self.cooldown_timer >= 4.5:
+                self.deal_nonstunning_damage()
+        if self.cur_time - self.cooldown_timer >= 4.5:
             self.finish_common_attack()
 
+    def pulling_mc(self):
+        '''Притяжение главного персонажа'''
+        if self.mc.centerx < self.rect.centerx:
+            self.mc.centerx += self.ai_settings.mc_speed_factor/2
+        else:
+            self.mc.centerx -= self.ai_settings.mc_speed_factor/2
+        if self.mc.centery < self.rect.centery:
+            self.mc.centery += self.ai_settings.mc_speed_factor/2
+        else:
+            self.mc.centery -= self.ai_settings.mc_speed_factor/2
+
+    def chasing_tornado(self):
+        '''Атака, при которой босс вращается и идет за главным персонажем'''
+        if not self.in_position:
+            self.in_position = True
+            self.timer = monotonic()
+            # Таймер перезарядки используется как таймер начала
+            # преследования и нанесения урона
+            self.cooldown_timer = monotonic()
+            self.frame_cycler = cycle(
+                [i for i in range(self.common_attack_frames)])
+            self.speed /= 1.5
+        self.spinning_animation()
+        if self.cur_time - self.cooldown_timer >= 1.5:
+            if not self.mc.rect.colliderect(self.an_rect):
+                self.chasing_mc()
+            elif not self.mc.invincible:
+                self.deal_nonstunning_damage()
+        if self.cur_time - self.cooldown_timer >= 5:
+            self.speed *= 1.5
+            self.finish_common_attack()
+
+    def chasing_mc(self):
+        '''Преследование главного персонажа'''
+        if self.rect.centerx < self.mc.rect.centerx:
+            self.centerx += self.speed
+        else:
+            self.centerx -= self.speed
+        if self.rect.centery < self.mc.rect.centery:
+            self.centery += self.speed
+        else:
+            self.centery -= self.speed
+        self.rect.centerx = int(self.centerx)
+        self.rect.centery = int(self.centery)
+        self.change_rect()
+
+    def deal_nonstunning_damage(self):
+        '''Наносит главному персонажу урон, не оглушая его'''
+        self.mc.health -= 1
+        self.mc.invincible = True
+        self.mc.invin_timer = monotonic()
+        self.mc.attack_timer = 0
+    
+    
     def shockwave_barrage(self, en_fists: pygame.sprite.Group):
         '''Атака с вращением и вызовом ударных волн'''
         if not self.in_position:
@@ -316,28 +370,84 @@ class Boss(Enemy):
             self.launch_cooldown_timer = monotonic()
             self.frame_cycler = cycle(
                 [i for i in range(self.common_attack_frames)])
-        if self.ats/3 >= self.cur_time.time - self.timer:
-            self.image = pygame.image.load(f'images/K{self.surname}Enemies/'+
-            f'boss/spinning{self.frame_cycler.__next__() + 1}.png')
+        self.spinning_animation()
+        if self.cur_time - self.launch_cooldown_timer >= 1:
+            self.launch_shockwaves(en_fists)
+        if self.cur_time - self.cooldown_timer >= 5.5:
+            self.finish_common_attack()
+
+    def launch_shockwaves(self, en_fists):
+        '''Запуск ударных волн во время вращения'''
+        from shockwave import Shockwave
+        for i in range(2):
+            for j in range(3):
+                new_shockwave = Shockwave(self.screen, self.cur_time, 
+                            self.ai_settings, True if i else False, boss=self)
+                en_fists.add(new_shockwave)
+        self.launch_cooldown_timer = monotonic()
+
+    def create_crack(self, en_fists: pygame.sprite.Group):
+        '''Атака, создающая разлом'''
+        if not self.position_is_chosen:
+            self.choose_cracking_point()
+        if self.movement(self.positionx, self.positiony, 2):
+            if not self.in_position:
+                self.in_position = True
+                self.timer = monotonic()
+            self.cracking_animation()
+            # Поскольку босса нельзя оглушить, флаг оглушения здесь используется
+                # как флаг создания разлома
+            if not self.is_stunned and (self.cur_time - self.timer 
+                >= 5/2 * self.ats):
+                self.new_crack_creation(en_fists)
+            if self.cur_time - self.timer >= 4 * self.ats:
+                self.is_stunned = False
+                self.finish_common_attack()
+
+    def new_crack_creation(self, en_fists):
+        '''Создание нового разлома'''
+        from boss_projectiles import Crack
+        crack_y = self.an_rect.top + 89
+        x_addition = 257 if self.right_punch else 13
+        crack_x = self.an_rect.left + x_addition
+        new_crack = Crack(crack_x, crack_y, 
+                    self.screen, self.cur_time)
+        en_fists.add(new_crack)
+        self.is_stunned = True
+
+    def cracking_animation(self):
+        '''Анимация вызова разлома'''
+        for i in range(6):
+            if (i + 1)/2 * self.ats > self.cur_time - self.timer >= i/2 * self.ats:
+                if i != 5:
+                    self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/' +
+                            f'boss/cracking{i + 1}.png')
+                else:
+                    self.image = pygame.image.load(
+                            f'images/K{self.surname}Enemies/' +
+                            f'boss/spinning{int(self.right_punch) + 1}.png')
+                self.change_rect()
+
+    def choose_cracking_point(self):
+        '''Выбирает точку для вызова разлома'''
+        if self.rect.centerx < self.mc.rect.centerx:
+            self.right_punch = True
+            self.define_position(self.mc.rect.centerx - 135, 
+                    self.mc.rect.centery - 37)
+        else:
+            self.right_punch = False
+            self.define_position(self.mc.rect.centerx + 135, 
+                    self.mc.rect.centery - 37)
+                        
+    def spinning_animation(self):
+        '''Анимация вращения босса во время обычной атаки'''
+        if self.ats/3 >= self.cur_time - self.timer:
+            self.image = pygame.image.load(f'images/K{self.surname}Enemies/' +
+                f'boss/spinning{self.frame_cycler.__next__() + 1}.png')
             self.change_rect()
             self.timer = monotonic()
-        if self.cur_time.time - self.launch_cooldown_timer >= 1:
-            from shockwave import Shockwave
-            for i in range(2):
-                for j in range(3):
-                    if i:
-                        new_shockwave = Shockwave(self.screen, self.cur_time, 
-                            self.ai_settings, True, boss=self)
-                    else:
-                        new_shockwave = Shockwave(self.screen, self.cur_time, 
-                            self.ai_settings, False, boss=self)
-                    en_fists.add(new_shockwave)
-            self.launch_cooldown_timer = monotonic()
-        if self.cur_time.time - self.cooldown_timer >= 5.5:
-            self.finish_common_attack()
         
-            
-
     def summon_enemies(self, en_fists: pygame.sprite.Group):
         '''Призывает врагов'''
         if not self.in_position:
@@ -345,7 +455,7 @@ class Boss(Enemy):
             self.timer = monotonic()
             self.in_position = True
         self.ultimate_animation('summon')
-        if self.cur_time.time - self.timer >= 6 * self.ats:
+        if self.cur_time - self.timer >= 6 * self.ats:
             from boss_projectiles import SummoningCircle
             summoning_circle1 = SummoningCircle(self, True)
             summoning_circle2 = SummoningCircle(self, False)
@@ -365,13 +475,13 @@ class Boss(Enemy):
                 self.delay = 0.25
                 self.launch_cooldown_timer = monotonic() + 6 * self.ats
             self.ultimate_animation('lightning')
-            if self.cur_time.time - self.launch_cooldown_timer >= 0:
+            if self.cur_time - self.launch_cooldown_timer >= 0:
                 from boss_projectiles import BallLightning
                 new_ball_lightning = BallLightning(self)
                 en_fists.add(new_ball_lightning)
                 self.launch_cooldown_timer += self.delay
             # Выпуск молний продолжается пять секунд
-            if self.cur_time.time - self.timer >= 6 * self.ats + 5:
+            if self.cur_time - self.timer >= 6 * self.ats + 5:
                 self.finish_ultimate()
 
     
@@ -389,13 +499,13 @@ class Boss(Enemy):
                 self.delay = 0.33
                 self.launch_cooldown_timer = monotonic() + 6 * self.ats
             self.ultimate_animation('spears')
-            if self.cur_time.time - self.launch_cooldown_timer >= 0:
+            if self.cur_time - self.launch_cooldown_timer >= 0:
                 from boss_projectiles import SpearTip
                 new_spear_tip = SpearTip(self)
                 en_fists.add(new_spear_tip)
                 self.launch_cooldown_timer += self.delay
             # Запуск копьев продолжается пять секунд
-            if self.cur_time.time - self.timer >= 6 * self.ats + 5:
+            if self.cur_time - self.timer >= 6 * self.ats + 5:
                 self.finish_ultimate()
 
     def blade_runner(self, en_fists: pygame.sprite.Group):
@@ -413,20 +523,10 @@ class Boss(Enemy):
                 # Данная ультимативная способность прерывается при нанесении боссу урона
                 # поэтому нужно запомнить здоровье на время начала применения
                 self.ultimate_starting_health = self.health
-            for i in range(self.ultimate_frames):
-                if (i + 1)/2 * self.ats > self.cur_time.time - self.timer\
-                    >= i/2 * self.ats:
-                    if i < 3:
-                        self.image = pygame.image.load(
-                            f'images/K{self.surname}Enemies/boss/ultimate{i + 1}.png')
-                        self.change_rect()
-                    else:
-                        self.image = pygame.image.load(
-                            f'images/K{self.surname}Enemies/boss/' +
-                            f'blades{i - 2}_{int(not self.side)}.png')
+            self.ultimate_animation('blades', 2, True)
             # Условие построено так, что персонажа переносит только после того,
             # как анимация босса проигралась
-            if self.cur_time.time - self.launch_cooldown_timer >= 0 \
+            if self.cur_time - self.launch_cooldown_timer >= 0 \
                 and self.moving_mc():
                 from boss_projectiles import Blade
                 for n in range(3):
@@ -450,10 +550,10 @@ class Boss(Enemy):
             self.ultimate_animation('maze', 2)
             # После конца времени персонаж перемещается. Когда персонаж
             # переместился, призываются пилы и цель, которую нужно достичь
-            if self.cur_time.time - self.timer >= 3 * self.ats and self.moving_mc():
-                from boss_projectiles import Saw
+            if self.cur_time - self.timer >= 3 * self.ats and self.moving_mc():
                 # Призыв пил происходит единожды, также инициализируется цель
                 if not self.summoned_saws:
+                    from boss_projectiles import Saw
                     self.summoned_saws = True
                     self.create_target_surface()
                     saw_amount = randint(self.ai_settings.saw_amount - 2, 
@@ -463,6 +563,7 @@ class Boss(Enemy):
                         en_fists.add(new_saw)
                 
                 elif self.mc.rect.colliderect(self.target_rect):
+                    from boss_projectiles import Saw
                     Saw.vertical_positions.clear()
                     Saw.horizontal_positions.clear()
                     del self.target_surface
@@ -472,11 +573,15 @@ class Boss(Enemy):
                 
         
     def ultimate_animation(self, ultimate_name: str, 
-        animation_speed_factor: int = 1):
-        '''Анимация применения ультимативной способности'''               
+        animation_speed_factor: int = 1, side_does_matter: bool = False):
+        '''Анимация применения ультимативной способности'''  
+        if side_does_matter:
+            side_factor = '_' + str(int(not self.side))
+        else:
+            side_factor = ''            
         for number in range(self.ultimate_frames):
             if (number + 1)/animation_speed_factor * self.ats >\
-                self.cur_time.time - self.timer >=\
+                self.cur_time - self.timer >=\
                 number/animation_speed_factor * self.ats:
                 if number < 3:
                     self.image = pygame.image.load(
@@ -485,7 +590,7 @@ class Boss(Enemy):
                     self.change_rect()
                 else:
                     self.image = pygame.image.load(f'images/K{self.surname}Enemies/boss/'
-                        f'{ultimate_name}{number - 2}.png')
+                        f'{ultimate_name}{number - 2}' + side_factor + '.png')
 
    
     def create_target_surface(self):
@@ -507,7 +612,8 @@ class Boss(Enemy):
         '''Отображение дополнительных элементов на экране'''
         if hasattr(self, 'target_surface'):
             self.screen.blit(self.target_surface, self.target_rect)
-        self.healthbar.blitme()
+        if hasattr(self, 'healthbar'):
+            self.healthbar.blitme()
 
     
     def moving_mc(self) -> bool:
@@ -561,6 +667,35 @@ class Boss(Enemy):
         self.position_is_chosen = False
         self.in_position = False
         self.cooldown_timer = monotonic()
+
+    def death_animation(self):
+        '''Анимация смерти босса'''
+        if not self.is_dead:
+            self.is_dead = True
+            self.timer = monotonic()
+            self.image = pygame.image.load(
+                f'images/K{self.surname}Enemies/boss/death.png')
+            self.change_rect()
+            self.frontlava = pygame.image.load(f'images/front_lava.png')
+            self.backlava = pygame.image.load(f'images/back_lava.png')
+            # fl - frontlava, bl - backlava
+            self.fl_rect = self.frontlava.get_rect()
+            self.bl_rect = self.backlava.get_rect()
+            self.fl_rect.centerx = self.bl_rect.centerx = self.an_rect.centerx
+            self.bl_rect.centery = self.an_rect.bottom
+            self.fl_rect.bottom = self.bl_rect.bottom
+        self.image = self.image.subsurface(
+            pygame.Rect(0, 0, self.an_rect.width, self.an_rect.height - 1))
+        self.an_rect = self.image.get_rect()
+        if not self.an_rect.height:
+            self.kill()
+            # Необходимо удалить ссылку на панель здоровья, чтобы она и босс не ссылались друг на друга
+            # и не было никаких ссылок на босса
+            del self.healthbar
+            return
+        self.an_rect.centerx = self.bl_rect.centerx
+        self.an_rect.bottom = self.bl_rect.centery
+
 
         
         

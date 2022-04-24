@@ -6,6 +6,7 @@ from pygame.sprite import Sprite
 import pygame
 from boss import Boss
 from bull import Bull
+from etimer import Timer
 
 
 class SummoningCircle(Sprite):
@@ -98,7 +99,7 @@ class SummoningCircle(Sprite):
     
     def animation(self):
         '''Анимация призывающего круга'''
-        if self.boss.cur_time.time - self.timer >= self.boss.ai_settings.animation_change:
+        if self.boss.cur_time - self.timer >= self.boss.ai_settings.animation_change:
             self.animation_flag = not self.animation_flag
             self.image = pygame.image.load(
                 f'images/K{self.boss.surname}Enemies/boss' +
@@ -199,7 +200,7 @@ class SpearTip(Sprite):
         # на весь экран
         if self.boss.using_ultimate:
             if self.screen_rect.contains(self.rect) \
-                and self.boss.cur_time.time - self.timer >= 1:
+                and self.boss.cur_time - self.timer >= 1:
                 if self.cardinal_direction in (0, 2):
                     self.rect.centery += self.dir_sign * self.speed
                 else:
@@ -322,7 +323,7 @@ class Blade(Sprite):
     def update(self, *args) -> None:
         '''Обновление лезвия'''
         if self.screen_rect.colliderect(self.rect):
-            if self.boss.cur_time.time - self.timer >= 1:
+            if self.boss.cur_time - self.timer >= 1:
                 self.rect.centery += self.direction * self.speed
         else:
             self.kill()
@@ -373,11 +374,11 @@ class Saw(Sprite):
             self.border2 = randrange(left_border, right_border, 25)
             # Изначально пила идет влево или вправо
         if self.border1 > self.border2:
-                # Влево
+            # Влево
             self.dir_sign = -1
             self.rect.right = self.border1
         else:
-                # Вправо
+            # Вправо
             self.dir_sign = 1
             self.rect.left = self.border1
 
@@ -415,7 +416,7 @@ class Saw(Sprite):
 
     def animation(self):
         '''Анимация пилы'''
-        if self.cur_time.time - self.timer >= self.animation_change:
+        if self.cur_time - self.timer >= self.animation_change:
             self.image = pygame.image.load(
                 f'images/KZEnemies/boss/saw{int(self.animation_number) + 1}.png')
             self.timer = monotonic()
@@ -439,6 +440,33 @@ class Saw(Sprite):
                 self.rect.left < self.border2)):
                 self.dir_sign *= -1
             self.rect.centerx += self.dir_sign * self.speed
+
+class Crack(Sprite):
+    '''Класс разлома, создаваемого боссом'''
+
+    def __init__(self, centerx: int, centery: int, 
+        screen: pygame.Surface, cur_time: Timer) -> None:
+        super().__init__()
+        self.image = pygame.image.load('images/KZEnemies/boss/crack.png')
+        self.rect = self.image.get_rect()
+        self.rect.centerx = centerx
+        self.rect.centery = centery
+        self.screen = screen
+        self.cur_time = cur_time
+        self.timer = monotonic()
+
+    def blitme(self):
+        '''Отображение разлома'''
+        self.screen.blit(self.image, self.rect)
+
+    def update(self, *args) -> None:
+        '''Обновление разлома'''
+        if self.cur_time - self.timer >= 25:
+            self.kill()
+
+
+
+
 
 
         

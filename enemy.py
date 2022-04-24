@@ -158,7 +158,7 @@ class Enemy(Sprite):
                     self.rect.centery = self.centery
                     # Если враг в зоне досягаемости, он начинает атаку
                     if where_am_i_x and where_am_i_y and \
-                    self.cur_time.time - self.cooldown_timer >= \
+                    self.cur_time - self.cooldown_timer >= \
                     self.cooldown:
                         self.initiate_punch()
                     elif self.launch_shuriken:
@@ -166,7 +166,7 @@ class Enemy(Sprite):
                         # возможность это сделать
                         where_am_i_y, where_am_i_x = self.check_launch_possibility()
                         if where_am_i_x and where_am_i_y and \
-                            self.cur_time.time - self.launch_cooldown_timer \
+                            self.cur_time - self.launch_cooldown_timer \
                             >= self.launch_cooldown:
                             self.initiate_launch()
 
@@ -280,7 +280,7 @@ class Enemy(Sprite):
             new_shuriken = Shuriken(self.screen, self.cur_time, self, 
                 self.ai_settings, self.right_punch)
             en_fists.add(new_shuriken)
-        if self.cur_time.time - self.timer >= self.ai_settings.animation_change:
+        if self.cur_time - self.timer >= self.ai_settings.animation_change:
             self.is_launching = False
             self.shuriken_active = False
             self.launch_cooldown_timer = monotonic()
@@ -291,7 +291,7 @@ class Enemy(Sprite):
         # self.frames - количество кадров
         for i in range(self.frames):
             # Кадры сменяются по времени:
-            if (i+1) * self.ats >= self.cur_time.time - self.timer > i * self.ats:
+            if (i+1) * self.ats >= self.cur_time - self.timer > i * self.ats:
                 # Кадров (изображений именно) всего половина от общего количества, 
                 # в случае нечетного кол-ва - с округлением в большую сторону
                 if i in range(int(self.frames/2) + 1):

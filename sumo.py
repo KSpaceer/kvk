@@ -55,16 +55,16 @@ class Sumo(Enemy):
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
 
-        if self.cur_time.time - self.timer < 9 * self.ai_settings.animation_change:
+        if self.cur_time - self.timer < 9 * self.ai_settings.animation_change:
             for i in range(9):
                 # Путь самурая - смерть
                 if (i + 1) * self.ai_settings.animation_change > \
-                    self.cur_time.time - self.timer >= \
+                    self.cur_time - self.timer >= \
                         i * self.ai_settings.animation_change:
                     self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies/sumo/death{i + 1}.png')
                     self.change_rect_sumo()
-        elif self.cur_time.time - self.timer > 18 * self.ai_settings.animation_change:
+        elif self.cur_time - self.timer > 18 * self.ai_settings.animation_change:
             enemies.remove(self)
 
     def change_rect_sumo(self):

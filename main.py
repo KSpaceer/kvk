@@ -50,7 +50,7 @@ def run_game():
         
         # Обработка событий
         gf.check_events(mc, st, buttons, screen, cur_time,
-             timer, enemies, selecticons)
+             timer, enemies, selecticons, en_fists)
         if st.state == Stats.INTRO:
             # Заставка
             tarzan.update_intro()

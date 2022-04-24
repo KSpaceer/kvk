@@ -7,7 +7,7 @@ def going_vertical_animation(enemy):
     '''Анимация вертикального перемещения'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if enemy.cur_time.time - enemy.timer >= \
+    if enemy.cur_time - enemy.timer >= \
         enemy.ai_settings.animation_change/2:
         enemy.timer = monotonic()
         if enemy.is_right_leg:
@@ -27,7 +27,7 @@ def going_right_animation(enemy):
     '''Анимация ходьбы вправо'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if enemy.cur_time.time - enemy.timer >= \
+    if enemy.cur_time - enemy.timer >= \
         enemy.ai_settings.animation_change:
         enemy.timer = monotonic()
         if enemy.is_right_leg:
@@ -47,7 +47,7 @@ def going_left_animation(enemy):
     '''Анимация ходьбы влево'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if enemy.cur_time.time - enemy.timer >= \
+    if enemy.cur_time - enemy.timer >= \
         enemy.ai_settings.animation_change:
         enemy.timer = monotonic()
         if enemy.is_right_leg:
@@ -67,7 +67,7 @@ def stunning_animation(enemy):
     '''Анимация оглушения'''
     for i in range(8):
         if (i+1) * (enemy.ai_settings.animation_change/2) > \
-            enemy.cur_time.time - enemy.timer >= i * (
+            enemy.cur_time - enemy.timer >= i * (
             enemy.ai_settings.animation_change/2):
             # Происходит шатание:
             if i % 2 == 0:

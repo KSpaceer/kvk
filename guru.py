@@ -73,15 +73,15 @@ class Guru(Enemy):
 
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
-        if self.cur_time.time - self.timer < \
+        if self.cur_time - self.timer < \
             12 * self.ai_settings.animation_change:
             for i in range(6):
                 if 2 * (i + 1) * self.ai_settings.animation_change > \
-                    self.cur_time.time - self.timer >= \
+                    self.cur_time - self.timer >= \
                     2 * i * self.ai_settings.animation_change:
                     self.image = pygame.image.load(
                         f'images/KZEnemies/guru/death{i + 1}.png')
                     self.change_rect()
-        elif self.cur_time.time - self.timer >= \
+        elif self.cur_time - self.timer >= \
             18 * self.ai_settings.animation_change:
             enemies.remove(self)

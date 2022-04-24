@@ -68,7 +68,7 @@ class MainCharacter(Sprite):
         if self.health > 0:
             # Если персонаж неуязвим:
             if self.invincible:
-                if self.cur_time.time - self.invin_timer >= self.ai_settings.inv_duration:
+                if self.cur_time - self.invin_timer >= self.ai_settings.inv_duration:
                     # По истечении времени он теряет неуязвимость
                     self.invincible = False
 
@@ -124,32 +124,32 @@ class MainCharacter(Sprite):
                         f'images/K{self.surname}Main/punching_right1.png')
             self.correlate_rect_image(True)
             self.attack_timer = monotonic() # Обновление таймера
-        elif 2 * self.ats >= self.cur_time.time - self.attack_timer \
+        elif 2 * self.ats >= self.cur_time - self.attack_timer \
                     > self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_right2.png')
             self.correlate_rect_image(True)
             # Изменение позиции кулака
             fist.change_position(self.an_rect.right, self.rect.top + 26) 
-        elif 3 * self.ats >= self.cur_time.time - self.attack_timer > \
+        elif 3 * self.ats >= self.cur_time - self.attack_timer > \
                     2 * self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_right3.png')
             self.correlate_rect_image(True)
             fist.change_position(self.an_rect.right, self.rect.top + 35)
             
-        elif 4 * self.ats >= self.cur_time.time - self.attack_timer > \
+        elif 4 * self.ats >= self.cur_time - self.attack_timer > \
                     3 * self.ats:
             fist.change_position(-50, -50)
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_right2.png')
             self.correlate_rect_image(True)
-        elif 5 * self.ats >= self.cur_time.time - self.attack_timer > \
+        elif 5 * self.ats >= self.cur_time - self.attack_timer > \
                      4 * self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_right1.png')
             self.correlate_rect_image(True)
-        elif self.cur_time.time - self.attack_timer > 5 * self.ats:
+        elif self.cur_time - self.attack_timer > 5 * self.ats:
             self.is_punching = False # Атака закончена
 
     def left_attack(self, fist: Fist):                   
@@ -160,14 +160,14 @@ class MainCharacter(Sprite):
             self.correlate_rect_image(False)
             self.attack_timer = monotonic()
             
-        elif 2 * self.ats >= self.cur_time.time - self.attack_timer \
+        elif 2 * self.ats >= self.cur_time - self.attack_timer \
                     > self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_left2.png')
             self.correlate_rect_image(False)
             fist.change_position(self.an_rect.left, self.rect.top + 25) 
             
-        elif 3 * self.ats >= self.cur_time.time - self.attack_timer > \
+        elif 3 * self.ats >= self.cur_time - self.attack_timer > \
                     2 * self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_left3.png')
@@ -175,20 +175,20 @@ class MainCharacter(Sprite):
             fist.change_position(self.an_rect.left, self.rect.top + 34)
            
             
-        elif 4 * self.ats >= self.cur_time.time - self.attack_timer > \
+        elif 4 * self.ats >= self.cur_time - self.attack_timer > \
                     3 * self.ats:
             fist.change_position(-50, -50)
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_left2.png')
             self.correlate_rect_image(False)
 
-        elif 5 * self.ats >= self.cur_time.time - self.attack_timer > \
+        elif 5 * self.ats >= self.cur_time - self.attack_timer > \
                      4 * self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_left1.png')
             self.correlate_rect_image(False)
 
-        elif self.cur_time.time - self.attack_timer > 5 * self.ats:
+        elif self.cur_time - self.attack_timer > 5 * self.ats:
             self.is_punching = False
                     
     
@@ -268,13 +268,16 @@ class MainCharacter(Sprite):
         
 
     def death(self, st: Stats):
-        ''' "Анимация" смерти, смена состояния игры'''        
-        if self.tf.rect.centerx >= self.rect.centerx:
-            self.death_side = 'right'
-        else:
-            self.death_side = 'left'
-        self.image = pygame.image.load(
+        ''' "Анимация" смерти, смена состояния игры'''
+        if hasattr(self, 'tf'):
+            if self.tf.rect.centerx >= self.rect.centerx:
+                self.death_side = 'right'
+            else:
+                self.death_side = 'left'
+            self.image = pygame.image.load(
                 f'images/K{self.surname}Main/death_{self.death_side}.png')
+        else:
+            self.image = pygame.image.load(f'images/K{self.surname}Main/death_right.png')
         self.an_rect = self.image.get_rect()
         self.an_rect.bottom = self.rect.bottom
         self.an_rect.centerx = self.rect.centerx

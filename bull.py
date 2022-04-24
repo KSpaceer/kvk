@@ -72,11 +72,11 @@ class Bull(Enemy):
         '''Анимация смерти'''
         # Если враг не Диана:
         if self.surname != 'D':
-            if self.cur_time.time - self.timer < 6 * self.ai_settings.animation_change:
+            if self.cur_time - self.timer < 6 * self.ai_settings.animation_change:
                 for i in range(6):
                     # Появление ангельских/дьявольских атрибутов
                     if (i+1) * self.ai_settings.animation_change > \
-                        self.cur_time.time - self.timer >= \
+                        self.cur_time - self.timer >= \
                             i * self.ai_settings.animation_change:
                         self.image = pygame.image.load(
                             f'images/K{self.surname}Enemies/bull/death{i + 1}.png')

@@ -5,7 +5,7 @@ def going_right_animation(mc):
     '''Анимация ходьбы вправо'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change:
+    if mc.cur_time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -20,7 +20,7 @@ def going_left_animation(mc,):
     '''Анимация ходьбы влево'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change:
+    if mc.cur_time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -35,7 +35,7 @@ def going_down_animation(mc):
     '''Анимация ходьбы вниз'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change:
+    if mc.cur_time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -50,7 +50,7 @@ def going_up_animation(mc):
     '''Анимация ходьбы вверх'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change:
+    if mc.cur_time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -63,7 +63,7 @@ def going_up_animation(mc):
 
 def standing_animation(mc):
     '''Анимация при отсутствии движения'''
-    if mc.cur_time.time - mc.timer >= mc.ai_settings.animation_change*1.5:
+    if mc.cur_time - mc.timer >= mc.ai_settings.animation_change*1.5:
         mc.timer = time.monotonic()
         if mc.is_right_leg:
             mc.is_right_leg = False
@@ -80,7 +80,7 @@ def stunning_animation(mc, file_endname: str, move_direction: str):
         mc.image = pygame.image.load(
             f'images/K{mc.surname}Main/stunned_{file_endname}.png')
         mc.attack_timer = time.monotonic()
-    elif mc.cur_time.time  - mc.attack_timer <= mc.ai_settings.stun_duration:
+    elif mc.cur_time  - mc.attack_timer <= mc.ai_settings.stun_duration:
         # Откидывание:
         exec(f'mc.centerx {move_direction}= mc.ai_settings.mc_speed_factor/2')
     else:

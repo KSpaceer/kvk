@@ -59,15 +59,15 @@ class Ninja(Enemy):
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
 
-        if self.cur_time.time - self.timer < 5.5 * self.ai_settings.animation_change:
+        if self.cur_time - self.timer < 5.5 * self.ai_settings.animation_change:
             for i in range(11):
                 if (i + 1)/2 * self.ai_settings.animation_change > \
-                    self.cur_time.time -self.timer >= \
+                    self.cur_time -self.timer >= \
                     i/2 * self.ai_settings.animation_change:
                     self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies/ninja/death{i + 1}.png')
                     self.change_rect()
-        elif self.cur_time.time - self.timer >= 10.5 * self.ai_settings.animation_change:
+        elif self.cur_time - self.timer >= 10.5 * self.ai_settings.animation_change:
             enemies.remove(self)
 
     def create_new_rect(self):

@@ -25,7 +25,8 @@ from selecticon import SelectIcon
 
 def check_events(mc: MainCharacter, st: Stats, buttons: list[Button], 
     screen: pygame.Surface, cur_time: Timer, timer: Timer, 
-    enemies: pygame.sprite.Group, selecticons: list[SelectIcon]):
+    enemies: pygame.sprite.Group, selecticons: list[SelectIcon], 
+    en_fists: pygame.sprite.Group):
     '''Обрабатывает нажатия клавиш и мыши'''
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -34,7 +35,7 @@ def check_events(mc: MainCharacter, st: Stats, buttons: list[Button],
         elif event.type == pygame.KEYDOWN:
             # Проверка событий нажатия
             keydown_events(event, mc, st, buttons, 
-            screen, cur_time, timer, enemies, selecticons)
+            screen, cur_time, timer, enemies, selecticons, en_fists)
             # Если текущее состояние - заставка или проигрыш, меняет состояние
             change_state(st, buttons, screen)
         elif event.type == pygame.KEYUP:
@@ -44,7 +45,7 @@ def check_events(mc: MainCharacter, st: Stats, buttons: list[Button],
 def keydown_events(event, mc: MainCharacter, 
     st: Stats, buttons: list[Button], screen: pygame.Surface, 
     cur_time: Timer, timer: Timer, enemies: pygame.sprite.Group, 
-    selecticons: list[SelectIcon]):
+    selecticons: list[SelectIcon], en_fists: pygame.sprite.Group):
     '''Обрабатывает события нажатия клавиш'''
     # В зависимости от состояния игры - различная реакция на нажатия
     if st.state == st.GAMEACTIVE:
@@ -55,7 +56,7 @@ def keydown_events(event, mc: MainCharacter,
         keydown_in_selectmode(event, st, selecticons, mc, buttons, screen)
     elif st.state == st.SUBMENU:
         keydown_in_submenu(event, st, buttons, screen, 
-        cur_time, timer, mc, enemies)
+        cur_time, timer, mc, enemies, en_fists)
     elif st.state in (st.SAVEFILES_SAVEMODE, st.SAVEFILES_LOADMODE):
         keydown_in_savefiles(event, st, buttons, screen, mc)
     
@@ -268,7 +269,7 @@ def wave(screen: pygame.Surface, ai_settings: Settings, mc: MainCharacter,
     '''Создает волну противников'''
     for i in range(len(adversaries)):
         # Враги появляются по времени. 
-        if cur_time.time - timer.time >= 5 * (i + 1) and len(enemies) == i \
+        if cur_time - timer >= 5 * (i + 1) and len(enemies) == i \
             and Enemy.summons < len(adversaries):
             enemy_summon(screen, ai_settings, mc, enemies, timer, 
                 cur_time, st, adversaries, i)
@@ -338,12 +339,13 @@ def update_submenu_screen(screen: pygame.Surface, ai_settings: Settings,
 
 def keydown_in_submenu(event, st: Stats, buttons: list[Button], 
     screen: pygame.Surface, cur_time: Timer, timer: Timer, 
-    mc: MainCharacter, enemies: pygame.sprite.Group):
+    mc: MainCharacter, enemies: pygame.sprite.Group, 
+    en_fists: pygame.sprite.Group):
     '''Обрабатывает нажатия клавиш во время паузы'''
     if event.key == pygame.K_ESCAPE:
         # Возобновление игры
         buttons.clear()
-        update_time(cur_time, timer, mc, enemies)
+        update_time(cur_time, timer, mc, enemies, en_fists)
         st.state = st.GAMEACTIVE
     elif event.key == pygame.K_DOWN or event.key == pygame.K_UP:
         select_button(buttons, event, True)
@@ -375,13 +377,15 @@ def obscure_screen(ai_settings: Settings, screen: pygame.Surface):
     screen.blit(damper, (0,0))
 
 def update_time(cur_time: Timer, timer: Timer, 
-    mc: MainCharacter, enemies: pygame.sprite.Group):
+    mc: MainCharacter, enemies: pygame.sprite.Group, 
+    en_fists: pygame.sprite.Group):
     '''Обновляет все атрибуты времени после возобновления игры, т.е.
     корректирует их на разницу между 
     игровым времени(cur_time) и монотонным(monotonic().'''
-    delta = monotonic() - cur_time.time
+    delta = monotonic() - cur_time
     objects = [timer, mc] 
     objects.extend(enemies)
+    objects.extend(en_fists)
     for object in objects:
         if isinstance(object, Timer):
             if object.time:
@@ -405,6 +409,8 @@ def update_time(cur_time: Timer, timer: Timer,
                     object.invin_timer += delta
                 if object.ultimate_cooldown_timer:
                     object.ultimate_cooldown_timer += delta
+        elif object in en_fists and hasattr(object, 'timer'):
+            object.timer += delta
             
 
 ### БЛОК МЕНЮ ФАЙЛОВ СОХРАНЕНИЯ (st.state = Stats.SAVEFILES_...) ###
