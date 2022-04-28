@@ -6,7 +6,7 @@ from boss import Boss
 
 def set_caption_and_icon():
     '''Устанавливает иконку и название игры'''
-    icon = pygame.image.load('images/icon.png')
+    icon = pygame.image.load('images/icon.png').convert_alpha()
     pygame.display.set_caption('KvK')
     pygame.display.set_icon(icon)
 
@@ -18,7 +18,8 @@ def draw_health(mc: MainCharacter, ai_settings: Settings):
     stripe.fill((49, 4, 138))
     mc.screen.blit(stripe, (0,0))
     for i in range(mc.health):
-        new_healthbar = pygame.image.load(f'images/K{mc.surname}_health.png')
+        new_healthbar = pygame.image.load(f'images/K{mc.surname}' + 
+            '_health.png').convert_alpha()
         rect = new_healthbar.get_rect()
         rect.top = mc.screen_rect.top
         rect.left = rect.width + i * 2 * rect.width
@@ -31,14 +32,15 @@ def draw_invincibility(mc: MainCharacter):
         stripe = pygame.Surface((55,55))
         stripe.fill((49, 4, 138))
         mc.screen.blit(stripe, (mc.screen_rect.width - 105, 0))
-        inv_bar = pygame.image.load(f'images/K{mc.surname}_invincibility.png')
+        inv_bar = pygame.image.load(f'images/K{mc.surname}' + 
+            '_invincibility.png').convert_alpha()
         mc.screen.blit(inv_bar,(mc.screen_rect.width - 100, 2))
 
 class BossHealth:
     '''Здоровье босса'''
 
     def __init__(self, boss: Boss) -> None:
-        self.bar_image = pygame.image.load('images/boss_health.png')
+        self.bar_image = pygame.image.load('images/boss_health.png').convert_alpha()
         self.rect = self.bar_image.get_rect()
         self.boss = boss
         self.screen = boss.screen

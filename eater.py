@@ -26,7 +26,7 @@ class Eater(Enemy):
         self.health = 10 * self.ai_settings.h_multiplier
         # Загрузка изображения
         self.image = pygame.image.load(
-            'images/KSEnemies/eater/standing.png')
+            'images/KSEnemies/eater/standing.png').convert_alpha()
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -76,7 +76,7 @@ class Eater(Enemy):
             self.direction = randint(0, 3)
             self.start_dying = False
             self.image = pygame.image.load(
-                'images/KSEnemies/eater/standing.png')
+                'images/KSEnemies/eater/standing.png').convert_alpha()
             self.change_rect()
 
     def gotta_go_fast(self):

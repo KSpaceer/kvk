@@ -32,7 +32,7 @@ class Boss(Enemy):
         self.healthbar = BossHealth(self)
         # Загрузка изображения
         self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/boss/standing.png') 
+            f'images/K{self.surname}Enemies/boss/standing.png').convert_alpha() 
         # Руки на картинке не учитываются, поэтому основной прямоугольник
         # задаем сами 
         self.rect = pygame.Rect(-500, -500, 110, 414)
@@ -422,11 +422,12 @@ class Boss(Enemy):
                 if i != 5:
                     self.image = pygame.image.load(
                             f'images/K{self.surname}Enemies/' +
-                            f'boss/cracking{i + 1}.png')
+                            f'boss/cracking{i + 1}.png').convert_alpha()
                 else:
                     self.image = pygame.image.load(
                             f'images/K{self.surname}Enemies/' +
-                            f'boss/spinning{int(self.right_punch) + 1}.png')
+                            f'boss/spinning{int(self.right_punch) + 1}' + 
+                            '.png').convert_alpha()
                 self.change_rect()
 
     def choose_cracking_point(self):
@@ -442,9 +443,9 @@ class Boss(Enemy):
                         
     def spinning_animation(self):
         '''Анимация вращения босса во время обычной атаки'''
-        if self.ats/3 >= self.cur_time - self.timer:
+        if self.ats/2 >= self.cur_time - self.timer:
             self.image = pygame.image.load(f'images/K{self.surname}Enemies/' +
-                f'boss/spinning{self.frame_cycler.__next__() + 1}.png')
+                f'boss/spinning{self.frame_cycler.__next__() + 1}.png').convert_alpha()
             self.change_rect()
             self.timer = monotonic()
         
@@ -586,11 +587,12 @@ class Boss(Enemy):
                 if number < 3:
                     self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies' +
-                        f'/boss/ultimate{number + 1}.png')
+                        f'/boss/ultimate{number + 1}.png').convert_alpha()
                     self.change_rect()
                 else:
-                    self.image = pygame.image.load(f'images/K{self.surname}Enemies/boss/'
-                        f'{ultimate_name}{number - 2}' + side_factor + '.png')
+                    self.image = pygame.image.load(f'images/K{self.surname}' +
+                        f'Enemies/boss/{ultimate_name}{number - 2}' 
+                        + side_factor + '.png').convert_alpha()
 
    
     def create_target_surface(self):
@@ -674,10 +676,12 @@ class Boss(Enemy):
             self.is_dead = True
             self.timer = monotonic()
             self.image = pygame.image.load(
-                f'images/K{self.surname}Enemies/boss/death.png')
+                f'images/K{self.surname}Enemies/boss/death.png').convert_alpha()
             self.change_rect()
-            self.frontlava = pygame.image.load(f'images/front_lava.png')
-            self.backlava = pygame.image.load(f'images/back_lava.png')
+            self.frontlava = pygame.image.load(f'images/' + 
+                'front_lava.png').convert_alpha()
+            self.backlava = pygame.image.load(f'images/' + 
+            'back_lava.png').convert_alpha()
             # fl - frontlava, bl - backlava
             self.fl_rect = self.frontlava.get_rect()
             self.bl_rect = self.backlava.get_rect()

@@ -20,7 +20,7 @@ class Shuriken(Sprite):
         self.screen = screen
         self.screen_rect = self.screen.get_rect()
         self.to_right = to_right
-        self.image = pygame.image.load('images/shuriken1.png')
+        self.image = pygame.image.load('images/shuriken1.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.starting_location(enemy)
         self.cur_time = cur_time
@@ -53,7 +53,8 @@ class Shuriken(Sprite):
         # Анимация
         if self.cur_time - self.timer >= self.ai_settings.animation_change/2:
             self.image = pygame.image.load(
-                f'images/shuriken{int(self.current_image_number) + 1}.png')
+                f'images/shuriken{int(self.current_image_number) + 1}' +
+                '.png').convert_alpha()
             self.timer.time = monotonic()
             self.current_image_number = not self.current_image_number
         # Действительные значения в целочисленные

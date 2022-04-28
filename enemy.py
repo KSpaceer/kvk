@@ -85,6 +85,8 @@ class Enemy(Sprite):
                 self.ai_settings.waves[self.st.level]) - 1 and \
                     self.st.level < self.ai_settings.max_level:
                 self.st.level += 1
+                # Восстановление здоровья главного персонажа
+                self.mc.health = self.ai_settings.mc_health
                 self.st.current_wave = 0
             # Либо вызов новой волны
             elif self.st.current_wave < len(
@@ -220,7 +222,8 @@ class Enemy(Sprite):
         self.health -= self.ai_settings.mc_damage
         self.is_stunned = True
         self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/{self.name}/stunned.png')
+            f'images/K{self.surname}Enemies/{self.name}' +
+            '/stunned.png').convert_alpha()
         self.change_stun_rect(fist)
         self.timer = monotonic()
 
@@ -274,7 +277,7 @@ class Enemy(Sprite):
             self.shuriken_active = True
             file_end_name = self.define_attack_vars()[0]
             self.image = pygame.image.load(f'images/K{self.surname}Enemies/' +
-            f'{self.name}/launching_{file_end_name}.png')
+            f'{self.name}/launching_{file_end_name}.png').convert_alpha()
             self.change_rect()
             from shuriken import Shuriken
             new_shuriken = Shuriken(self.screen, self.cur_time, self, 
@@ -308,7 +311,8 @@ class Enemy(Sprite):
         # Кадры идут в обратном порядке
         self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies/{self.name}/'+
-                        f'punching{self.frames + 1 - i}_{file_end_name}.png')
+                        f'punching{self.frames + 1 - i}_{file_end_name}' + 
+                        '.png').convert_alpha()
         self.correlate_rect_image(self.right_punch)
         if i == self.frames - 1:
             # Атака закончена, начинается перезарядка
@@ -326,7 +330,7 @@ class Enemy(Sprite):
             en_fists.add(self.fist)
         self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies/{self.name}' +
-                        f'/punching{i + 1}_{file_end_name}.png')                    
+                        f'/punching{i + 1}_{file_end_name}.png').convert_alpha()                   
         if i <= self.noload_fr - 1:
         # Корректирует изображение на "неатакующих" кадрах, если такое предусмотрено
             if self.pos_correction != '0':

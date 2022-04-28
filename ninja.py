@@ -17,7 +17,7 @@ class Ninja(Enemy):
         self.health = 10 * self.ai_settings.h_multiplier
         # Загрузка изображения
         self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/ninja/standing.png')
+            f'images/K{self.surname}Enemies/ninja/standing.png').convert_alpha()
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -65,7 +65,8 @@ class Ninja(Enemy):
                     self.cur_time -self.timer >= \
                     i/2 * self.ai_settings.animation_change:
                     self.image = pygame.image.load(
-                        f'images/K{self.surname}Enemies/ninja/death{i + 1}.png')
+                        f'images/K{self.surname}Enemies/ninja/death{i + 1}' + 
+                        '.png').convert_alpha()
                     self.change_rect()
         elif self.cur_time - self.timer >= 10.5 * self.ai_settings.animation_change:
             enemies.remove(self)

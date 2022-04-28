@@ -19,9 +19,11 @@ class Settings():
         self.stun_duration = 1
         self.inv_duration = 2
         # Настройки волн и уровней
-        self.waves = [ [ (4,), (2, 2, 1), (1, 0, 1) ],
-                        ]
-        self.max_level = 0
+        self.waves = [ [(4,)],
+                       [(2, 1, 2), (2, 2, 1, 1), (2, 0, 2, 0), (2, 2, 2, 2), (2, 2, 1, 1, 3)],
+                       [(1, 3, 1, 3), (3, 1, 3, 1), (3, 3, 3, 3), (1, 3, 1, 3, 1), (3, 1, 2, 1, 3)],
+                       [(0, 1, 0), (1, 0, 1), (1, 0, 1, 0), (1, 1, 1, 1), (0, 0, 1, 2)]]
+        self.max_level = len(self.waves)
         # Настройки врагов
         self.h_multiplier = 1
         # Бугаи:
@@ -54,7 +56,7 @@ class Settings():
         self.boss_cooldown = 15
         self.boss_ultimate_cooldown = 40
         self.boss_invincibility_duration = 0.5
-        self.boss_health = 100 * self.h_multiplier
+        self.boss_health = 10 * self.h_multiplier
         # Ударные волны
         self.shockwave_speed = 0.75
         # Сюрикены

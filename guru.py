@@ -20,7 +20,7 @@ class Guru(Enemy):
         self.health = 10 * self.ai_settings.h_multiplier
         # Загрузка изображения
         self.image = pygame.image.load(
-            'images/KZEnemies/guru/standing.png')
+            'images/KZEnemies/guru/standing.png').convert_alpha()
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -51,7 +51,7 @@ class Guru(Enemy):
         '''Перемещение врага по вертикали'''
        # Отличие от одноименного метода класса Enemy - отсутствие анимации
         self.image = pygame.image.load(
-            'images/KZEnemies/guru/standing.png')
+            'images/KZEnemies/guru/standing.png').convert_alpha()
         self.change_rect()
         if self.rect.centery < self.mc.rect.centery:
             self.centery += self.ai_settings.guru_speed_factor
@@ -80,7 +80,8 @@ class Guru(Enemy):
                     self.cur_time - self.timer >= \
                     2 * i * self.ai_settings.animation_change:
                     self.image = pygame.image.load(
-                        f'images/KZEnemies/guru/death{i + 1}.png')
+                        f'images/KZEnemies/guru/death{i + 1}' + 
+                        '.png').convert_alpha()
                     self.change_rect()
         elif self.cur_time - self.timer >= \
             18 * self.ai_settings.animation_change:

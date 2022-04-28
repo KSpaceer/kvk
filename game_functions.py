@@ -4,6 +4,7 @@ from time import monotonic
 import pygame
 import sys
 from MC import MainCharacter
+from background import Background
 from boss import Boss
 from eater import Eater
 from etimer import Timer
@@ -19,6 +20,7 @@ from enemy import Enemy
 from button import Button
 from fist import Fist
 from selecticon import SelectIcon
+
 
 
 ### ОБЩИЙ БЛОК ###
@@ -126,10 +128,10 @@ def create_mainmenu_buttons(buttons: list[Button], screen: pygame.Surface):
         buttons[i].rect.centery = 125 + 2 * i * 90
 
 def update_mainmenu_screen(ai_settings: Settings, screen: pygame.Surface, 
-    buttons: list[Button]):
+    buttons: list[Button], bg: Background):
     '''Обновляет изображение в главном меню'''
     # Перерисовка экрана
-    screen.fill(ai_settings.bg_color)
+    bg.blitme()
     # Прорисовка кнопок
     for button in buttons:
         button.blitme()
@@ -170,12 +172,12 @@ def create_selecticons(selecticons: list[SelectIcon], screen: pygame.Surface):
     selecticons.extend((SelectIcon('S', screen), SelectIcon('Z', screen)))
 
 def update_selectmode_screen(ai_settings: Settings, 
-    screen: pygame.Surface, selecticons: list[SelectIcon]):
+    screen: pygame.Surface, selecticons: list[SelectIcon], bg: Background):
     '''Обновляет изображение на экране во время выбора персонажа'''
     # Перерисовка экрана
-    screen.fill(ai_settings.bg_color)
+    bg.blitme()
     # Вывод надписи 
-    screen.blit(pygame.image.load('images/syf.png'), (450, 100))
+    screen.blit(pygame.image.load('images/syf.png').convert_alpha(), (450, 100))
     # Отображение иконок персонажей
     for selecticon in selecticons:
         selecticon.blitme()
@@ -205,6 +207,7 @@ def keydown_in_selectmode(event, st: Stats, selecticons: list[SelectIcon],
             if selecticon.is_selected:
                 mc.surname = selecticon.surname
                 selecticons.clear()
+                st.level = 0
                 st.state = st.LOADING
                 break 
 
@@ -212,10 +215,11 @@ def keydown_in_selectmode(event, st: Stats, selecticons: list[SelectIcon],
 
 def update_screen(ai_settings: Settings, screen: pygame.Surface, 
     mc: MainCharacter, enemies: pygame.sprite.Group, 
-    en_fists: pygame.sprite.Group):
+    en_fists: pygame.sprite.Group, bg: Background):
     '''Обновляет изображение на экране'''
     # Перерисовка экрана
-    screen.fill(ai_settings.bg_color)
+    #screen.fill(ai_settings.bg_color)
+    bg.blitme()
     # Отображение здоровья и неуязвимости
     gr.draw_health(mc, ai_settings)
     gr.draw_invincibility(mc)
@@ -318,10 +322,10 @@ def create_submenu_buttons(buttons: list[Button],
 
 def update_submenu_screen(screen: pygame.Surface, ai_settings: Settings, 
     mc: MainCharacter, enemies: pygame.sprite.Group, 
-    en_fists: pygame.sprite.Group, buttons: list[Button]):
+    en_fists: pygame.sprite.Group, buttons: list[Button], bg: Background):
     '''Обновляет изображение в меню паузы'''
     # Аналогично функции update_screen(), чтобы во время паузы было видно игру
-    screen.fill(ai_settings.bg_color)
+    bg.blitme()
     gr.draw_health(mc, ai_settings)
     gr.draw_invincibility(mc)
     mc.blitme()
@@ -430,10 +434,11 @@ def create_savefiles_buttons(buttons: list[Button], screen: pygame.Surface):
             buttons[i].is_chosen = True
         buttons[i].rect.centery = 220 + 2 * i * 90
 
-def update_savefiles_screen(screen: pygame.Surface, buttons: list[Button]):
+def update_savefiles_screen(screen: pygame.Surface, buttons: list[Button], 
+    bg: Background):
     '''Обновляет изображение в меню файлов сохранения'''
     # Перерисовка экрана
-    screen.fill((0, 0, 0))
+    bg.blitme()
     # Прорисовка кнопок
     for button in buttons:
         button.blitme()
@@ -490,24 +495,26 @@ def open_savefile(number: int, buttons: list[Button]):
         buttons[number].saved_data = f.readlines()
         # Добавляем к изображению номер файла
         buttons[number].image.blit(
-            pygame.image.load(f'images/Buttons/{number + 1}.png'), (82, 13))
+            pygame.image.load(f'images/Buttons/{number + 1}.png').convert_alpha(), 
+            (82, 13))
         # Перевернутая строка значения уровня
         reversed_level = str(int(buttons[number].saved_data[0]) + 1)[::-1]
         for i in range(len(reversed_level) + 1):
             if i == len(reversed_level):
                 # Добавляем к изображению букву L (level)
                 buttons[number].image.blit(
-                    pygame.image.load('images/Buttons/L.png'),
+                    pygame.image.load('images/Buttons/L.png').convert_alpha(),
                 (179 - 20 * i, 13))
             else:
                 # Добавляем к изображению одну цифру из значения уровня
                 buttons[number].image.blit(
                     pygame.image.load(
-                        f'images/Buttons/{reversed_level[i]}.png'),
+                        f'images/Buttons/{reversed_level[i]}.png').convert_alpha(),
                     (179 - 20 * i, 13))
         # Добавим на кнопку иконку персонажа
         buttons[number].image.blit(pygame.image.load(
-            f'images/K{buttons[number].saved_data[1]}_health.png'), (157, 40))
+            f'images/K{buttons[number].saved_data[1]}_health.png').convert_alpha(), 
+            (157, 40))
 
 ### БЛОК ПРОИГРЫША (st.state = Stats.GAMEOVER) ###
 
@@ -518,6 +525,7 @@ def restart(screen: pygame.Surface, ai_settings: Settings,
     '''Функция рестарта'''
     timer = Timer(monotonic())
     new_mc = MainCharacter(screen, ai_settings, cur_time, mc.surname)
+    st.mc = new_mc
     mc_fist = Fist(screen)
     enemies.empty()
     en_fists.empty()

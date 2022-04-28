@@ -1,6 +1,7 @@
 
 import pygame
 from time import monotonic
+
 from settings import Settings
 from MC import MainCharacter
 from fist import Fist
@@ -15,10 +16,13 @@ from Tarzan import Tarzan
 def run_game():
     # Инициализация pygame, settings, статистики и дисплея
     pygame.init()
+    pygame.event.set_allowed([pygame.QUIT, pygame.KEYUP, pygame.KEYDOWN])
     ai_settings = Settings()
-    st = Stats()
     screen = pygame.display.set_mode((ai_settings.screen_width, 
                         ai_settings.screen_height))
+    from background import Background
+    # Задний фон
+    bg = Background(screen)
     gr.set_caption_and_icon()
     # Счетчик времени
     timer = Timer(monotonic())
@@ -26,6 +30,7 @@ def run_game():
     cur_time = Timer(monotonic())
     # Создание главного персонажа
     mc = MainCharacter(screen, ai_settings, cur_time)
+    st = Stats(bg)
     # Создание врагов
     enemies = Group()
     # Ударная поверхность главного персонажа
@@ -33,7 +38,7 @@ def run_game():
     # Группа ударных поверхностей врагов
     en_fists = Group()
     # Объект для заставки
-    tarzan = Tarzan(screen, ai_settings)
+    tarzan = Tarzan(screen, ai_settings, bg)
     # Кнопки
     buttons = []
     # Иконки меню выбора персонажа
@@ -43,7 +48,7 @@ def run_game():
     
     
     # Основной цикл игры
-    while True:
+    while 1:
 
 
         
@@ -56,14 +61,14 @@ def run_game():
             tarzan.update_intro()
         elif st.state == Stats.MAINMENU:
             # Главное меню
-            gf.update_mainmenu_screen(ai_settings, screen, buttons)
+            gf.update_mainmenu_screen(ai_settings, screen, buttons, bg)
         elif st.state == Stats.SELECTMODE:
             # Меню выбора персонажа
-            gf.update_selectmode_screen(ai_settings, screen, selecticons)
+            gf.update_selectmode_screen(ai_settings, screen, selecticons, bg)
         elif st.state == Stats.GAMEACTIVE:
             # Сама игра
             # Обновление экрана
-            gf.update_screen(ai_settings, screen, mc, enemies, en_fists)
+            gf.update_screen(ai_settings, screen, mc, enemies, en_fists, bg)
             # Обновление текущего времени
             cur_time.time = monotonic()
             # Обновление главного персонажа
@@ -80,10 +85,10 @@ def run_game():
             
         elif st.state == Stats.SUBMENU:
             # Меню паузы
-            gf.update_submenu_screen(screen, ai_settings, mc, enemies, en_fists, buttons)
+            gf.update_submenu_screen(screen, ai_settings, mc, enemies, en_fists, buttons, bg)
         elif st.state in (Stats.SAVEFILES_SAVEMODE, Stats.SAVEFILES_LOADMODE):
             # Меню файлов сохранения в режиме сохранения
-            gf.update_savefiles_screen(screen, buttons)
+            gf.update_savefiles_screen(screen, buttons, bg)
         elif st.state == Stats.GAMEOVER:
             # Конец игры (проигрыш)
             if st.restart_flag:

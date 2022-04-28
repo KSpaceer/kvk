@@ -10,11 +10,11 @@ def going_right_animation(mc):
         if mc.is_right_leg:
             mc.is_right_leg = False
             mc.image = pygame.image.load(
-                f'images/K{mc.surname}Main/going_right(left_leg).png')
+                f'images/K{mc.surname}Main/going_right(left_leg).png').convert_alpha()
         else:
             mc.is_right_leg = True
             mc.image = pygame.image.load(
-                f'images/K{mc.surname}Main/going_right(right_leg).png')
+                f'images/K{mc.surname}Main/going_right(right_leg).png').convert_alpha()
 
 def going_left_animation(mc,):
     '''Анимация ходьбы влево'''
@@ -25,11 +25,11 @@ def going_left_animation(mc,):
         if mc.is_right_leg:
             mc.is_right_leg = False
             mc.image = pygame.image.load(
-                f'images/K{mc.surname}Main/going_left(left_leg).png')
+                f'images/K{mc.surname}Main/going_left(left_leg).png').convert_alpha()
         else:
             mc.is_right_leg = True
             mc.image = pygame.image.load(
-                f'images/K{mc.surname}Main/going_left(right_leg).png')
+                f'images/K{mc.surname}Main/going_left(right_leg).png').convert_alpha()
 
 def going_down_animation(mc):
     '''Анимация ходьбы вниз'''
@@ -40,11 +40,11 @@ def going_down_animation(mc):
         if mc.is_right_leg:
             mc.is_right_leg = False
             mc.image = pygame.image.load(
-                    f'images/K{mc.surname}Main/going_down(left_leg).png')
+                    f'images/K{mc.surname}Main/going_down(left_leg).png').convert_alpha()
         else:
             mc.is_right_leg = True
             mc.image = pygame.image.load(
-                f'images/K{mc.surname}Main/going_down(right_leg).png')
+                f'images/K{mc.surname}Main/going_down(right_leg).png').convert_alpha()
 
 def going_up_animation(mc):
     '''Анимация ходьбы вверх'''
@@ -55,11 +55,11 @@ def going_up_animation(mc):
         if mc.is_right_leg:
             mc.is_right_leg = False
             mc.image = pygame.image.load(
-                f'images/K{mc.surname}Main/going_up(left_leg).png')
+                f'images/K{mc.surname}Main/going_up(left_leg).png').convert_alpha()
         else:
             mc.is_right_leg = True
             mc.image = pygame.image.load(
-                f'images/K{mc.surname}Main/going_up(right_leg).png')
+                f'images/K{mc.surname}Main/going_up(right_leg).png').convert_alpha()
 
 def standing_animation(mc):
     '''Анимация при отсутствии движения'''
@@ -68,17 +68,17 @@ def standing_animation(mc):
         if mc.is_right_leg:
             mc.is_right_leg = False
             mc.image = pygame.image.load(
-                f'images/K{mc.surname}Main/standing.png')
+                f'images/K{mc.surname}Main/standing.png').convert_alpha()
         else:
             mc.is_right_leg = True
             mc.image = pygame.image.load(
-                f'images/K{mc.surname}Main/standing2.png')
+                f'images/K{mc.surname}Main/standing2.png').convert_alpha()
 
 def stunning_animation(mc, file_endname: str, move_direction: str):
     '''Анимация оглушения'''
     if mc.attack_timer == 0:
         mc.image = pygame.image.load(
-            f'images/K{mc.surname}Main/stunned_{file_endname}.png')
+            f'images/K{mc.surname}Main/stunned_{file_endname}.png').convert_alpha()
         mc.attack_timer = time.monotonic()
     elif mc.cur_time  - mc.attack_timer <= mc.ai_settings.stun_duration:
         # Откидывание:

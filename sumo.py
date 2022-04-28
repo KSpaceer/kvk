@@ -19,7 +19,7 @@ class Sumo(Enemy):
         self.health = 15 * self.ai_settings.h_multiplier
         # Загрузка изображения
         self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/sumo/standing.png')
+            f'images/K{self.surname}Enemies/sumo/standing.png').convert_alpha()
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -62,7 +62,8 @@ class Sumo(Enemy):
                     self.cur_time - self.timer >= \
                         i * self.ai_settings.animation_change:
                     self.image = pygame.image.load(
-                        f'images/K{self.surname}Enemies/sumo/death{i + 1}.png')
+                        f'images/K{self.surname}Enemies/sumo/death{i + 1}' +
+                        '.png').convert_alpha()
                     self.change_rect_sumo()
         elif self.cur_time - self.timer > 18 * self.ai_settings.animation_change:
             enemies.remove(self)

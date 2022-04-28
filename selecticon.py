@@ -8,7 +8,8 @@ class SelectIcon():
     def __init__(self, surname: str, screen: pygame.Surface) -> None:
         '''Инициализация параметров по первой букве фамилии персонажа'''
         # Добавление изображение, прямоугольника, первой буквы фамилии
-        self.image = pygame.image.load(f'images/K{surname}Main/selection.png')
+        self.image = pygame.image.load(f'images/K{surname}Main/' + 
+        'selection.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.surname = surname
         self.screen = screen
@@ -17,7 +18,7 @@ class SelectIcon():
         self.rect.centery = self.screen_rect.centery
         # Изображение активного выбора (ярко-желтый силуэт):
         self.a_image = pygame.image.load(
-            f'images/K{surname}Main/selection(active).png')
+            f'images/K{surname}Main/selection(active).png').convert_alpha()
         # Соотв. прямоугольник, тоже вертикально по центру
         self.a_rect = self.a_image.get_rect()
         self.a_rect.centery = self.screen_rect.centery

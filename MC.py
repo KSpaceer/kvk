@@ -17,9 +17,9 @@ class MainCharacter(Sprite):
         self.ai_settings = ai_settings
         self.speed = self.ai_settings.mc_speed_factor
         # Первая буква фамилии персонажа
-        self.surname = surname
+        self.__surname = surname
         # Загрузка изображения
-        self.image = pygame.image.load('images/KSMain/standing.png')
+        self.image = pygame.image.load('images/KSMain/standing.png').convert_alpha()
         self.rect = self.image.get_rect()
         # Прямоугольник для анимаций
         self.an_rect = self.rect
@@ -54,7 +54,22 @@ class MainCharacter(Sprite):
         # Скорость атаки (для удобства зададим новую переменную)
         self.ats = self.ai_settings.attack_speed
         
+    @property
+    def surname(self):
+        return self.__surname
 
+    @surname.setter
+    def surname(self, surname):
+        Stats.mc_surname = surname
+        Stats.update_state_to_bg_dict()
+        self.__surname = surname
+
+    @surname.deleter
+    def surname(self):
+        del self.__surname
+
+
+    
     def blitme(self):
         '''Рисует персонажа в текущей позиции'''
         if not self.is_punching and self.health > 0:
@@ -121,20 +136,20 @@ class MainCharacter(Sprite):
         if self.attack_timer == 0:
             # Загружаем изображение
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right1.png')
+                        f'images/K{self.surname}Main/punching_right1.png').convert_alpha()
             self.correlate_rect_image(True)
             self.attack_timer = monotonic() # Обновление таймера
         elif 2 * self.ats >= self.cur_time - self.attack_timer \
                     > self.ats:
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right2.png')
+                        f'images/K{self.surname}Main/punching_right2.png').convert_alpha()
             self.correlate_rect_image(True)
             # Изменение позиции кулака
             fist.change_position(self.an_rect.right, self.rect.top + 26) 
         elif 3 * self.ats >= self.cur_time - self.attack_timer > \
                     2 * self.ats:
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right3.png')
+                        f'images/K{self.surname}Main/punching_right3.png').convert_alpha()
             self.correlate_rect_image(True)
             fist.change_position(self.an_rect.right, self.rect.top + 35)
             
@@ -142,12 +157,12 @@ class MainCharacter(Sprite):
                     3 * self.ats:
             fist.change_position(-50, -50)
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right2.png')
+                        f'images/K{self.surname}Main/punching_right2.png').convert_alpha()
             self.correlate_rect_image(True)
         elif 5 * self.ats >= self.cur_time - self.attack_timer > \
                      4 * self.ats:
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right1.png')
+                        f'images/K{self.surname}Main/punching_right1.png').convert_alpha()
             self.correlate_rect_image(True)
         elif self.cur_time - self.attack_timer > 5 * self.ats:
             self.is_punching = False # Атака закончена
@@ -156,21 +171,21 @@ class MainCharacter(Sprite):
         '''Процесс атаки на левую сторону'''
         if self.attack_timer == 0:
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left1.png')
+                        f'images/K{self.surname}Main/punching_left1.png').convert_alpha()
             self.correlate_rect_image(False)
             self.attack_timer = monotonic()
             
         elif 2 * self.ats >= self.cur_time - self.attack_timer \
                     > self.ats:
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left2.png')
+                        f'images/K{self.surname}Main/punching_left2.png').convert_alpha()
             self.correlate_rect_image(False)
             fist.change_position(self.an_rect.left, self.rect.top + 25) 
             
         elif 3 * self.ats >= self.cur_time - self.attack_timer > \
                     2 * self.ats:
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left3.png')
+                        f'images/K{self.surname}Main/punching_left3.png').convert_alpha()
             self.correlate_rect_image(False)
             fist.change_position(self.an_rect.left, self.rect.top + 34)
            
@@ -179,13 +194,13 @@ class MainCharacter(Sprite):
                     3 * self.ats:
             fist.change_position(-50, -50)
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left2.png')
+                        f'images/K{self.surname}Main/punching_left2.png').convert_alpha()
             self.correlate_rect_image(False)
 
         elif 5 * self.ats >= self.cur_time - self.attack_timer > \
                      4 * self.ats:
             self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left1.png')
+                        f'images/K{self.surname}Main/punching_left1.png').convert_alpha()
             self.correlate_rect_image(False)
 
         elif self.cur_time - self.attack_timer > 5 * self.ats:
@@ -275,9 +290,10 @@ class MainCharacter(Sprite):
             else:
                 self.death_side = 'left'
             self.image = pygame.image.load(
-                f'images/K{self.surname}Main/death_{self.death_side}.png')
+                f'images/K{self.surname}Main/death_{self.death_side}.png').convert_alpha()
         else:
-            self.image = pygame.image.load(f'images/K{self.surname}Main/death_right.png')
+            self.image = pygame.image.load(f'images/K{self.surname}Main' +
+            '/death_right.png').convert_alpha()
         self.an_rect = self.image.get_rect()
         self.an_rect.bottom = self.rect.bottom
         self.an_rect.centerx = self.rect.centerx

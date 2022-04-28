@@ -28,7 +28,7 @@ class Bull(Enemy):
             self.surname = 'D'
         # Загрузка изображения
         self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/bull/standing.png')
+            f'images/K{self.surname}Enemies/bull/standing.png').convert_alpha()
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -79,7 +79,8 @@ class Bull(Enemy):
                         self.cur_time - self.timer >= \
                             i * self.ai_settings.animation_change:
                         self.image = pygame.image.load(
-                            f'images/K{self.surname}Enemies/bull/death{i + 1}.png')
+                            f'images/K{self.surname}Enemies/bull' + 
+                            f'/death{i + 1}.png').convert_alpha()
                         self.change_rect()
             else:
                 # Полетели вверх, если ангел

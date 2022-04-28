@@ -19,7 +19,8 @@ class SummoningCircle(Sprite):
         self.screen = boss.screen
         self.screen_rect = boss.screen_rect
         self.image = pygame.image.load(
-            f'images/K{boss.surname}Enemies/boss/summoning_circle1.png')
+            f'images/K{boss.surname}Enemies' + 
+            '/boss/summoning_circle1.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.center = self.boss.rect.center
         self.to_right = to_right
@@ -103,7 +104,8 @@ class SummoningCircle(Sprite):
             self.animation_flag = not self.animation_flag
             self.image = pygame.image.load(
                 f'images/K{self.boss.surname}Enemies/boss' +
-                f'/summoning_circle{int(self.animation_flag) + 1}.png')
+                f'/summoning_circle{int(self.animation_flag) + 1}' +
+                '.png').convert_alpha()
             self.timer = monotonic()
 
 
@@ -116,7 +118,8 @@ class BallLightning(Sprite):
         self.boss = boss
         self.screen = boss.screen
         self.screen_rect = boss.screen_rect
-        self.image = pygame.image.load('images/KSEnemies/boss/ball_lightning.png')
+        self.image = pygame.image.load('images/KSEnemies/boss/' + 
+        'ball_lightning.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.centerx = boss.rect.centerx - 9
         self.rect.centery = boss.rect.centery - 127
@@ -168,7 +171,7 @@ class SpearTip(Sprite):
         # 0 - N, 1 - W, 2 - S, 3 - E
         self.cardinal_direction = randint(0, 3)
         self.image = pygame.transform.rotate(
-            pygame.image.load('images/KZEnemies/boss/spear_tip.png'), 
+            pygame.image.load('images/KZEnemies/boss/spear_tip.png').convert_alpha(), 
             90 * self.cardinal_direction)
         self.rect = self.image.get_rect()
         # Копье нацеливается на главного персонажа
@@ -235,7 +238,7 @@ class SpearShaft(Sprite):
         self.cardinal_direction = self.spear_tip.cardinal_direction
         self.speed = self.spear_tip.speed
         self.image = pygame.transform.rotate(
-            pygame.image.load('images/KZEnemies/boss/spear_shaft.png'), 
+            pygame.image.load('images/KZEnemies/boss/spear_shaft.png').convert_alpha(), 
             90 * self.cardinal_direction)
         self.rect = self.image.get_rect()
         self.define_starting_position()
@@ -294,7 +297,8 @@ class Blade(Sprite):
         self.screen = boss.screen
         self.screen_rect = boss.screen_rect
         self.speed = boss.ai_settings.blade_speed
-        self.image = pygame.image.load('images/KSEnemies/boss/blade.png')
+        self.image = pygame.image.load('images/KSEnemies/boss' +
+            '/blade.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.define_starting_position()
         self.timer = monotonic()
@@ -341,7 +345,8 @@ class Saw(Sprite):
         self.screen = boss.screen
         self.screen_rect = boss.screen_rect
         self.speed = boss.ai_settings.saw_speed
-        self.image = pygame.image.load('images/KZEnemies/boss/saw1.png')
+        self.image = pygame.image.load('images/KZEnemies' + 
+            '/boss/saw1.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.is_vertical = randint(0, 1) # пила двигается вертикально или горизонтально
         self.define_starting_position(boss)
@@ -418,7 +423,8 @@ class Saw(Sprite):
         '''Анимация пилы'''
         if self.cur_time - self.timer >= self.animation_change:
             self.image = pygame.image.load(
-                f'images/KZEnemies/boss/saw{int(self.animation_number) + 1}.png')
+                f'images/KZEnemies/boss/saw{int(self.animation_number) + 1}' + 
+                '.png').convert_alpha()
             self.timer = monotonic()
             self.animation_number = not self.animation_number
 
@@ -447,7 +453,7 @@ class Crack(Sprite):
     def __init__(self, centerx: int, centery: int, 
         screen: pygame.Surface, cur_time: Timer) -> None:
         super().__init__()
-        self.image = pygame.image.load('images/KZEnemies/boss/crack.png')
+        self.image = pygame.image.load('images/KZEnemies/boss/crack.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.centerx = centerx
         self.rect.centery = centery

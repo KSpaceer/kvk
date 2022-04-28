@@ -24,12 +24,13 @@ class Shockwave(Sprite):
         self.screen_rect = self.screen.get_rect()
         self.to_right = to_right
         self.image = pygame.image.load(
-            f'images/Shockwave/shockwave1_{Shockwave.direction[to_right]}.png')
+            f'images/Shockwave/shockwave1_{Shockwave.direction[to_right]}' +
+            '.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.starting_location(en_fist=en_fist, boss=boss)
         self.cur_time = cur_time
         self.current_image_number = False # потом из bool в int
-        self.timer = Timer(monotonic())
+        self.timer = monotonic()
         # Действительные значения координаты X центра
         self.centerx = float(self.rect.centerx)
         
@@ -69,8 +70,8 @@ class Shockwave(Sprite):
         if self.cur_time - self.timer >= self.ai_settings.animation_change:
             self.image = pygame.image.load('images/Shockwave/shockwave' + 
                 f'{int(self.current_image_number) + 1}_' + 
-                f'{Shockwave.direction[self.to_right]}.png')
-            self.timer.time = monotonic()
+                f'{Shockwave.direction[self.to_right]}.png').convert_alpha()
+            self.timer = monotonic()
             self.current_image_number = not self.current_image_number
         # Действительные значения в целочисленные
         self.rect.centerx = int(self.centerx)

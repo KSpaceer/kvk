@@ -29,7 +29,8 @@ class Button():
         self.screen_rect = self.screen.get_rect()
         self.name_number = name_number
         self.image = pygame.image.load(
-            f'images/Buttons/{Button.image_names_dict[name_number]}.png')
+            f'images/Buttons/{Button.image_names_dict[name_number]}' +
+            '.png').convert_alpha()
         self.rect = self.image.get_rect()
         # Кнопки находятся по середине экрана (по ширине)
         self.rect.centerx = self.screen_rect.centerx
