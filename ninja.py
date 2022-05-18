@@ -58,7 +58,10 @@ class Ninja(Enemy):
 
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
-
+    
+        if not self.has_played_audio:
+            self.audio.play_sound('ninja_death')
+            self.has_played_audio = True
         if self.cur_time - self.timer < 5.5 * self.ai_settings.animation_change:
             for i in range(11):
                 if (i + 1)/2 * self.ai_settings.animation_change > \

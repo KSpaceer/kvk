@@ -22,6 +22,8 @@ class Eater(Enemy):
         super().__init__(screen, ai_settings, mc, st, timer, cur_time)
         # Инициализация имени для подстановки в файлы и имена переменных
         self.name = 'eater'
+        # Название звука атаки
+        self.audioname = 'bite'
         # Инициализация здоровья
         self.health = 10 * self.ai_settings.h_multiplier
         # Загрузка изображения
@@ -59,6 +61,8 @@ class Eater(Enemy):
                          2: ('x', '-'),
                          3: ('x', '+')}
 
+   
+    
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
         self.initiate_death()
@@ -81,6 +85,7 @@ class Eater(Enemy):
 
     def gotta_go_fast(self):
         '''Противник быстро убегает после смерти'''
+        self.audio.play_sound('eater_death')
         if self.direction in (0, 1):
             going_vertical_animation(self)
         elif self.direction == 2:

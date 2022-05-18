@@ -72,6 +72,9 @@ class Bull(Enemy):
         '''Анимация смерти'''
         # Если враг не Диана:
         if self.surname != 'D':
+            if not self.has_played_audio:
+                self.st.audio.play_sound(f'bull{self.surname}_death')
+                self.has_played_audio = True
             if self.cur_time - self.timer < 6 * self.ai_settings.animation_change:
                 for i in range(6):
                     # Появление ангельских/дьявольских атрибутов

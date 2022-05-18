@@ -6,11 +6,12 @@ from settings import Settings
 from etimer import Timer
 from fist import Fist
 from stats import Stats
+from audiosounds import Audio
 
 class MainCharacter(Sprite):
     '''Класс главного персонажа'''
     def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
-        cur_time: Timer, surname: str = None):
+        cur_time: Timer, audio: Audio, surname: str = None):
         '''Инициализация главного персонажа и задание его начальной позиции'''
         super().__init__()
         self.screen = screen
@@ -53,6 +54,7 @@ class MainCharacter(Sprite):
         self.invincible = False
         # Скорость атаки (для удобства зададим новую переменную)
         self.ats = self.ai_settings.attack_speed
+        self.audio = audio
         
     @property
     def surname(self):
@@ -62,6 +64,7 @@ class MainCharacter(Sprite):
     def surname(self, surname):
         Stats.mc_surname = surname
         Stats.update_state_to_bg_dict()
+        Stats.update_state_to_audio_dict()
         self.__surname = surname
 
     @surname.deleter
@@ -298,6 +301,12 @@ class MainCharacter(Sprite):
         self.an_rect.bottom = self.rect.bottom
         self.an_rect.centerx = self.rect.centerx
         self.blitme()
+        pygame.display.flip()
+        self.timer = monotonic()
+        # Остановка всех звуков
+        for name in self.audio.sounds.keys():
+            self.audio.sounds[name].stop()
+        self.font = pygame.font.SysFont('tahoma', 48)
         st.state = st.GAMEOVER 
 
     

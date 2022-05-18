@@ -1,4 +1,5 @@
 
+import gc
 from itertools import cycle
 from random import randint
 from time import monotonic
@@ -12,6 +13,7 @@ from fist import Fist
 from MC import MainCharacter
 from settings import Settings
 from stats import Stats
+
 
 
 class Boss(Enemy):
@@ -73,9 +75,13 @@ class Boss(Enemy):
         self.positiony = None
         # Определяем количество кадров для различных атак
         self.define_attack_frames()
-        
+        # Запуск музыки
+        st.audio.current_music = f'boss{self.surname}'
+        Stats.state_to_audio[Stats.GAMEACTIVE] = f'boss{self.surname}'
 
     def __del__(self):
+        if 'spinning' in self.audio.sounds.keys():
+            self.audio.sounds.pop('spinning')
         self.mc.speed /= 2
         return super().__del__()
     
@@ -203,6 +209,7 @@ class Boss(Enemy):
         '''Получение урона'''
         self.health -= self.ai_settings.mc_damage
         self.is_invincible = True
+        self.audio.play_sound('punch')
         self.invin_timer = monotonic()
 
     def check_position(self, x: int, y: int) -> tuple[bool, bool]:
@@ -288,6 +295,7 @@ class Boss(Enemy):
         if not self.in_position:
             self.in_position = True
             self.timer = monotonic()
+            self.audio.play_sound('spinning', -1)
             # Во время атаки таймер перезарядки используется
             # как таймер для отсчета начала нанесения урона и притяжения,
             # а также конца применения атаки
@@ -320,6 +328,7 @@ class Boss(Enemy):
         if not self.in_position:
             self.in_position = True
             self.timer = monotonic()
+            self.audio.play_sound('spinning', -1)
             # Таймер перезарядки используется как таймер начала
             # преследования и нанесения урона
             self.cooldown_timer = monotonic()
@@ -363,6 +372,7 @@ class Boss(Enemy):
         if not self.in_position:
             self.in_position = True
             self.timer = monotonic()
+            self.audio.play_sound('spinning', -1)
             # Во время атаки таймер перезарядки используется
             # как таймер прекращения атаки
             self.cooldown_timer = monotonic()
@@ -381,6 +391,7 @@ class Boss(Enemy):
         from shockwave import Shockwave
         for i in range(2):
             for j in range(3):
+                self.audio.play_sound('launch_shockwave')
                 new_shockwave = Shockwave(self.screen, self.cur_time, 
                             self.ai_settings, True if i else False, boss=self)
                 en_fists.add(new_shockwave)
@@ -407,6 +418,7 @@ class Boss(Enemy):
     def new_crack_creation(self, en_fists):
         '''Создание нового разлома'''
         from boss_projectiles import Crack
+        self.audio.play_sound('launch_shockwave')
         crack_y = self.an_rect.top + 89
         x_addition = 257 if self.right_punch else 13
         crack_x = self.an_rect.left + x_addition
@@ -565,8 +577,10 @@ class Boss(Enemy):
                 
                 elif self.mc.rect.colliderect(self.target_rect):
                     from boss_projectiles import Saw
-                    Saw.vertical_positions.clear()
-                    Saw.horizontal_positions.clear()
+                    self.audio.stop_sound('saw')
+                    self.audio.play_sound('target_achieved')
+                    Saw.vertical_positions = [0,]
+                    Saw.horizontal_positions = [0,]
                     del self.target_surface
                     del self.target_rect
                     self.is_invincible = False
@@ -664,6 +678,8 @@ class Boss(Enemy):
 
     def finish_common_attack(self):
         '''Заканчивает применение обычной атаки'''
+        if 'spinning' in self.audio.sounds.keys():
+            self.audio.stop_sound('spinning')
         self.is_punching = False
         self.using_common_attack = False
         self.position_is_chosen = False
@@ -673,6 +689,8 @@ class Boss(Enemy):
     def death_animation(self):
         '''Анимация смерти босса'''
         if not self.is_dead:
+            self.audio.stop_music()
+            self.audio.play_sound('boss_death')
             self.is_dead = True
             self.timer = monotonic()
             self.image = pygame.image.load(

@@ -54,7 +54,9 @@ class Sumo(Enemy):
 
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
-
+        if not self.has_played_audio:
+            self.audio.play_sound('sumo_death')
+            self.has_played_audio = True
         if self.cur_time - self.timer < 9 * self.ai_settings.animation_change:
             for i in range(9):
                 # Путь самурая - смерть

@@ -7,6 +7,7 @@ def going_right_animation(mc):
     # времени смены анимации
     if mc.cur_time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
+        mc.audio.play_sound('step')
         if mc.is_right_leg:
             mc.is_right_leg = False
             mc.image = pygame.image.load(
@@ -22,6 +23,7 @@ def going_left_animation(mc,):
     # времени смены анимации
     if mc.cur_time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
+        mc.audio.play_sound('step')
         if mc.is_right_leg:
             mc.is_right_leg = False
             mc.image = pygame.image.load(
@@ -37,6 +39,7 @@ def going_down_animation(mc):
     # времени смены анимации
     if mc.cur_time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
+        mc.audio.play_sound('step')
         if mc.is_right_leg:
             mc.is_right_leg = False
             mc.image = pygame.image.load(
@@ -52,6 +55,7 @@ def going_up_animation(mc):
     # времени смены анимации
     if mc.cur_time - mc.timer >= mc.ai_settings.animation_change:
         mc.timer = time.monotonic()
+        mc.audio.play_sound('step')
         if mc.is_right_leg:
             mc.is_right_leg = False
             mc.image = pygame.image.load(

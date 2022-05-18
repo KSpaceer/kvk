@@ -1,16 +1,16 @@
 import pygame
-from os import listdir
-from os.path import abspath
+
 
 
 class Background:
     '''Класс заднего фона игры'''
 
-
+    PASTER_EGG_ACTIVE = False
     
     def __init__(self, screen: pygame.Surface) -> None:
         self.screen = screen
         self.image = pygame.image.load('images/backgrounds/intro.png').convert()
+        
 
     def blitme(self) -> None:
         '''Прорисовка заднего фона'''
@@ -18,6 +18,9 @@ class Background:
 
     def change(self, name: str) -> None:
         '''Смена заднего фона'''
-        self.image = pygame.image.load('images/backgrounds/' + name + '.png').convert()
+        if not Background.PASTER_EGG_ACTIVE:
+            self.image = pygame.image.load('images/backgrounds/' + name + '.png').convert()
+        else:
+            self.image = pygame.image.load('images/backgrounds/sans.png').convert()
         
         

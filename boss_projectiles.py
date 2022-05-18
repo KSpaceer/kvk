@@ -7,9 +7,10 @@ import pygame
 from boss import Boss
 from bull import Bull
 from etimer import Timer
+from hollow import Hollow
 
 
-class SummoningCircle(Sprite):
+class SummoningCircle(Sprite, Hollow):
     '''Класс призывающего круга, который босс создает во время призыва'''
 
     def __init__(self, boss: Boss, to_right: bool) -> None:
@@ -31,6 +32,7 @@ class SummoningCircle(Sprite):
         self.timer = monotonic()
         self.animation_flag = False
         self.has_summoned = False
+        boss.audio.play_sound('summon')
         
 
     def define_destination(self):
@@ -110,7 +112,7 @@ class SummoningCircle(Sprite):
 
 
                 
-class BallLightning(Sprite):
+class BallLightning(Sprite, Hollow):
     '''Класс шаровых молний, испускаемых боссом'''
 
     def __init__(self, boss: Boss) -> None:
@@ -128,6 +130,7 @@ class BallLightning(Sprite):
         # Координаты в вещественном формате
         self.centerx = float(self.rect.centerx)
         self.centery = float(self.rect.centery)
+        boss.audio.play_sound('lightning')
 
     def blitme(self):
         '''Отображает шаровую молнию'''
@@ -145,7 +148,7 @@ class BallLightning(Sprite):
         self.rect.centery = int(self.centery)
 
 
-class SpearTip(Sprite):
+class SpearTip(Sprite, Hollow):
     '''Класс наконечника копья, выпускаемого боссом'''
 
     def __init__(self, boss: Boss) -> None:
@@ -158,6 +161,7 @@ class SpearTip(Sprite):
         self.define_cardinal_direction()
         self.spear: list[Sprite] = []
         self.spear.append(self)
+        self.has_played_sound = False
         
 
     
@@ -204,6 +208,9 @@ class SpearTip(Sprite):
         if self.boss.using_ultimate:
             if self.screen_rect.contains(self.rect) \
                 and self.boss.cur_time - self.timer >= 1:
+                if not self.has_played_sound:
+                    self.boss.audio.play_sound('spear')
+                    self.has_played_sound = True
                 if self.cardinal_direction in (0, 2):
                     self.rect.centery += self.dir_sign * self.speed
                 else:
@@ -222,10 +229,15 @@ class SpearTip(Sprite):
             # Если последняя часть древка/наконечник не пересекается с экраном, удаляет его
             if not self.screen_rect.colliderect(self.spear[-1].rect):
                 self.spear[-1].kill()
+                self.spear.pop(-1)
+
+    def play_hit_sound(self):
+        '''Проигрывание звука удара'''
+        self.boss.audio.play_sound('cold_weapon_hit')
 
 
 
-class SpearShaft(Sprite):
+class SpearShaft(Sprite, Hollow):
     '''Класс древка копья, выпускаемого боссом'''
 
     def __init__(self, spear: pygame.sprite.Group) -> None:
@@ -288,7 +300,7 @@ class SpearShaft(Sprite):
                 self.rect.centerx -= self.dir_sign * self.speed
 
 
-class Blade(Sprite):
+class Blade(Sprite, Hollow):
     '''Класс лезвий, выпускаемых боссом'''
 
     def __init__(self, boss: Boss) -> None:
@@ -302,6 +314,8 @@ class Blade(Sprite):
         self.rect = self.image.get_rect()
         self.define_starting_position()
         self.timer = monotonic()
+        self.has_played_sound = False
+        
         
 
     def define_starting_position(self):
@@ -328,12 +342,19 @@ class Blade(Sprite):
         '''Обновление лезвия'''
         if self.screen_rect.colliderect(self.rect):
             if self.boss.cur_time - self.timer >= 1:
+                if not self.has_played_sound:
+                    self.boss.audio.play_sound('blade')
+                    self.has_played_sound = True
                 self.rect.centery += self.direction * self.speed
         else:
             self.kill()
+
+    def play_hit_sound(self):
+        '''Проигрывание звука удара'''
+        self.boss.audio.play_sound('cold_weapon_hit')
             
         
-class Saw(Sprite):
+class Saw(Sprite, Hollow):
     '''Класс пил, вызываемых боссом'''
 
     vertical_positions = [0,]
@@ -355,6 +376,8 @@ class Saw(Sprite):
         self.cur_time = boss.cur_time
         self.animation_change = boss.ai_settings.animation_change/2
         self.animation_number = True # bool -> int
+        if not 'saw' in boss.audio.sounds.keys():
+            boss.audio.play_sound('saw', -1)
 
     def define_starting_position(self, boss: Boss):
         '''Определяет начальное положение пилы'''
@@ -408,6 +431,8 @@ class Saw(Sprite):
             self.dir_sign = 1
             self.rect.top = self.border1
     
+    
+
     def blitme(self):
         '''Отображение пилы'''
         self.screen.blit(self.image, self.rect)
@@ -418,6 +443,7 @@ class Saw(Sprite):
         self.animation()
         if not self.boss.using_ultimate:
             self.kill()
+            del self.boss
 
     def animation(self):
         '''Анимация пилы'''
@@ -447,7 +473,11 @@ class Saw(Sprite):
                 self.dir_sign *= -1
             self.rect.centerx += self.dir_sign * self.speed
 
-class Crack(Sprite):
+    def play_hit_sound(self):
+        '''Проигрывание звука удара'''
+        self.boss.audio.play_sound('cold_weapon_hit')
+
+class Crack(Sprite, Hollow):
     '''Класс разлома, создаваемого боссом'''
 
     def __init__(self, centerx: int, centery: int, 
@@ -469,6 +499,8 @@ class Crack(Sprite):
         '''Обновление разлома'''
         if self.cur_time - self.timer >= 25:
             self.kill()
+
+    
 
 
 

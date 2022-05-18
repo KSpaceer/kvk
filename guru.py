@@ -16,6 +16,8 @@ class Guru(Enemy):
         super().__init__(screen, ai_settings, mc, st, timer, cur_time)
         # Инициализация имени для подстановки в файлы и имена переменных
         self.name = 'guru'
+        # Название звука атаки
+        self.audioname = 'ohm'
         # Инициализация здоровья
         self.health = 10 * self.ai_settings.h_multiplier
         # Загрузка изображения
@@ -73,6 +75,7 @@ class Guru(Enemy):
 
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
+        self.audio.play_sound('guru_death')
         if self.cur_time - self.timer < \
             12 * self.ai_settings.animation_change:
             for i in range(6):

@@ -1,6 +1,9 @@
 
 
 
+import pygame
+
+
 class Settings():
 
     def __init__(self):
@@ -11,6 +14,9 @@ class Settings():
         self.bg_color = (100, 0, 0)
         # Настройки анимации
         self.animation_change = 0.25
+        # Настройки аудио
+        self.sound_volume = 5
+        self._music_volume = 5
         # Настройки персонажа
         self.mc_speed_factor = 0.5
         self.attack_speed = 0.18
@@ -19,11 +25,14 @@ class Settings():
         self.stun_duration = 1
         self.inv_duration = 2
         # Настройки волн и уровней
-        self.waves = [ [(4,)],
-                       [(2, 1, 2), (2, 2, 1, 1), (2, 0, 2, 0), (2, 2, 2, 2), (2, 2, 1, 1, 3)],
+        self.waves = [ [(2, 1, 2), (2, 2, 1, 1), (2, 0, 2, 0), (2, 2, 2, 2), (2, 2, 1, 1, 3)],
                        [(1, 3, 1, 3), (3, 1, 3, 1), (3, 3, 3, 3), (1, 3, 1, 3, 1), (3, 1, 2, 1, 3)],
-                       [(0, 1, 0), (1, 0, 1), (1, 0, 1, 0), (1, 1, 1, 1), (0, 0, 1, 2)]]
-        self.max_level = len(self.waves)
+                       [(0, 1, 0), (1, 0, 1), (1, 0, 1, 0), (1, 1, 1, 1), (0, 0, 1, 2)],
+                       [tuple([i if i < 4 else 3 for j in range(5)]) for i in range(5)],
+                       [(0, 1, 2, 3, 3, 2) for i in range(5)],
+                       [(0, 1, 2, 3, 3, 2, 1, 0) for i in range(5)], 
+                       [(4,)]]
+        self.max_level = len(self.waves) - 1
         # Настройки врагов
         self.h_multiplier = 1
         # Бугаи:
@@ -73,3 +82,16 @@ class Settings():
         self.saw_speed = 2
         self.maze_narrowing = 200 # Сужение лабиринта пил относительно экрана
         self.saw_amount = 7
+
+    @property
+    def music_volume(self):
+        return self._music_volume
+
+    @music_volume.setter
+    def music_volume(self, value):
+        pygame.mixer.music.set_volume(value/10)
+        self._music_volume = value
+
+    @music_volume.deleter
+    def music_volume(self):
+        del self._music_volume

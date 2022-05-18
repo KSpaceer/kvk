@@ -11,26 +11,28 @@ import graphic as gr
 import game_functions as gf
 from stats import Stats
 from Tarzan import Tarzan
+from audiosounds import Audio
 
 
 def run_game():
     # Инициализация pygame, settings, статистики и дисплея
     pygame.init()
-    pygame.event.set_allowed([pygame.QUIT, pygame.KEYUP, pygame.KEYDOWN])
     ai_settings = Settings()
     screen = pygame.display.set_mode((ai_settings.screen_width, 
                         ai_settings.screen_height))
     from background import Background
     # Задний фон
     bg = Background(screen)
+    # Звуки
+    audio = Audio(ai_settings)
     gr.set_caption_and_icon()
     # Счетчик времени
     timer = Timer(monotonic())
     # Текущее время
     cur_time = Timer(monotonic())
     # Создание главного персонажа
-    mc = MainCharacter(screen, ai_settings, cur_time)
-    st = Stats(bg)
+    mc = MainCharacter(screen, ai_settings, cur_time, audio)
+    st = Stats(bg, audio, ai_settings.max_level)
     # Создание врагов
     enemies = Group()
     # Ударная поверхность главного персонажа
@@ -43,6 +45,8 @@ def run_game():
     buttons = []
     # Иконки меню выбора персонажа
     selecticons = []
+    # Отслеживание текущей вертикальной позиции заднего фона (для титров)
+    cur_y = 0
     
     
     
@@ -55,16 +59,21 @@ def run_game():
         
         # Обработка событий
         gf.check_events(mc, st, buttons, screen, cur_time,
-             timer, enemies, selecticons, en_fists)
+             timer, enemies, selecticons, en_fists, audio, ai_settings)
         if st.state == Stats.INTRO:
             # Заставка
             tarzan.update_intro()
         elif st.state == Stats.MAINMENU:
             # Главное меню
+            if enemies:
+                enemies.empty()
             gf.update_mainmenu_screen(ai_settings, screen, buttons, bg)
         elif st.state == Stats.SELECTMODE:
             # Меню выбора персонажа
             gf.update_selectmode_screen(ai_settings, screen, selecticons, bg)
+        elif st.state == Stats.OPTIONS:
+            # Меню опций
+            gf.update_options_screen(buttons, bg)
         elif st.state == Stats.GAMEACTIVE:
             # Сама игра
             # Обновление экрана
@@ -91,17 +100,22 @@ def run_game():
             gf.update_savefiles_screen(screen, buttons, bg)
         elif st.state == Stats.GAMEOVER:
             # Конец игры (проигрыш)
+            gf.update_gameover_screen(bg, mc, ai_settings,
+                enemies, en_fists, screen)
             if st.restart_flag:
                 timer, mc, mc_fist = gf.restart(
-                    screen, ai_settings, enemies, en_fists, st, cur_time, mc)
+                    screen, ai_settings, enemies, 
+                    en_fists, st, cur_time, mc, audio)
         elif st.state == Stats.LOADING:
             # Загрузка: это состояние нужно для перезапуска всех объектов, 
             # т.к. из модуля game_functions функции режима загрузки не 
             # позволяют это сделать (я лох).
             timer, mc, mc_fist = gf.restart(
-                    screen, ai_settings, enemies, en_fists, st, cur_time, mc)
+                    screen, ai_settings, enemies, en_fists, st, cur_time, mc, audio)
             st.state = Stats.GAMEACTIVE
-        
+        elif st.state == Stats.CREDITS:
+            cur_y = gf.update_credits_screen(bg, cur_y, 
+                st, buttons, screen)
         
         
         

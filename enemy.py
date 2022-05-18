@@ -2,6 +2,7 @@
 from time import monotonic
 import pygame
 from pygame.sprite import Sprite
+from audiosounds import Audio
 import enemy_animation as an
 from fist import Fist
 from settings import Settings
@@ -31,6 +32,9 @@ class Enemy(Sprite):
         self.ai_settings = ai_settings
         self.mc = mc
         self.st = st
+        self.audio = st.audio
+        # Название звука атаки (по умолчанию)
+        self.audioname = 'punch'
         self.main_timer = timer # Таймер из основного модуля
         self.image = ''
         self.define_surname()
@@ -42,6 +46,8 @@ class Enemy(Sprite):
         self.timer = monotonic()
         self.is_right_leg = True
         self.is_dead = False
+        # Флаг проигрывания звука
+        self.has_played_audio = False
         # Флаг оглушения после получения урона
         self.is_stunned = False
         # Флаги удара
@@ -92,6 +98,9 @@ class Enemy(Sprite):
             elif self.st.current_wave < len(
                 self.ai_settings.waves[self.st.level]) - 1:
                 self.st.current_wave += 1
+            # Завершение игры
+            elif self.st.level == self.ai_settings.max_level:
+                self.st.state = self.st.CREDITS
             # Текущие смерти и призывы обнуляются
             Enemy.c_deaths = 0
             Enemy.summons = 0
@@ -225,6 +234,7 @@ class Enemy(Sprite):
             f'images/K{self.surname}Enemies/{self.name}' +
             '/stunned.png').convert_alpha()
         self.change_stun_rect(fist)
+        self.st.audio.play_sound('punch')
         self.timer = monotonic()
 
     def vertical_movement(self):
@@ -283,6 +293,7 @@ class Enemy(Sprite):
             new_shuriken = Shuriken(self.screen, self.cur_time, self, 
                 self.ai_settings, self.right_punch)
             en_fists.add(new_shuriken)
+            self.audio.play_sound('launch_shuriken')
         if self.cur_time - self.timer >= self.ai_settings.animation_change:
             self.is_launching = False
             self.shuriken_active = False
@@ -298,7 +309,8 @@ class Enemy(Sprite):
                 # Кадров (изображений именно) всего половина от общего количества, 
                 # в случае нечетного кол-ва - с округлением в большую сторону
                 if i in range(int(self.frames/2) + 1):
-                    self.working_stroke(en_fists, file_end_name, sign, rect_side, i)
+                    self.working_stroke(en_fists, file_end_name, 
+                        sign, rect_side, i)
                 else:
                     self.idling(en_fists, file_end_name, i)
 
@@ -318,6 +330,7 @@ class Enemy(Sprite):
             # Атака закончена, начинается перезарядка
             self.is_punching = False
             self.shockwave_active = False
+            self.has_played_audio = False
             self.cooldown_timer = monotonic()
             if hasattr(self, 'is_new_rect_created'):
                 self.is_new_rect_created = False
@@ -344,20 +357,24 @@ class Enemy(Sprite):
                             f'self.an_rect.{rect_side} {sign}' +
                             f'self.frl_side[i-{self.noload_fr}],' +
                             f'self.an_rect.top + self.frl_top[i-{self.noload_fr}])')
+            if not self.has_played_audio:
+                self.audio.play_sound(self.audioname)
+                self.has_played_audio = True
             self.shockwave_check(en_fists, i)
 
-    def shockwave_check(self, en_fists, i):
+    def shockwave_check(self, en_fists: pygame.sprite.Group, i: int):
         '''Вызывает ударную волну, 
         если такое предусмотрено типом врага и другой волны нет'''
         if self.summon_shockwave and not self.shockwave_active \
             and i == round(self.frames/2):
             # Вызывает ударную волну, если такое предусмотрено типом врага
+            self.audio.play_sound('launch_shockwave')
             new_shockwave = Shockwave(self.screen, self.cur_time, 
                 self.ai_settings, self.right_punch, en_fist=self.fist)
             en_fists.add(new_shockwave)
             self.shockwave_active = True
 
-    def correct_position(self, sign, rect_side):
+    def correct_position(self, sign: str, rect_side: str):
         '''Корректирует положение на неатакующих кадрах'''
         self.an_rect = self.image.get_rect()
         self.an_rect.centery = self.rect.centery
