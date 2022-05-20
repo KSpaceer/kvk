@@ -266,7 +266,9 @@ class MainCharacter(Sprite):
             self.right_punch = right_punch
             self.attack_timer = 0
 
-    def get_damage(self, touching_fist, en_fists, enemies):
+    def get_damage(self, touching_fist: Fist, 
+        en_fists: pygame.sprite.Group, 
+        enemies: pygame.sprite.Group):
         '''Активирует флаги получения урона'''
         self.tf = touching_fist
         # Если ударивший противник - Диана, то она не выносит греха 
