@@ -85,7 +85,17 @@ class Eater(Enemy):
 
     def gotta_go_fast(self):
         '''Противник быстро убегает после смерти'''
-        self.audio.play_sound('eater_death')
+        # Выражение вида "НЕ 1 ИЛИ НЕ 2" используется
+        # вместо "НЕ(1 ИЛИ 2)", т.к. в таком случае, если
+        # звук не проигрывался (self.has_played_audio) будет равно False, и тогда
+        # выражение под скобками: (0 ИЛИ 2). Из-за этого начнет проверяться 
+        # второе выражение, что приведет к ошибке - значения с таким ключом в словаре
+        # до первого проигрывания звука нет. В использующемся выражении, если
+        # НЕ 1 равно True, то второе выражении проверяться уже не будет.
+        if not self.has_played_audio or not \
+            self.audio.sounds['eater_death'].get_num_channels():
+            self.audio.play_sound('eater_death')
+            self.has_played_audio = True
         if self.direction in (0, 1):
             going_vertical_animation(self)
         elif self.direction == 2:

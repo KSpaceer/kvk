@@ -5,7 +5,7 @@ class Timer():
 
     def __init__(self, time):
         self.time: float = time
-        self.changing_intro = False
+        
 
     def __sub__(self, other) -> float:
         if isinstance(other, Timer):

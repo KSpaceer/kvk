@@ -75,7 +75,9 @@ class Guru(Enemy):
 
     def death_animation(self, enemies: pygame.sprite.Group):
         '''Анимация смерти'''
-        self.audio.play_sound('guru_death')
+        if not self.has_played_audio:
+            self.audio.play_sound('guru_death')
+            self.has_played_audio = True
         if self.cur_time - self.timer < \
             12 * self.ai_settings.animation_change:
             for i in range(6):

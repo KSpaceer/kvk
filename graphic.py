@@ -51,10 +51,14 @@ class BossHealth:
 
     def blitme(self):
         '''Отображение здоровья босса на экране'''
+        # 461 - полная ширина полосы здоровья, 16 - ее высота
         health_to_draw = pygame.Surface((int(self.boss.health/self.boss_full_health * 461), 16))
+        # светло-зеленый цвет
         health_to_draw.fill((22, 250, 45))
+        # Полоса здоровья по середине отображающего элемента, за рамкой
         self.screen.blit(
             health_to_draw, (self.rect.left + 19, self.rect.top + 54))
+        # Прорисовка рамки
         self.screen.blit(self.bar_image, self.rect)
 
 

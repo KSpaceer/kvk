@@ -16,7 +16,8 @@ class Option:
     number_to_name = {MUSIC_VOLUME : 'music_volume',
                       SOUND_VOLUME : 'sound_volume'}
     
-    def __init__(self, screen: pygame.Surface, ai_settings: Settings, name_number: int) -> None:
+    def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
+        name_number: int) -> None:
             self.screen = screen
             self.screen_rect = screen.get_rect()
             self.ai_settings = ai_settings
