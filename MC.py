@@ -2,6 +2,7 @@ from time import monotonic
 import mc_animation as an
 import pygame
 from pygame.sprite import Sprite
+from mediator import Mediator
 from settings import Settings
 from etimer import Timer
 from fist import Fist
@@ -10,13 +11,11 @@ from audiosounds import Audio
 
 class MainCharacter(Sprite):
     '''Класс главного персонажа'''
-    def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
-        cur_time: Timer, audio: Audio, surname: str = None):
+    def __init__(self, mediator: Mediator, surname: str = None):
         '''Инициализация главного персонажа и задание его начальной позиции'''
         super().__init__()
-        self.screen = screen
-        self.ai_settings = ai_settings
-        self.speed = self.ai_settings.mc_speed_factor
+        self.mediator = mediator
+        self.speed = mediator.get_value('ai_settings', 'mc_speed_factor')
         # Первая буква фамилии персонажа
         self.__surname = surname
         # Загрузка изображения
@@ -25,14 +24,13 @@ class MainCharacter(Sprite):
         # Прямоугольник для анимаций
         self.an_rect = self.rect
         # Персонаж появляется ближе к левому экрану
-        self.screen_rect = screen.get_rect()
-        self.rect.centery = self.screen_rect.centery
-        self.rect.left = self.screen_rect.left + 200
+        self.rect.centery = mediator.get_value('screen_rect','centery')
+        self.rect.left = mediator.get_value('screen_rect','left') + 200
         # Сохранение вещественной координаты центра персонажа
         self.centerx = float(self.rect.centerx)
         self.centery = float(self.rect.centery)
         # Здоровье
-        self.health = ai_settings.mc_health
+        self.health = mediator.get_value('ai_settings', 'mc_health')
         # Флаги перемещения и переключатели анимации:
         self.moving_right = False
         self.moving_left = False
@@ -42,8 +40,6 @@ class MainCharacter(Sprite):
         self.timer = 0
         self.attack_timer = 0
         self.space_active = False
-        # Текущее время
-        self.cur_time = cur_time
         # Таймер неуязвимости
         self.invin_timer = 0
         # Флаги удара
@@ -53,8 +49,8 @@ class MainCharacter(Sprite):
         self.is_stunned = False
         self.invincible = False
         # Скорость атаки (для удобства зададим новую переменную)
-        self.ats = self.ai_settings.attack_speed
-        self.audio = audio
+        self.ats = mediator.get_value('ai_settings', 'attack_speed')
+        
         
     @property
     def surname(self):
@@ -76,17 +72,18 @@ class MainCharacter(Sprite):
     def blitme(self):
         '''Рисует персонажа в текущей позиции'''
         if not self.is_punching and self.health > 0:
-            self.screen.blit(self.image, self.rect)
+            self.mediator.blit_surface(self.image, self.rect)
         else:
-            self.screen.blit(self.image, self.an_rect)
+            self.mediator.blit_surface(self.image, self.rect)
     
-    def update(self, enemies: pygame.sprite.Group, fist: Fist, st: Stats):
+    def update(self):
         '''Обновляет позицию главного персонажа'''
         # Если персонаж жив
         if self.health > 0:
             # Если персонаж неуязвим:
             if self.invincible:
-                if self.cur_time - self.invin_timer >= self.ai_settings.inv_duration:
+                if self.mediator.current_time() - self.invin_timer >=\
+                    self.mediator.get_value('ai_settings', 'inv_duration'):
                     # По истечении времени он теряет неуязвимость
                     self.invincible = False
 
@@ -99,23 +96,13 @@ class MainCharacter(Sprite):
                         # если персонаж не двигается. то он будет анимация стояния
                         an.standing_animation(self)
                     else:
-                        if self.moving_right and self.rect.right < self.screen_rect.right:
-                            self.going_right(enemies)
-                            # Если активен пробел, то начинает атаку:
-                            self.initiate_punch(True, True)
-                        if self.moving_left and self.rect.left > 0:
-                            self.going_left(enemies)
-                            self.initiate_punch(True, False)
-                        if self.moving_down and self.rect.bottom < self.screen_rect.bottom:
-                            self.going_down(enemies)
-                        if self.moving_up and self.rect.top > 0:
-                            self.going_up(enemies)
+                        self.movement()
                         
                 else:
                     if self.right_punch:
-                        self.right_attack(fist)
+                        self.right_attack()
                     else:
-                        self.left_attack(fist)
+                        self.left_attack()
             else:
                 # Удар был справа
                 if self.tf.rect.centerx >= self.rect.centerx:
@@ -125,16 +112,31 @@ class MainCharacter(Sprite):
                     an.stunning_animation(self, 'left', '+')
             
         else:
-            self.death(st)
+            self.death()
         
         self.rect.centerx = self.centerx
         self.rect.centery = self.centery
+
+    def movement(self):
+        if self.moving_right and self.rect.right <\
+            self.mediator.get_value('screen_rect', 'right'):
+            self.going_right()
+                            # Если активен пробел, то начинает атаку:
+            self.initiate_punch(True, True)
+        if self.moving_left and self.rect.left > 0:
+            self.going_left()
+            self.initiate_punch(True, False)
+        if self.moving_down and self.rect.bottom <\
+            self.mediator.get_value('screen_rect', 'right'):
+            self.going_down()
+        if self.moving_up and self.rect.top > 0:
+            self.going_up()
             
 
     
 
 
-    def right_attack(self, fist: Fist):
+    def right_attack(self):
         '''Процесс атаки на правую сторону'''
         if self.attack_timer == 0:
             # Загружаем изображение
@@ -142,35 +144,37 @@ class MainCharacter(Sprite):
                         f'images/K{self.surname}Main/punching_right1.png').convert_alpha()
             self.correlate_rect_image(True)
             self.attack_timer = monotonic() # Обновление таймера
-        elif 2 * self.ats >= self.cur_time - self.attack_timer \
+        elif 2 * self.ats >= self.mediator.current_time() - self.attack_timer \
                     > self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_right2.png').convert_alpha()
             self.correlate_rect_image(True)
             # Изменение позиции кулака
-            fist.change_position(self.an_rect.right, self.rect.top + 26) 
-        elif 3 * self.ats >= self.cur_time - self.attack_timer > \
+            self.mediator.get_value('mc_fist').change_position(
+                self.an_rect.right, self.rect.top + 26) 
+        elif 3 * self.ats >= self.mediator.current_time() - self.attack_timer > \
                     2 * self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_right3.png').convert_alpha()
             self.correlate_rect_image(True)
-            fist.change_position(self.an_rect.right, self.rect.top + 35)
+            self.mediator.get_value('mc_fist').change_position(
+                self.an_rect.right, self.rect.top + 35)
             
-        elif 4 * self.ats >= self.cur_time - self.attack_timer > \
+        elif 4 * self.ats >= self.mediator.current_time() - self.attack_timer > \
                     3 * self.ats:
-            fist.change_position(-50, -50)
+            self.mediator.get_value('mc_fist').change_position(-50, -50)
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_right2.png').convert_alpha()
             self.correlate_rect_image(True)
-        elif 5 * self.ats >= self.cur_time - self.attack_timer > \
+        elif 5 * self.ats >= self.mediator.current_time() - self.attack_timer > \
                      4 * self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_right1.png').convert_alpha()
             self.correlate_rect_image(True)
-        elif self.cur_time - self.attack_timer > 5 * self.ats:
+        elif self.mediator.current_time() - self.attack_timer > 5 * self.ats:
             self.is_punching = False # Атака закончена
 
-    def left_attack(self, fist: Fist):                   
+    def left_attack(self):                   
         '''Процесс атаки на левую сторону'''
         if self.attack_timer == 0:
             self.image = pygame.image.load(
@@ -178,42 +182,44 @@ class MainCharacter(Sprite):
             self.correlate_rect_image(False)
             self.attack_timer = monotonic()
             
-        elif 2 * self.ats >= self.cur_time - self.attack_timer \
+        elif 2 * self.ats >= self.mediator.current_time() - self.attack_timer \
                     > self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_left2.png').convert_alpha()
             self.correlate_rect_image(False)
-            fist.change_position(self.an_rect.left, self.rect.top + 25) 
+            self.mediator.get_value('mc_fist').change_position(
+                self.an_rect.left, self.rect.top + 25) 
             
-        elif 3 * self.ats >= self.cur_time - self.attack_timer > \
+        elif 3 * self.ats >= self.mediator.current_time() - self.attack_timer > \
                     2 * self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_left3.png').convert_alpha()
             self.correlate_rect_image(False)
-            fist.change_position(self.an_rect.left, self.rect.top + 34)
+            self.mediator.get_value('mc_fist').change_position(
+                self.an_rect.left, self.rect.top + 34)
            
             
-        elif 4 * self.ats >= self.cur_time - self.attack_timer > \
+        elif 4 * self.ats >= self.mediator.current_time() - self.attack_timer > \
                     3 * self.ats:
-            fist.change_position(-50, -50)
+            self.mediator.get_value('mc_fist').change_position(-50, -50)
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_left2.png').convert_alpha()
             self.correlate_rect_image(False)
 
-        elif 5 * self.ats >= self.cur_time - self.attack_timer > \
+        elif 5 * self.ats >= self.mediator.current_time() - self.attack_timer > \
                      4 * self.ats:
             self.image = pygame.image.load(
                         f'images/K{self.surname}Main/punching_left1.png').convert_alpha()
             self.correlate_rect_image(False)
 
-        elif self.cur_time - self.attack_timer > 5 * self.ats:
+        elif self.mediator.current_time() - self.attack_timer > 5 * self.ats:
             self.is_punching = False
                     
     
-    def going_right(self, enemies: pygame.sprite.Group):
+    def going_right(self):
         '''Если персонаж ни с кем не столкнулся из врагов, он делает движение 
         вправо'''
-        for enemy in enemies:
+        for enemy in self.mediator.get_collection('enemies'):
             if self.rect.right in range(enemy.rect.left - 10, enemy.rect.left + 10):
                 # Если персонаж расположен намного ниже врага, то он может пройти
                 if self.rect.centery in range(
@@ -224,10 +230,10 @@ class MainCharacter(Sprite):
         self.centerx += self.speed
         an.going_right_animation(self)
 
-    def going_left(self, enemies: pygame.sprite.Group):
+    def going_left(self):
         '''Если персонаж ни с кем не столкнулся из врагов, он делает движение 
         влево'''
-        for enemy in enemies:
+        for enemy in self.mediator.get_collection('enemies'):
             if self.rect.left in range(enemy.rect.right - 10, enemy.rect.right + 10):
                 # Если персонаж расположен намного ниже врага, то он может пройти
                 if self.rect.centery in range(
@@ -237,10 +243,10 @@ class MainCharacter(Sprite):
         self.centerx -= self.speed
         an.going_left_animation(self)
 
-    def going_down(self, enemies: pygame.sprite.Group):
+    def going_down(self):
         '''Если персонаж ни с кем не столкнулся из врагов, он делает движение
         вниз'''
-        for enemy in enemies:
+        for enemy in self.mediator.get_collection('enemies'):
             if self.rect.bottom in range(enemy.rect.top - 10, enemy.rect.top + 10):
                 if self.rect.centerx in range(
                 enemy.rect.left, enemy.rect.left + enemy.rect.width):               
@@ -248,10 +254,10 @@ class MainCharacter(Sprite):
         self.centery += self.speed
         an.going_down_animation(self)
 
-    def going_up(self, enemies: pygame.sprite.Group):
+    def going_up(self):
         '''Если персонаж ни с кем не столкнулся из врагов, он делает движение
         вверх'''
-        for enemy in enemies:
+        for enemy in self.mediator.get_collection('enemies'):
             if self.rect.top in range(enemy.rect.bottom - 10, enemy.rect.bottom + 10):
                 if self.rect.centerx in range(
                 enemy.rect.left, enemy.rect.left + enemy.rect.width):                
@@ -266,18 +272,16 @@ class MainCharacter(Sprite):
             self.right_punch = right_punch
             self.attack_timer = 0
 
-    def get_damage(self, touching_fist: Fist, 
-        en_fists: pygame.sprite.Group, 
-        enemies: pygame.sprite.Group):
+    def get_damage(self, touching_fist: Fist):
         '''Активирует флаги получения урона'''
         self.tf = touching_fist
         # Если ударивший противник - Диана, то она не выносит греха 
         # нанесенного ущерба и покидает поле боя.
-        for enemy in enemies:
+        for enemy in self.mediator.get_collection('enemies'):
             if enemy.surname == 'D' and enemy.fist is self.tf:
                 enemy.health = 0
                 enemy.is_punching = False
-                en_fists.remove(self.tf)
+                self.tf.kill()
                 if self.rect.centerx > enemy.rect.centerx:
                     enemy.leaving_left = True
         self.health -= 1
@@ -287,7 +291,7 @@ class MainCharacter(Sprite):
         self.invin_timer = monotonic()
         
 
-    def death(self, st: Stats):
+    def death(self):
         ''' "Анимация" смерти, смена состояния игры'''
         if hasattr(self, 'tf'):
             if self.tf.rect.centerx >= self.rect.centerx:
@@ -306,10 +310,10 @@ class MainCharacter(Sprite):
         pygame.display.flip()
         self.timer = monotonic()
         # Остановка всех звуков
-        for name in self.audio.sounds.keys():
-            self.audio.sounds[name].stop()
+        for name in self.mediator.get_value('audio', 'sounds').keys():
+            self.mediator.get_value('audio', 'sounds')[name].stop()
         self.font = pygame.font.SysFont('tahoma', 48)
-        st.state = st.GAMEOVER 
+        self.mediator.set_value('st', 'state', 'st.GAMEOVER') 
 
     
     def correlate_rect_image(self, side: bool):

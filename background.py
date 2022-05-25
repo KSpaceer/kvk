@@ -1,5 +1,7 @@
 import pygame
 
+from mediator import Mediator
+
 
 
 class Background:
@@ -7,14 +9,14 @@ class Background:
 
     PASTER_EGG_ACTIVE = False
     
-    def __init__(self, screen: pygame.Surface) -> None:
-        self.screen = screen
+    def __init__(self, mediator: Mediator) -> None:
+        self.mediator = mediator
         self.image = pygame.image.load('images/backgrounds/intro.png').convert()
         
-
+    
     def blitme(self) -> None:
         '''Прорисовка заднего фона'''
-        self.screen.blit(self.image, (0, 0))
+        self.mediator.blit_surface(self.image, (0, 0))
 
     def change(self, name: str) -> None:
         '''Смена заднего фона'''
@@ -23,4 +25,5 @@ class Background:
         else:
             self.image = pygame.image.load('images/backgrounds/sans.png').convert()
         
-        
+    
+     

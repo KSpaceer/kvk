@@ -12,39 +12,44 @@ import game_functions as gf
 from stats import Stats
 from Tarzan import Tarzan
 from audiosounds import Audio
+from mediator import Mediator
 
 
 def run_game():
     # Инициализация pygame, settings, статистики и дисплея
     pygame.init()
+    mediator = Mediator()
     ai_settings = Settings()
     screen = pygame.display.set_mode((ai_settings.screen_width, 
                         ai_settings.screen_height))
     from background import Background
     # Задний фон
-    bg = Background(screen)
+    bg = Background(mediator)
     # Звуки
-    audio = Audio(ai_settings)
+    audio = Audio(mediator)
     gr.set_caption_and_icon()
     # Счетчик времени
     timer = Timer(monotonic())
     # Текущее время
     cur_time = Timer(monotonic())
     # Создание главного персонажа
-    mc = MainCharacter(screen, ai_settings, cur_time, audio)
-    st = Stats(bg, audio, ai_settings.max_level)
+    mc = MainCharacter(mediator)
+    st = Stats(mediator)
     # Создание врагов
     enemies = Group()
     # Ударная поверхность главного персонажа
-    mc_fist = Fist(screen)
+    mc_fist = Fist(mediator)
     # Группа ударных поверхностей врагов
     en_fists = Group()
     # Объект для заставки
-    tarzan = Tarzan(screen, ai_settings, bg)
+    tarzan = Tarzan(mediator)
     # Кнопки
     buttons = []
     # Иконки меню выбора персонажа
     selecticons = []
+    # Добавляем ссылки на все объекты в посредника
+    mediator.add(ai_settings, screen, bg, audio, timer, cur_time, 
+        mc, st, enemies, mc_fist, en_fists, tarzan, buttons)
     # Отслеживание текущей вертикальной позиции заднего фона (для титров)
     cur_y = 0
     

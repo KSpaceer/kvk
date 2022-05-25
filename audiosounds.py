@@ -1,6 +1,7 @@
 
 from os import listdir
 import pygame.mixer as mix
+from mediator import Mediator
 from settings import Settings
 
 
@@ -11,9 +12,9 @@ class Audio:
     
     PASTER_EGG_ACTIVE = False
     
-    def __init__(self, ai_settings: Settings) -> None:
+    def __init__(self, mediator: Mediator) -> None:
         self.__current_music: str = ''
-        self.ai_settings = ai_settings
+        self.mediator = mediator
         self.current_music = 'mainmenu'
         self.sounds: dict[str, mix.Sound] = {}
 
@@ -30,7 +31,8 @@ class Audio:
                 self.__current_music = value
         else:
             mix.music.load('audio/savemode.mp3')
-        mix.music.set_volume(self.ai_settings.music_volume/10)
+        mix.music.set_volume(self.mediator.get_value(
+            'ai_settings', 'music_volume')/10)
         mix.music.play(-1)
 
     @current_music.deleter
@@ -47,7 +49,8 @@ class Audio:
             (filter(lambda x : str(x).startswith(name), 
             self.list_of_soundfiles)))
         self.sounds[name] = mix.Sound('audio/sounds/' + filename)
-        self.sounds[name].set_volume(self.ai_settings.sound_volume/10)
+        self.sounds[name].set_volume(self.mediator.get_value(
+            'ai_settings', 'music_volume')/10)
         self.sounds[name].play(loops)
 
 
