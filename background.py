@@ -24,6 +24,8 @@ class Background:
             self.image = pygame.image.load('images/backgrounds/' + name + '.png').convert()
         else:
             self.image = pygame.image.load('images/backgrounds/sans.png').convert()
+
+    
         
     
      

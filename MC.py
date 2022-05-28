@@ -105,7 +105,7 @@ class MainCharacter(Sprite):
                         self.left_attack()
             else:
                 # Удар был справа
-                if self.tf.rect.centerx >= self.rect.centerx:
+                if self.damaged_from_right:
                     an.stunning_animation(self, 'right', '-')
                 # Удар был слева
                 else:
@@ -274,14 +274,15 @@ class MainCharacter(Sprite):
 
     def get_damage(self, touching_fist: Fist):
         '''Активирует флаги получения урона'''
-        self.tf = touching_fist
+        tf = touching_fist
+        self.damaged_from_right = tf.rect.centerx >= self.rect.centerx
         # Если ударивший противник - Диана, то она не выносит греха 
         # нанесенного ущерба и покидает поле боя.
         for enemy in self.mediator.get_collection('enemies'):
-            if enemy.surname == 'D' and enemy.fist is self.tf:
+            if enemy.surname == 'D' and enemy.fist is tf:
                 enemy.health = 0
                 enemy.is_punching = False
-                self.tf.kill()
+                tf.kill()
                 if self.rect.centerx > enemy.rect.centerx:
                     enemy.leaving_left = True
         self.health -= 1
@@ -293,8 +294,8 @@ class MainCharacter(Sprite):
 
     def death(self):
         ''' "Анимация" смерти, смена состояния игры'''
-        if hasattr(self, 'tf'):
-            if self.tf.rect.centerx >= self.rect.centerx:
+        if hasattr(self, 'damaged_from_right'):
+            if self.damaged_from_right:
                 self.death_side = 'right'
             else:
                 self.death_side = 'left'

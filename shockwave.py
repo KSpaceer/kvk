@@ -16,7 +16,7 @@ class Shockwave(Sprite):
     
     def __init__(self, screen: pygame.Surface, cur_time: Timer, 
         ai_settings: Settings, to_right: bool = True, 
-        *, en_fist: Fist = None, boss = None) -> None:
+        *, called_by_boss: bool = False) -> None:
         '''Инициализация ударной волны'''
         super().__init__()
         self.ai_settings = ai_settings

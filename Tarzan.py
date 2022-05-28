@@ -1,39 +1,39 @@
 
 import pygame
 from background import Background
+from mediator import Mediator
 
 from settings import Settings
 
 class Tarzan():
     '''Для заставки'''
 
-    def __init__(self, screen: pygame.Surface, 
-        ai_settings: Settings, bg: Background) -> None:
+    def __init__(self, mediator: Mediator) -> None:
         '''Инициализирует параметры основные'''
         self.image = pygame.image.load('images/Tarzan.png').convert_alpha()
         self.rect = self.image.get_rect()
-        self.screen = screen
-        self.screen_rect = screen.get_rect()
-        self.rect.center = self.screen_rect.center
-        self.ai_settings = ai_settings
+        self.mediator = mediator
+        self.rect.center = self.mediator.get_value('screen_rect', 'center')
         self.direction = False
-        self.bg = bg
+        
 
     def update_intro(self):
         '''Обновляет заставку'''
-        self.bg.blitme()
+        self.mediator.call_method('bg', 'blitme')
         if not self.direction:
-            if self.rect.centery != self.screen_rect.centery - 25:
+            if self.rect.centery != self.mediator.get_value(
+                'screen_rect', 'centery') - 25:
                 self.rect.centery -= 1
             else:
                 self.direction = True
         else:
-            if self.rect.centery != self.screen_rect.centery + 25:
+            if self.rect.centery != self.mediator.get_value(
+                'screen_rect', 'center') + 25:
                 self.rect.centery += 1
             else:
                 self.direction = False
             
-        self.screen.blit(self.image, self.rect)
+        self.mediator.blit_surface(self.image, self.rect)
         pygame.display.flip()
 
     
