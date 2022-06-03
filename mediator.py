@@ -35,9 +35,10 @@ class Mediator():
             is not None else eval('self._' + obj_name)
         return value_to_return
 
-    def set_value(self, obj_name: str, value_name: str, new_value):
+    def set_value(self, obj_name: str, value_name: str, new_value_name: str):
         '''Позволяет изменить некоторое значение в объекте из посредника'''
-        exec(f'self._{obj_name}.{value_name} = {new_value}')
+        exec(f'self._{obj_name}.{value_name} = {new_value_name}')
+        
 
     def extend_collection(self, collection_name: str, *new_elements):
         '''Позволяет добавить новые элементы в коллекцию'''
@@ -59,3 +60,8 @@ class Mediator():
     def current_time(self):
         '''Возвращает текущее время игры'''
         return self._cur_time.time
+
+    def call_method(self, obj_name: str, method_name: str, *args_names: str):
+        '''Вызывает метод объекта с заданными аргументами'''
+        args = ','.join(args_names)
+        exec(f'self._{obj_name}.{method_name}({args})')

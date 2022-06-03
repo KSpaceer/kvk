@@ -43,11 +43,10 @@ class BossHealth:
         self.bar_image = pygame.image.load('images/boss_health.png').convert_alpha()
         self.rect = self.bar_image.get_rect()
         self.boss = boss
-        self.screen = boss.screen
-        self.screen_rect = boss.screen_rect
-        self.rect.centerx = self.screen_rect.centerx
-        self.rect.bottom = self.screen_rect.bottom
-        self.boss_full_health = boss.ai_settings.boss_health
+        self.mediator = boss.mediator
+        self.rect.centerx = self.mediator.get_value('screen_rect', 'centerx')
+        self.rect.bottom = self.mediator.get_value('screen_rect', 'bottom')
+        self.boss_full_health = self.mediator.get_value('ai_settings', 'boss_health')
 
     def blitme(self):
         '''Отображение здоровья босса на экране'''
@@ -56,9 +55,9 @@ class BossHealth:
         # светло-зеленый цвет
         health_to_draw.fill((22, 250, 45))
         # Полоса здоровья по середине отображающего элемента, за рамкой
-        self.screen.blit(
+        self.mediator.blit_surface(
             health_to_draw, (self.rect.left + 19, self.rect.top + 54))
         # Прорисовка рамки
-        self.screen.blit(self.bar_image, self.rect)
+        self.mediator.blit_surface(self.bar_image, self.rect)
 
 

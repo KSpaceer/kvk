@@ -1,6 +1,7 @@
 
 
 import pygame
+from mediator import Mediator
 from settings import Settings
 
 
@@ -16,22 +17,20 @@ class Option:
     number_to_name = {MUSIC_VOLUME : 'music_volume',
                       SOUND_VOLUME : 'sound_volume'}
     
-    def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
+    def __init__(self, mediator: Mediator, 
         name_number: int) -> None:
-            self.screen = screen
-            self.screen_rect = screen.get_rect()
-            self.ai_settings = ai_settings
+            self.mediator = mediator
             self.name_number = name_number
             self.image = pygame.image.load('images/buttons/' +
                 f'{Option.number_to_name[self.name_number]}.png').convert_alpha()
             self.rect = self.image.get_rect()
             # Опции находятся по середине экрана
-            self.rect.centerx = self.screen_rect.centerx
+            self.rect.centerx = self.mediator.get_value('screen_rect', 'centerx')
             self.__is_chosen = False
 
     def blitme(self):
         '''Отображение изображения опции на экране'''
-        self.screen.blit(self.image, self.rect)
+        self.mediator.blit_surface(self.image, self.rect)
         current_value = eval('int(self.ai_settings.' +
             f'{self.number_to_name[self.name_number]})')
         # Рисуем апельсинки-указатели величины
@@ -44,7 +43,7 @@ class Option:
             else:
                 orange_image = pygame.image.load('images/buttons/' +
                     'inactive_orange.png')
-            self.screen.blit(orange_image, orange_rect)
+            self.mediator.blit_surface(orange_image, orange_rect)
 
     def vary_parameter(self, is_plus: bool):
         '''Изменяет параметр текущей опции'''

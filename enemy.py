@@ -303,7 +303,7 @@ class Enemy(Sprite):
             f'{self.name}/launching_{file_end_name}.png').convert_alpha()
             self.change_rect()
             from shuriken import Shuriken
-            new_shuriken = Shuriken(self.mediator)
+            new_shuriken = Shuriken(self.mediator, self, self.right_punch)
             self.mediator.extend_collection(new_shuriken)
             self.mediator.call_method(
                 'audio', 'play_sound', '"launch_shuriken"')
@@ -385,7 +385,7 @@ class Enemy(Sprite):
             and i == round(self.frames/2):
             # Вызывает ударную волну, если такое предусмотрено типом врага
             self.mediator.call_method('audio', 'play_sound', '"launch_shockwave"')
-            new_shockwave = Shockwave(self.mediator, self.right_punch)
+            new_shockwave = Shockwave(self.mediator, self.right_punch, en_fist=self.fist)
             self.mediator.extend_collection('en_fists', new_shockwave)
             self.shockwave_active = True
 

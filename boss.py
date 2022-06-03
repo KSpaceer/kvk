@@ -11,25 +11,28 @@ from enemy import Enemy
 from etimer import Timer
 from fist import Fist
 from MC import MainCharacter
+from mediator import Mediator
 from settings import Settings
 from stats import Stats
+from audiosounds import Audio
 
 
 
 class Boss(Enemy):
     '''Пятый тип врагов - босс'''
 
-    def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
-        mc: MainCharacter, st: Stats, timer: Timer, cur_time: Timer):
-        super().__init__(screen, ai_settings, mc, st, timer, cur_time)
+    def __init__(self, mediator: Mediator):
+        super().__init__(mediator)
+        self.mediator = mediator
         # Повышение скорости главного персонажа
-        self.mc.speed *= 2
+        new_mc_speed = self.mediator.get_value('mc', 'speed') * 2
+        self.mediator.set_value('mc', 'speed', f'{new_mc_speed}')
         # Скорость босса
-        self.speed = ai_settings.boss_speed_factor
+        self.speed = self.mediator.get_value('ai_settings', 'boss_speed_factor')
         # Инициализация имени для подстановки в файлы и имена переменных
         self.name = 'boss'
         # Инициализация здоровья и панели здоровья
-        self.health = ai_settings.boss_health
+        self.health = self.mediator.get_value('ai_settings', 'boss_health')
         from graphic import BossHealth
         self.healthbar = BossHealth(self)
         # Загрузка изображения
@@ -44,9 +47,10 @@ class Boss(Enemy):
         self.centerx = float(self.rect.centerx)
         self.centery = float(self.rect.centery)
         # Сохраняем скорость атаки и время перезарядки из настроек
-        self.ats = ai_settings.boss_attack_speed
-        self.cooldown = ai_settings.boss_cooldown
-        self.ultimate_cooldown = ai_settings.boss_ultimate_cooldown
+        self.ats = self.mediator.get_value('ai_settings', 'boss_attack_speed')
+        self.cooldown = self.mediator.get_value('ai_settings', 'boss_cooldown')
+        self.ultimate_cooldown = self.mediator.get_value(
+            'ai_settings', 'boss_ultimate_cooldown')
         # Флаг неуязвимости (босса нельзя оглушить, поэтому он получает неуязвимость на время)
         # Т.к. он может делать другие действия во время неуязвимости, 
         # использовать обычный таймер (Enemy.timer) нельзя - он используется
@@ -76,18 +80,20 @@ class Boss(Enemy):
         # Определяем количество кадров для различных атак
         self.define_attack_frames()
         # Запуск музыки
-        st.audio.current_music = f'boss{self.surname}'
+        self.mediator.set_value('audio', 'current_music', f'boss{self.surname}')
         Stats.state_to_audio[Stats.GAMEACTIVE] = f'boss{self.surname}'
 
     def __del__(self):
-        if 'spinning' in self.audio.sounds.keys():
-            self.audio.sounds.pop('spinning')
-        self.mc.speed /= 2
+        audio: Audio = self.mediator.get_value('audio')
+        if 'spinning' in audio.sounds.keys():
+            audio.sounds.pop('spinning')
+        new_mc_speed = self.mediator.get_value('mc', 'speed')
+        self.mediator.set_value('mc', 'speed', f'{new_mc_speed}')
         return super().__del__()
     
     def spawning_point(self):
         '''Определяет начальное положение врага'''
-        self.rect.centerx = self.screen_rect.centerx
+        self.rect.centerx = self.mediator.get_value('screen_rect', 'centerx')
         self.rect.centery = -int(self.rect.width/2)
         self.change_rect()
 
@@ -104,16 +110,16 @@ class Boss(Enemy):
         '''Декоратор для прорисовки лавы во время смерти'''
         def wrapper(self, *args, **kwargs):
             if self.is_dead:
-                self.screen.blit(self.backlava, self.bl_rect)
+                self.mediator.blit_surface(self.backlava, self.bl_rect)
             method(self, *args, **kwargs)
             if self.is_dead:
-                self.screen.blit(self.frontlava, self.fl_rect)
+                self.mediator.blit_surface(self.frontlava, self.fl_rect)
         return wrapper
     
     @lava_blit_decorator.__func__
     def blitme(self):
         '''Рисует врага в текущей позиции'''
-        self.screen.blit(self.image, self.an_rect)
+        self.mediator.blit_surface(self.image, self.an_rect)
         self.additional_draw()
 
     def change_rect(self):
@@ -124,35 +130,35 @@ class Boss(Enemy):
         self.an_rect.bottom = self.rect.bottom
         self.an_rect.centerx = self.rect.centerx
 
-    def update(self, fist: Fist, enemies: pygame.sprite.Group, 
-        en_fists: pygame.sprite.Group):
+    def update(self):
         '''Обновление состояния врага(перемещение, атаки или смерть)'''
         # Если враг жив
         if self.health > 0:
-            self.damage_invin_processing(fist)
+            self.damage_invin_processing()
             if not self.is_punching:
+                screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
                 # Функция движения находится в условии, т.к. если
-                # босс на нужном месте, то должна проигрываться какая-то анимация
+                # босс на нужном месте, то должна проигрываться какая-то анимация;
                 # в данном случае это анимация вертикального движения.
-                if self.movement(self.screen_rect.centerx, 
-                    self.screen_rect.centery):
+                if self.movement(screen_rect.centerx, 
+                    screen_rect.centery):
                     an.going_vertical_animation(self)
                 
                 # Если нет перезарядки, применяет ультимативную атаку
-                if self.cur_time - self.ultimate_cooldown_timer \
+                if self.mediator.current_time() - self.ultimate_cooldown_timer \
                     >= self.ultimate_cooldown:
                     self.initiate_ultimate()
                     return
                 # Если нет перезарядки, применяет обычную атаку
-                elif self.cur_time - self.cooldown_timer >= \
+                elif self.mediator.current_time() - self.cooldown_timer >= \
                     self.cooldown:
                     self.initiate_common_attack()
                     return
             else:
                 if self.using_ultimate:
-                    self.ultimate(en_fists)
+                    self.ultimate()
                 else:
-                    self.common_attack(en_fists)
+                    self.common_attack()
         else:    
             self.death_animation()
         self.blitme()
@@ -193,23 +199,25 @@ class Boss(Enemy):
     
     
     @zubkov_third_ultimate_decorator.__func__
-    def damage_invin_processing(self, fist: Fist):
+    def damage_invin_processing(self):
         '''Обработка получения урона и неуязвимости'''
         # Если босс не неуязвим и в него попал кулак главного персонажа, он получает урон
-        if not self.is_invincible and self.rect.colliderect(fist.rect):
+        mc_fist: Fist = self.mediator.get_value('mc_fist')
+        if not self.is_invincible and self.rect.colliderect(mc_fist.rect):
             self.get_damage()
         # Если босс неуязвим и уже прошло время его неуязвимости, он ее теряет
-        elif self.is_invincible and self.cur_time - self.invin_timer \
-                >= self.ai_settings.boss_invincibility_duration:
+        elif self.is_invincible and self.mediator.current_time() - self.invin_timer \
+                >= self.mediator.get_value(
+                'ai_settings', 'boss_invincibility_duration'):
                     self.is_invincible = False
                 
 
 
     def get_damage(self):
         '''Получение урона'''
-        self.health -= self.ai_settings.mc_damage
+        self.health -= self.mediator.get_value('ai_settings', 'mc_damage')
         self.is_invincible = True
-        self.audio.play_sound('punch')
+        self.mediator.call_method('audio', 'play_sound', '"punch"')
         self.invin_timer = monotonic()
 
     def check_position(self, x: int, y: int) -> tuple[bool, bool]:
@@ -252,27 +260,27 @@ class Boss(Enemy):
         self.is_punching = True
         self.common_attack_number = randint(0, 1)
 
-    def ultimate(self, en_fists):
+    def ultimate(self):
         '''Применение ультимативной атаки'''
         if self.ultimate_number == 0:
             # Призывает врагов
-            self.summon_enemies(en_fists)
+            self.summon_enemies()
         elif self.ultimate_number == 1:
             if self.surname == 'S':
                 #Запуск молний
-                self.launch_lightnings(en_fists)
+                self.launch_lightnings()
             else:
                 # Запуск копий
-                self.launch_spears(en_fists)
+                self.launch_spears()
         else:
             if self.surname == 'S':
                 # Добежать от босса через лезвия
-                self.blade_runner(en_fists)
+                self.blade_runner()
             else:
                 # Убежать от босса через пилы
-                self.saw_runner(en_fists)
+                self.saw_runner()
 
-    def common_attack(self, en_fists: pygame.sprite.Group):
+    def common_attack(self):
         '''Применение обычной атаки'''
         # Не перепутать: тут сначала идет номер 1, потом номер 0
         if self.common_attack_number:
@@ -281,21 +289,21 @@ class Boss(Enemy):
                 self.pulling_spin()
             else:
                 # Залп ударных волн
-                self.shockwave_barrage(en_fists)
+                self.shockwave_barrage()
         else:
             if self.surname == 'S':
                 # Преследующее торнадо
                 self.chasing_tornado()
             else:
                 # Создание трещины
-                self.create_crack(en_fists)
+                self.create_crack()
 
     def pulling_spin(self):
         '''Атака, при которой босс вращается и притягивает главного персонажа'''
         if not self.in_position:
             self.in_position = True
             self.timer = monotonic()
-            self.audio.play_sound('spinning', -1)
+            self.mediator.call_method('audio', 'play_method', '"spinning"', '-1')
             # Во время атаки таймер перезарядки используется
             # как таймер для отсчета начала нанесения урона и притяжения,
             # а также конца применения атаки
@@ -303,32 +311,35 @@ class Boss(Enemy):
             self.frame_cycler = cycle(
                 [i for i in range(self.common_attack_frames)])
         self.spinning_animation()
-        if self.cur_time - self.cooldown_timer >= 1.5:
+        if self.mediator.current_time() - self.cooldown_timer >= 1.5:
+            mc: MainCharacter = self.mediator.get_value('mc')
             # Притяжение персонажа
-            if not self.mc.rect.colliderect(self.an_rect):
-                self.pulling_mc()
-            elif not self.mc.invincible:
-                self.deal_nonstunning_damage()
-        if self.cur_time - self.cooldown_timer >= 4.5:
+            if not mc.rect.colliderect(self.an_rect):
+                self.pulling_mc(mc)
+            elif not mc.invincible:
+                self.deal_nonstunning_damage(mc)
+        if self.mediator.current_time() - self.cooldown_timer >= 4.5:
             self.finish_common_attack()
 
-    def pulling_mc(self):
+    def pulling_mc(self, mc: MainCharacter):
         '''Притяжение главного персонажа'''
-        if self.mc.centerx < self.rect.centerx:
-            self.mc.centerx += self.ai_settings.mc_speed_factor/2
+        pulling_speed = self.mediator.get_value(
+            'ai_settings', 'mc_speed_factor')/2
+        if mc.centerx < self.rect.centerx:
+            mc.centerx += pulling_speed
         else:
-            self.mc.centerx -= self.ai_settings.mc_speed_factor/2
-        if self.mc.centery < self.rect.centery:
-            self.mc.centery += self.ai_settings.mc_speed_factor/2
+            mc.centerx -= pulling_speed
+        if mc.centery < self.rect.centery:
+            mc.centery += pulling_speed
         else:
-            self.mc.centery -= self.ai_settings.mc_speed_factor/2
+            mc.centery -= pulling_speed
 
     def chasing_tornado(self):
         '''Атака, при которой босс вращается и идет за главным персонажем'''
         if not self.in_position:
             self.in_position = True
             self.timer = monotonic()
-            self.audio.play_sound('spinning', -1)
+            self.mediator.call_method('audio', 'play_sound', '"spinning"', '-1')
             # Таймер перезарядки используется как таймер начала
             # преследования и нанесения урона
             self.cooldown_timer = monotonic()
@@ -336,22 +347,23 @@ class Boss(Enemy):
                 [i for i in range(self.common_attack_frames)])
             self.speed /= 1.5
         self.spinning_animation()
-        if self.cur_time - self.cooldown_timer >= 1.5:
-            if not self.mc.rect.colliderect(self.an_rect):
-                self.chasing_mc()
-            elif not self.mc.invincible:
-                self.deal_nonstunning_damage()
-        if self.cur_time - self.cooldown_timer >= 5:
+        if self.mediator.current_time() - self.cooldown_timer >= 1.5:
+            mc: MainCharacter = self.mediator.get_value('mc')
+            if not mc.rect.colliderect(self.an_rect):
+                self.chasing_mc(mc)
+            elif not mc.invincible:
+                self.deal_nonstunning_damage(mc)
+        if self.mediator.current_time() - self.cooldown_timer >= 5:
             self.speed *= 1.5
             self.finish_common_attack()
 
-    def chasing_mc(self):
+    def chasing_mc(self, mc: MainCharacter):
         '''Преследование главного персонажа'''
-        if self.rect.centerx < self.mc.rect.centerx:
+        if self.rect.centerx < mc.rect.centerx:
             self.centerx += self.speed
         else:
             self.centerx -= self.speed
-        if self.rect.centery < self.mc.rect.centery:
+        if self.rect.centery < mc.rect.centery:
             self.centery += self.speed
         else:
             self.centery -= self.speed
@@ -359,20 +371,20 @@ class Boss(Enemy):
         self.rect.centery = int(self.centery)
         self.change_rect()
 
-    def deal_nonstunning_damage(self):
+    def deal_nonstunning_damage(self, mc: MainCharacter):
         '''Наносит главному персонажу урон, не оглушая его'''
-        self.mc.health -= 1
-        self.mc.invincible = True
-        self.mc.invin_timer = monotonic()
-        self.mc.attack_timer = 0
+        mc.health -= 1
+        mc.invincible = True
+        mc.invin_timer = monotonic()
+        mc.attack_timer = 0
     
     
-    def shockwave_barrage(self, en_fists: pygame.sprite.Group):
+    def shockwave_barrage(self):
         '''Атака с вращением и вызовом ударных волн'''
         if not self.in_position:
             self.in_position = True
             self.timer = monotonic()
-            self.audio.play_sound('spinning', -1)
+            self.mediator.call_method('audio', 'play_sound', '"spinning"', '-1')
             # Во время атаки таймер перезарядки используется
             # как таймер прекращения атаки
             self.cooldown_timer = monotonic()
@@ -381,23 +393,24 @@ class Boss(Enemy):
             self.frame_cycler = cycle(
                 [i for i in range(self.common_attack_frames)])
         self.spinning_animation()
-        if self.cur_time - self.launch_cooldown_timer >= 1:
-            self.launch_shockwaves(en_fists)
-        if self.cur_time - self.cooldown_timer >= 5.5:
+        if self.mediator.current_time() - self.launch_cooldown_timer >= 1:
+            self.launch_shockwaves()
+        if self.mediator.current_time() - self.cooldown_timer >= 5.5:
             self.finish_common_attack()
 
-    def launch_shockwaves(self, en_fists):
+    def launch_shockwaves(self):
         '''Запуск ударных волн во время вращения'''
         from shockwave import Shockwave
         for i in range(2):
             for j in range(3):
-                self.audio.play_sound('launch_shockwave')
-                new_shockwave = Shockwave(self.screen, self.cur_time, 
-                            self.ai_settings, True if i else False, boss=self)
-                en_fists.add(new_shockwave)
+                self.mediator.call_method(
+                    'audio', 'play_sound', '"launch_shockwave"')
+                new_shockwave = Shockwave(
+                    self.mediator, True if i else False, boss=self)
+                self.mediator.extend_collection('en_fists', new_shockwave)
         self.launch_cooldown_timer = monotonic()
 
-    def create_crack(self, en_fists: pygame.sprite.Group):
+    def create_crack(self):
         '''Атака, создающая разлом'''
         if not self.position_is_chosen:
             self.choose_cracking_point()
@@ -408,29 +421,30 @@ class Boss(Enemy):
             self.cracking_animation()
             # Поскольку босса нельзя оглушить, флаг оглушения здесь используется
                 # как флаг создания разлома
-            if not self.is_stunned and (self.cur_time - self.timer 
+            if not self.is_stunned and (self.mediator.current_time() - self.timer 
                 >= 5/2 * self.ats):
-                self.new_crack_creation(en_fists)
-            if self.cur_time - self.timer >= 4 * self.ats:
+                self.new_crack_creation()
+            if self.mediator.current_time() - self.timer >= 4 * self.ats:
                 self.is_stunned = False
                 self.finish_common_attack()
 
-    def new_crack_creation(self, en_fists):
+    def new_crack_creation(self):
         '''Создание нового разлома'''
         from boss_projectiles import Crack
-        self.audio.play_sound('launch_shockwave')
+
+        self.mediator.call_method('audio', 'play_sound', '"launch_shockwave"')
         crack_y = self.an_rect.top + 89
         x_addition = 257 if self.right_punch else 13
         crack_x = self.an_rect.left + x_addition
-        new_crack = Crack(crack_x, crack_y, 
-                    self.screen, self.cur_time)
-        en_fists.add(new_crack)
+        new_crack = Crack(crack_x, crack_y, self.mediator)
+        self.mediator.extend_collection('en_fists', new_crack)
         self.is_stunned = True
 
     def cracking_animation(self):
         '''Анимация вызова разлома'''
         for i in range(6):
-            if (i + 1)/2 * self.ats > self.cur_time - self.timer >= i/2 * self.ats:
+            if (i + 1)/2 * self.ats > self.mediator.current_time()\
+                - self.timer >= i/2 * self.ats:
                 if i != 5:
                     self.image = pygame.image.load(
                             f'images/K{self.surname}Enemies/' +
@@ -444,42 +458,44 @@ class Boss(Enemy):
 
     def choose_cracking_point(self):
         '''Выбирает точку для вызова разлома'''
-        if self.rect.centerx < self.mc.rect.centerx:
+        mc_rect: pygame.Rect = self.mediator.get_value('mc', 'rect')
+        if self.rect.centerx < mc_rect.centerx:
             self.right_punch = True
-            self.define_position(self.mc.rect.centerx - 135, 
-                    self.mc.rect.centery - 37)
+            self.define_position(mc_rect.centerx - 135, 
+                    mc_rect.centery - 37)
         else:
             self.right_punch = False
-            self.define_position(self.mc.rect.centerx + 135, 
-                    self.mc.rect.centery - 37)
+            self.define_position(mc_rect.centerx + 135, 
+                    mc_rect.centery - 37)
                         
     def spinning_animation(self):
         '''Анимация вращения босса во время обычной атаки'''
-        if self.ats/2 >= self.cur_time - self.timer:
+        if self.ats/2 >= self.mediator.current_time() - self.timer:
             self.image = pygame.image.load(f'images/K{self.surname}Enemies/' +
                 f'boss/spinning{self.frame_cycler.__next__() + 1}.png').convert_alpha()
             self.change_rect()
             self.timer = monotonic()
         
-    def summon_enemies(self, en_fists: pygame.sprite.Group):
+    def summon_enemies(self):
         '''Призывает врагов'''
         if not self.in_position:
             # Призыв может начаться в любой позиции
             self.timer = monotonic()
             self.in_position = True
         self.ultimate_animation('summon')
-        if self.cur_time - self.timer >= 6 * self.ats:
+        if self.mediator.current_time() - self.timer >= 6 * self.ats:
             from boss_projectiles import SummoningCircle
             summoning_circle1 = SummoningCircle(self, True)
             summoning_circle2 = SummoningCircle(self, False)
-            en_fists.add(summoning_circle1, summoning_circle2)
+            self.mediator.extend_collection(
+                'en_fists', summoning_circle1, summoning_circle2)
             self.finish_ultimate()
 
-    def launch_lightnings(self, en_fists: pygame.sprite.Group):
+    def launch_lightnings(self):
         '''Запуск шаровых молний'''
         if not self.position_is_chosen:
-            self.define_position(self.screen_rect.centerx, 
-                self.screen_rect.centery)
+            screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
+            self.define_position(screen_rect.centerx, screen_rect.centery)
         if self.movement(self.positionx, self.positiony):
             if not self.in_position:
                 self.timer = monotonic()
@@ -488,22 +504,23 @@ class Boss(Enemy):
                 self.delay = 0.25
                 self.launch_cooldown_timer = monotonic() + 6 * self.ats
             self.ultimate_animation('lightning')
-            if self.cur_time - self.launch_cooldown_timer >= 0:
+            if self.mediator.current_time() - self.launch_cooldown_timer >= 0:
                 from boss_projectiles import BallLightning
                 new_ball_lightning = BallLightning(self)
-                en_fists.add(new_ball_lightning)
+                self.mediator.extend_collection('en_fists', new_ball_lightning)
                 self.launch_cooldown_timer += self.delay
             # Выпуск молний продолжается пять секунд
-            if self.cur_time - self.timer >= 6 * self.ats + 5:
+            if self.mediator.current_time() - self.timer >= 6 * self.ats + 5:
                 self.finish_ultimate()
 
     
 
-    def launch_spears(self, en_fists: pygame.sprite.Group):
+    def launch_spears(self):
         '''Запуск копий'''
         if not self.position_is_chosen:
-            self.define_position(self.screen_rect.centerx, 
-                self.screen_rect.centery)
+            screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
+            self.define_position(screen_rect.centerx, 
+                screen_rect.centery)
         if self.movement(self.positionx, self.positiony):
             if not self.in_position:
                 self.timer = monotonic()
@@ -512,20 +529,21 @@ class Boss(Enemy):
                 self.delay = 0.33
                 self.launch_cooldown_timer = monotonic() + 6 * self.ats
             self.ultimate_animation('spears')
-            if self.cur_time - self.launch_cooldown_timer >= 0:
+            if self.mediator.current_time() - self.launch_cooldown_timer >= 0:
                 from boss_projectiles import SpearTip
                 new_spear_tip = SpearTip(self)
-                en_fists.add(new_spear_tip)
+                self.mediator.extend_collection('en_fists', new_spear_tip)
                 self.launch_cooldown_timer += self.delay
             # Запуск копьев продолжается пять секунд
-            if self.cur_time - self.timer >= 6 * self.ats + 5:
+            if self.mediator.current_time() - self.timer >= 6 * self.ats + 5:
                 self.finish_ultimate()
 
-    def blade_runner(self, en_fists: pygame.sprite.Group):
+    def blade_runner(self):
         '''Забег с лезвиями'''
         if not self.position_is_chosen:
             x = self.define_direction()
-            self.define_position(x, self.screen_rect.centery)
+            self.define_position(x, self.mediator.get_value(
+                'screen_rect', 'centery'))
         if self.movement(self.positionx, self.positiony, 2):
             if not self.in_position:
                 self.timer = monotonic()
@@ -539,21 +557,22 @@ class Boss(Enemy):
             self.ultimate_animation('blades', 2, True)
             # Условие построено так, что персонажа переносит только после того,
             # как анимация босса проигралась
-            if self.cur_time - self.launch_cooldown_timer >= 0 \
+            if self.mediator.current_time() - self.launch_cooldown_timer >= 0 \
                 and self.moving_mc():
                 from boss_projectiles import Blade
                 for n in range(3):
                     new_blade = Blade(self)
-                    en_fists.add(new_blade)
+                    self.mediator.extend_collection('en_fists', new_blade)
                 self.launch_cooldown_timer += self.delay
             if self.health != self.ultimate_starting_health:
                 self.finish_ultimate()
 
-    def saw_runner(self, en_fists: pygame.sprite.Group):
+    def saw_runner(self):
         '''Забег с пилами'''
         if not self.position_is_chosen:
             x = self.define_direction(-1)
-            self.define_position(x, self.screen_rect.centery)
+            self.define_position(x, self.mediator.get_value(
+                'screen_rect', 'centery'))
         if self.movement(self.positionx, self.positiony, 2):
             if not self.in_position:
                 self.timer = monotonic()
@@ -563,22 +582,24 @@ class Boss(Enemy):
             self.ultimate_animation('maze', 2)
             # После конца времени персонаж перемещается. Когда персонаж
             # переместился, призываются пилы и цель, которую нужно достичь
-            if self.cur_time - self.timer >= 3 * self.ats and self.moving_mc():
+            mc_rect: pygame.Rect = self.mediator.get_value('mc', 'rect')
+            if self.mediator.current_time() - self.timer\
+                >= 3 * self.ats and self.moving_mc():
                 # Призыв пил происходит единожды, также инициализируется цель
                 if not self.summoned_saws:
                     from boss_projectiles import Saw
                     self.summoned_saws = True
-                    self.create_target_surface()
-                    saw_amount = randint(self.ai_settings.saw_amount - 2, 
-                        self.ai_settings.saw_amount + 2) + 1
+                    self.create_target_surface(mc_rect)
+                    saw_amount = self.mediator.get_value('ai_settings')
+                    saw_amount = randint(saw_amount - 2, saw_amount + 2) + 1
                     for saw in range(saw_amount):
                         new_saw = Saw(self)
-                        en_fists.add(new_saw)
+                        self.mediator.extend_collection('en_fists', new_saw)
                 
-                elif self.mc.rect.colliderect(self.target_rect):
+                elif mc_rect.colliderect(self.target_rect):
                     from boss_projectiles import Saw
-                    self.audio.stop_sound('saw')
-                    self.audio.play_sound('target_achieved')
+                    self.mediator.call_method('audio', 'stop_audio', '"saw"')
+                    self.mediator.call_method('audio', 'play_sound', '"target_achieved"')
                     Saw.vertical_positions = [0,]
                     Saw.horizontal_positions = [0,]
                     del self.target_surface
@@ -596,7 +617,7 @@ class Boss(Enemy):
             side_factor = ''            
         for number in range(self.ultimate_frames):
             if (number + 1)/animation_speed_factor * self.ats >\
-                self.cur_time - self.timer >=\
+                self.mediator.current_time() - self.timer >=\
                 number/animation_speed_factor * self.ats:
                 if number < 3:
                     self.image = pygame.image.load(
@@ -609,53 +630,56 @@ class Boss(Enemy):
                         + side_factor + '.png').convert_alpha()
 
    
-    def create_target_surface(self):
+    def create_target_surface(self, mc_rect : pygame.Rect):
         '''Создает поверхность цели, которую главному персонажу
         нужно достичь.'''
-        self.target_surface = pygame.Surface((
-                        self.mc.rect.width, self.mc.rect.height))
-        self.target_surface.fill((8, 255, 251))
-        self.target_surface.set_alpha(127)
+        self.target_surface = pygame.Surface((mc_rect.width, mc_rect.height))
+        self.target_surface.fill((8, 255, 251)) # голубой цвет
+        self.target_surface.set_alpha(127) # полупрозрачный
         self.target_rect = self.target_surface.get_rect()
         # Цель в противоположной стороне от босса
-        if self.positionx > self.screen_rect.centerx:
-            self.target_rect.left = self.screen_rect.left
+        screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
+        if self.positionx > screen_rect.centerx:
+            self.target_rect.left = screen_rect.left
         else:
-            self.target_rect.right = self.screen_rect.right
-        self.target_rect.centery = self.screen_rect.centery
+            self.target_rect.right = screen_rect.right
+        self.target_rect.centery = screen_rect.centery
 
     def additional_draw(self):
         '''Отображение дополнительных элементов на экране'''
         if hasattr(self, 'target_surface'):
-            self.screen.blit(self.target_surface, self.target_rect)
+            self.mediator.blit_surface(self.target_surface, self.target_rect)
         if hasattr(self, 'healthbar'):
             self.healthbar.blitme()
 
     
     def moving_mc(self) -> bool:
         '''Отталкивание/притягивание главного персонажа'''
+        mc: MainCharacter = self.mediator.get_value('mc')
         if self.mc_achieved_position:
             # Для подстановки в условие
             return True
-        self.mc.centerx += 2 * self.mc.speed \
+        mc.centerx += 2 * mc.speed \
             * self.mc_dir_sign
-        if not self.screen_rect.contains(self.mc.rect):
+        screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
+        if not screen_rect.contains(mc.rect):
             self.mc_achieved_position = True
         return False
 
     def define_direction(self, kind_of_action: int = 1):
         '''Определяет то, в какую сторону полетит босс
         и отлетит главный персонаж'''
+        screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
         # Сторона, в которую полетит босс
         self.side = randint(0, 1)
         if self.side:
-            x = self.screen_rect.right - int(self.rect.width/2)
+            x = screen_rect.right - int(self.rect.width/2)
                 # В какую сторону отбросит главного персонажа
                 # kind_of_action определяет, что происходит с персонажем:
                 # его притягивает или отталкивает от босса
             self.mc_dir_sign = -kind_of_action
         else:
-            x = self.screen_rect.left + int(self.rect.width/2)
+            x = screen_rect.left + int(self.rect.width/2)
             self.mc_dir_sign = kind_of_action
             # Флаг достижения главным персонажем 
         self.mc_achieved_position = False
@@ -678,8 +702,9 @@ class Boss(Enemy):
 
     def finish_common_attack(self):
         '''Заканчивает применение обычной атаки'''
-        if 'spinning' in self.audio.sounds.keys():
-            self.audio.stop_sound('spinning')
+        audio: Audio = self.mediator.get_value('audio')
+        if 'spinning' in audio.sounds.keys():
+            audio.stop_sound('spinning')
         self.is_punching = False
         self.using_common_attack = False
         self.position_is_chosen = False
@@ -689,8 +714,8 @@ class Boss(Enemy):
     def death_animation(self):
         '''Анимация смерти босса'''
         if not self.is_dead:
-            self.audio.stop_music()
-            self.audio.play_sound('boss_death')
+            self.mediator.call_method('audio', 'stop_music')
+            self.mediator.call_method('audio', 'play_sound', '"boss_death"')
             self.is_dead = True
             self.timer = monotonic()
             self.image = pygame.image.load(

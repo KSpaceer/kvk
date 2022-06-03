@@ -7,8 +7,9 @@ def going_vertical_animation(enemy):
     '''Анимация вертикального перемещения'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if enemy.cur_time - enemy.timer >= \
-        enemy.ai_settings.animation_change/2:
+    an_change = enemy.mediator.get_value(
+        'ai_settings', 'animation_change')/2
+    if enemy.mediator.current_time() - enemy.timer >= an_change:
         enemy.timer = monotonic()
         if enemy.is_right_leg:
             enemy.is_right_leg = False
@@ -27,8 +28,9 @@ def going_right_animation(enemy):
     '''Анимация ходьбы вправо'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if enemy.cur_time - enemy.timer >= \
-        enemy.ai_settings.animation_change:
+    an_change = enemy.mediator.get_value(
+        'ai_settings', 'animation_change')/2
+    if enemy.mediator.current_time() - enemy.timer >= an_change:
         enemy.timer = monotonic()
         if enemy.is_right_leg:
             enemy.is_right_leg = False
@@ -47,8 +49,9 @@ def going_left_animation(enemy):
     '''Анимация ходьбы влево'''
     # Сверяет разность времени монотонных часов и атрибута времени с 
     # времени смены анимации
-    if enemy.cur_time - enemy.timer >= \
-        enemy.ai_settings.animation_change:
+    an_change = enemy.mediator.get_value(
+        'ai_settings', 'animation_change')/2
+    if enemy.mediator.current_time() - enemy.timer >= an_change:
         enemy.timer = monotonic()
         if enemy.is_right_leg:
             enemy.is_right_leg = False
@@ -65,10 +68,11 @@ def going_left_animation(enemy):
 
 def stunning_animation(enemy):
     '''Анимация оглушения'''
+    an_change = enemy.mediator.get_value(
+        'ai_settings', 'animation_change')/2
     for i in range(8):
-        if (i+1) * (enemy.ai_settings.animation_change/2) > \
-            enemy.cur_time - enemy.timer >= i * (
-            enemy.ai_settings.animation_change/2):
+        if (i+1) * an_change > \
+            enemy.cur_time - enemy.timer >= i * an_change:
             # Происходит шатание:
             if i % 2 == 0:
                 enemy.rect.centerx = enemy.centerx - 5

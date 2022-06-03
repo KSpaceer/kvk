@@ -7,23 +7,23 @@ import pygame
 from boss import Boss
 from bull import Bull
 from etimer import Timer
-from hollow import Hollow
+from mediator import Mediator
+from audiosounds import Audio
 
 
-class SummoningCircle(Sprite, Hollow):
+class SummoningCircle(Sprite):
     '''Класс призывающего круга, который босс создает во время призыва'''
 
     def __init__(self, boss: Boss, to_right: bool) -> None:
         '''Инициализация изображения, создателя и прямоугольника'''
         super().__init__()
-        self.boss = boss
-        self.screen = boss.screen
-        self.screen_rect = boss.screen_rect
+        self.mediator = boss.mediator
+        self.surname = boss.surname
         self.image = pygame.image.load(
             f'images/K{boss.surname}Enemies' + 
             '/boss/summoning_circle1.png').convert_alpha()
         self.rect = self.image.get_rect()
-        self.rect.center = self.boss.rect.center
+        self.rect.center = boss.rect.center
         self.to_right = to_right
         self.ring_width = int(self.rect.width/2) 
         self.define_destination()
@@ -32,7 +32,7 @@ class SummoningCircle(Sprite, Hollow):
         self.timer = monotonic()
         self.animation_flag = False
         self.has_summoned = False
-        boss.audio.play_sound('summon')
+        self.mediator.call_method('audio', 'play_sound', '"summon"')
         
 
     def define_destination(self):
@@ -41,16 +41,17 @@ class SummoningCircle(Sprite, Hollow):
             # Изначально кольцо, в которое превратится круг 
             # при анимации самого призыва, является кругом.
             # Поэтому здесь используется его толщина (т.е. радиус круга)
-            self.destination_point = self.screen_rect.right - self.ring_width
+            self.destination_point = self.mediator.get_value(
+                'screen_rect', 'right') - self.ring_width
         else:
-            self.destination_point = self.screen_rect.left + self.ring_width
+            self.destination_point = self.mediator.get_value(
+                'screen_rect', 'left') + self.ring_width
 
     def blitme(self):
         '''Отображает призывающий круг'''
-        self.screen.blit(self.image, self.rect)
+        self.mediator.blit_surface(self.image, self.rect)
     
-    def update(self, en_fists: pygame.sprite.Group, 
-        enemies: pygame.sprite.Group, *args) -> None:
+    def update(self, *args) -> None:
         '''Обновление призывающего круга'''
         if self.rect.centerx not in range(
             self.destination_point - 3, self.destination_point + 4):
@@ -58,18 +59,20 @@ class SummoningCircle(Sprite, Hollow):
             self.animation()
         else:
             if not self.has_summoned:
-                self.summon_bull(enemies)
+                self.summon_bull()
                 self.circle_to_ring()
                 
             if self.ring_width > 0:
                 self.ring_is_narrowing()
             else:
-                en_fists.remove(self)
+                self.kill()
 
     def ring_is_narrowing(self):
         '''Сужение кольца'''
-        self.image.fill(self.boss.ai_settings.bg_color)
-        self.image.set_colorkey(self.boss.ai_settings.bg_color)
+       
+        self.image.fill(self.mediator.get_value('ai_settings', 'bg_color'))
+        self.image.set_colorkey(
+            self.mediator.get_value('ai_settings', 'bg_color'))
         pygame.draw.circle(self.image, (255, 246, 159), 
                 self.ring_center, self.rect.width/2, self.ring_width)
         self.ring_width -= 2
@@ -77,69 +80,65 @@ class SummoningCircle(Sprite, Hollow):
     def circle_to_ring(self):
         '''Призывающий круг превращается в сужающееся кольцо'''
         self.image = pygame.Surface((self.rect.width, self.rect.height))
-        self.image.fill(self.boss.ai_settings.bg_color)
-        self.image.set_colorkey(self.boss.ai_settings.bg_color)
+        self.image.fill( self.mediator.get_value('ai_settings', 'bg_color'))
+        self.image.set_colorkey(self.mediator.get_value('ai_settings', 'bg_color'))
         self.ring_center = (int(self.rect.width/2), int(self.rect.height/2))
 
-    def summon_bull(self, enemies):
+    def summon_bull(self):
         '''Призыв бугая'''
-        new_enemy = Bull(
-                    self.screen, self.boss.ai_settings, self.boss.mc, 
-                    self.boss.st, self.boss.main_timer, 
-                    self.boss.cur_time, False)
+        new_enemy = Bull(self.mediator, False)
         new_enemy.centerx, new_enemy.centery = self.centerx, \
                 float(self.rect.centery)
-        enemies.add(new_enemy)
+        self.mediator.extend_collection('enemies', new_enemy)
         self.has_summoned = True
 
     def movement(self):
         '''Движение призывающего круга'''
         if self.to_right:
-            self.centerx += self.boss.ai_settings.sc_speed
+            self.centerx += self.mediator.get_value('ai_settings', 'sc_speed')
         else:
-            self.centerx -= self.boss.ai_settings.sc_speed
+            self.centerx -= self.mediator.get_value('ai_settings', 'sc_speed')
         self.rect.centerx = int(self.centerx)
     
     def animation(self):
         '''Анимация призывающего круга'''
-        if self.boss.cur_time - self.timer >= self.boss.ai_settings.animation_change:
+        if self.mediator.current_time() - self.timer >= self.mediator.get_value(
+            'ai_settings', 'animation_change'):
             self.animation_flag = not self.animation_flag
             self.image = pygame.image.load(
-                f'images/K{self.boss.surname}Enemies/boss' +
+                f'images/K{self.surname}Enemies/boss' +
                 f'/summoning_circle{int(self.animation_flag) + 1}' +
                 '.png').convert_alpha()
             self.timer = monotonic()
 
 
                 
-class BallLightning(Sprite, Hollow):
+class BallLightning(Sprite):
     '''Класс шаровых молний, испускаемых боссом'''
 
     def __init__(self, boss: Boss) -> None:
         super().__init__()
-        self.boss = boss
-        self.screen = boss.screen
-        self.screen_rect = boss.screen_rect
+        self.mediator = boss.mediator
         self.image = pygame.image.load('images/KSEnemies/boss/' + 
         'ball_lightning.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.centerx = boss.rect.centerx - 9
         self.rect.centery = boss.rect.centery - 127
         self.angle = radians(randint(0, 36) * 10)
-        self.speed = boss.ai_settings.bl_speed
+        self.speed = self.mediator.get_value('ai_settings', 'bl_speed')
         # Координаты в вещественном формате
         self.centerx = float(self.rect.centerx)
         self.centery = float(self.rect.centery)
-        boss.audio.play_sound('lightning')
+        self.mediator.call_method('audio', 'play_sound', '"lightning"')
 
     def blitme(self):
         '''Отображает шаровую молнию'''
-        self.screen.blit(self.image, self.rect)
+        self.mediator.blit_surface(self.image, self.rect)
 
-    def update(self, en_fists: pygame.sprite.Group, *args) -> None:
+    def update(self, *args) -> None:
         '''Обновление шаровой молнии'''
-        if not self.rect.colliderect(self.screen_rect):
-            en_fists.remove(self)
+        if not self.rect.colliderect(self.mediator.get_value('screen_rect')):
+            self.kill()
             return
         self.centerx += self.speed * cos(self.angle)
         self.centery += self.speed * sin(self.angle)
@@ -148,16 +147,15 @@ class BallLightning(Sprite, Hollow):
         self.rect.centery = int(self.centery)
 
 
-class SpearTip(Sprite, Hollow):
+class SpearTip(Sprite):
     '''Класс наконечника копья, выпускаемого боссом'''
 
     def __init__(self, boss: Boss) -> None:
         super().__init__()
         self.boss = boss
+        self.mediator = boss.mediator
         self.timer = monotonic()
-        self.screen = boss.screen
-        self.screen_rect = boss.screen_rect
-        self.speed = boss.ai_settings.spear_speed
+        self.speed = self.mediator.get_value('ai_settings', 'spear_speed')
         self.define_cardinal_direction()
         self.spear: list[Sprite] = []
         self.spear.append(self)
@@ -167,7 +165,7 @@ class SpearTip(Sprite, Hollow):
     
     def blitme(self):
         '''Отображает наконечник копья'''
-        self.screen.blit(self.image, self.rect)
+        self.mediator.blit_surface(self.image, self.rect)
 
     
     def define_cardinal_direction(self):
@@ -183,43 +181,46 @@ class SpearTip(Sprite, Hollow):
 
     def define_starting_position(self):
         '''Определяет начальное местонахождение наконечника копья'''
+        screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
+        mc_rect: pygame.Rect = self.mediator.get_value('mc', 'rect')
         if self.cardinal_direction == 0:
-            self.rect.bottom = self.screen_rect.bottom
-            self.rect.centerx = self.boss.mc.rect.centerx
+            self.rect.bottom = screen_rect.bottom
+            self.rect.centerx = mc_rect.centerx
             # Направление движения копья
             self.dir_sign = -1
         elif self.cardinal_direction == 1:
-            self.rect.right = self.screen_rect.right
-            self.rect.centery = self.boss.mc.rect.centery
+            self.rect.right = screen_rect.right
+            self.rect.centery = mc_rect.centery
             self.dir_sign = -1
         elif self.cardinal_direction == 2:
-            self.rect.top = self.screen_rect.top
-            self.rect.centerx = self.boss.mc.rect.centerx
+            self.rect.top = screen_rect.top
+            self.rect.centerx = mc_rect.centerx
             self.dir_sign = 1
         else:
-            self.rect.left = self.screen_rect.left
-            self.rect.centery = self.boss.mc.rect.centery
+            self.rect.left = screen_rect.left
+            self.rect.centery = mc_rect.centery
             self.dir_sign = 1
 
-    def update(self, en_fists: pygame.sprite.Group, *args) -> None:
+    def update(self, *args) -> None:
         '''Обновление наконечника копья'''
         # Пока босс использует ультимативную атаку, копья вытягиваются
         # на весь экран
+        screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
         if self.boss.using_ultimate:
-            if self.screen_rect.contains(self.rect) \
-                and self.boss.cur_time - self.timer >= 1:
+            if screen_rect.contains(self.rect) \
+                and self.mediator.current_time() - self.timer >= 1:
                 if not self.has_played_sound:
-                    self.boss.audio.play_sound('spear')
+                    self.mediator.call_method('audio', 'play_sound', '"spear"')
                     self.has_played_sound = True
                 if self.cardinal_direction in (0, 2):
                     self.rect.centery += self.dir_sign * self.speed
                 else:
                     self.rect.centerx += self.dir_sign * self.speed
                 # Если последняя часть древка полностью на экране, создает новую
-                if self.screen_rect.contains(self.spear[-1].rect):
+                if screen_rect.contains(self.spear[-1].rect):
                     new_spear_shaft = SpearShaft(self.spear)
                     self.spear.append(new_spear_shaft)
-                    en_fists.add(new_spear_shaft)
+                    self.mediator.extend_collection('en_fists', new_spear_shaft)
                 
         else:
             if self.cardinal_direction in (0, 2):
@@ -227,17 +228,14 @@ class SpearTip(Sprite, Hollow):
             else:
                 self.rect.centerx -= self.dir_sign * self.speed
             # Если последняя часть древка/наконечник не пересекается с экраном, удаляет его
-            if not self.screen_rect.colliderect(self.spear[-1].rect):
+            if not screen_rect.colliderect(self.spear[-1].rect):
                 self.spear[-1].kill()
                 self.spear.pop(-1)
 
-    def play_hit_sound(self):
-        '''Проигрывание звука удара'''
-        self.boss.audio.play_sound('cold_weapon_hit')
 
 
 
-class SpearShaft(Sprite, Hollow):
+class SpearShaft(Sprite):
     '''Класс древка копья, выпускаемого боссом'''
 
     def __init__(self, spear: pygame.sprite.Group) -> None:
@@ -245,8 +243,7 @@ class SpearShaft(Sprite, Hollow):
         # Передний перед данным элемент копья
         self.the_next_in_spear: Sprite = spear[-1]
         self.spear_tip: SpearTip = spear[0]
-        self.screen = self.spear_tip.screen
-        self.screen_rect = self.spear_tip.screen_rect
+        self.mediator = self.spear_tip.mediator
         self.cardinal_direction = self.spear_tip.cardinal_direction
         self.speed = self.spear_tip.speed
         self.image = pygame.transform.rotate(
@@ -257,7 +254,7 @@ class SpearShaft(Sprite, Hollow):
         
     def blitme(self):
         '''Отображает древко копья'''
-        self.screen.blit(self.image, self.rect)
+        self.mediator.blit_surface(self.image, self.rect)
 
     def define_starting_position(self):
         '''Определяет начальное положение древка'''
@@ -288,7 +285,8 @@ class SpearShaft(Sprite, Hollow):
     def update(self, *args) -> None:
         '''Обновление древка копья'''
         if self.spear_tip.boss.using_ultimate:
-            if self.screen_rect.contains(self.spear_tip.rect):
+            screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
+            if screen_rect.contains(self.spear_tip.rect):
                 if self.cardinal_direction in (0, 2):
                     self.rect.centery += self.dir_sign * self.speed
                 else:
@@ -300,61 +298,60 @@ class SpearShaft(Sprite, Hollow):
                 self.rect.centerx -= self.dir_sign * self.speed
 
 
-class Blade(Sprite, Hollow):
+class Blade(Sprite):
     '''Класс лезвий, выпускаемых боссом'''
 
     def __init__(self, boss: Boss) -> None:
         super().__init__()
-        self.boss = boss
-        self.screen = boss.screen
-        self.screen_rect = boss.screen_rect
-        self.speed = boss.ai_settings.blade_speed
+        self.mediator = boss.mediator
+        self.speed = self.mediator.get_value('ai_settings', 'blade_speed')
         self.image = pygame.image.load('images/KSEnemies/boss' +
             '/blade.png').convert_alpha()
         self.rect = self.image.get_rect()
-        self.define_starting_position()
+        self.define_starting_position(boss)
         self.timer = monotonic()
         self.has_played_sound = False
         
         
 
-    def define_starting_position(self):
+    def define_starting_position(self, boss: Boss):
         '''Определяет начальную позицию лезвия'''
         # В зависимости от выбранной боссом стороны,
         # пределы местонахождения кинжала по Х меняются
-        if self.boss.side:
-            allowed_x = (self.screen_rect.left + self.boss.mc.rect.width * 2, 
-                self.screen_rect.right - self.boss.rect.width)
+        screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
+        mc_rect: pygame.Rect = self.mediator.get_value('mc', 'rect')
+        if boss.side:
+            allowed_x = (screen_rect.left + mc_rect.width * 2, 
+                screen_rect.right - boss.rect.width)
         else:
-            allowed_x = (self.screen_rect.left + self.boss.rect.width, 
-                self.screen_rect.right - self.boss.mc.rect.width * 2)
+            allowed_x = (screen_rect.left + boss.rect.width, 
+                screen_rect.right - mc_rect.width * 2)
         self.rect.centerx = randrange(allowed_x[0], allowed_x[1], 10)
         # Положение по Y (сверху или снизу) выбирается случайно
         self.rect.bottom, self.direction = choice(
-            [(self.screen_rect.top + self.rect.height, 1), 
-            (self.screen_rect.bottom, -1)])
+            [(screen_rect.top + self.rect.height, 1), 
+            (screen_rect.bottom, -1)])
 
     def blitme(self):
         '''Отображает лезвие'''
-        self.screen.blit(self.image, self.rect)
+        self.mediator.blit_surface(self.image, self.rect)
 
     def update(self, *args) -> None:
         '''Обновление лезвия'''
-        if self.screen_rect.colliderect(self.rect):
-            if self.boss.cur_time - self.timer >= 1:
+        screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
+        if screen_rect.colliderect(self.rect):
+            if self.mediator.current_time() - self.timer >= 1:
                 if not self.has_played_sound:
-                    self.boss.audio.play_sound('blade')
+                    self.mediator.call_method('audio', 'play_sound', '"blade"')
                     self.has_played_sound = True
                 self.rect.centery += self.direction * self.speed
         else:
             self.kill()
 
-    def play_hit_sound(self):
-        '''Проигрывание звука удара'''
-        self.boss.audio.play_sound('cold_weapon_hit')
+    
             
         
-class Saw(Sprite, Hollow):
+class Saw(Sprite):
     '''Класс пил, вызываемых боссом'''
 
     vertical_positions = [0,]
@@ -363,44 +360,48 @@ class Saw(Sprite, Hollow):
     def __init__(self, boss: Boss) -> None:
         super().__init__()
         self.boss = boss
-        self.screen = boss.screen
-        self.screen_rect = boss.screen_rect
-        self.speed = boss.ai_settings.saw_speed
+        self.mediator = boss.mediator
+        self.speed = self.mediator.get_value('ai_settings', 'saw_speed')
         self.image = pygame.image.load('images/KZEnemies' + 
             '/boss/saw1.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.is_vertical = randint(0, 1) # пила двигается вертикально или горизонтально
-        self.define_starting_position(boss)
+        self.define_starting_position()
         # Атрибуты для анимации
         self.timer = monotonic()
-        self.cur_time = boss.cur_time
-        self.animation_change = boss.ai_settings.animation_change/2
+        self.animation_change = self.mediator.get_value(
+            'ai_settings', 'animation_change')/2
         self.animation_number = True # bool -> int
-        if not 'saw' in boss.audio.sounds.keys():
-            boss.audio.play_sound('saw', -1)
+        audio: Audio = self.mediator.get_value('audio')
+        if 'saw' not in audio.sounds.keys():
+            audio.play_sound('saw', -1)
 
-    def define_starting_position(self, boss: Boss):
+    def define_starting_position(self):
         '''Определяет начальное положение пилы'''
         self.rect.center = 0, 0
-        left_border = self.screen_rect.left + boss.ai_settings.maze_narrowing
-        right_border = self.screen_rect.right - boss.ai_settings.maze_narrowing
+        screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
+        maze_narrowing = self.mediator.get_value('ai_settings', 'maze_narrowing')
+        left_border = screen_rect.left + maze_narrowing
+        right_border = screen_rect.right - maze_narrowing
         if self.is_vertical:
-            self.vertical_starting_position(left_border, right_border)
+            self.vertical_starting_position(
+                left_border, right_border, screen_rect)
         else:
-            self.horisontal_starting_position(left_border, right_border)
+            self.horisontal_starting_position(
+                left_border, right_border, screen_rect)
 
-    def horisontal_starting_position(self, left_border, right_border):
+    def horisontal_starting_position(self, left_border, right_border, 
+        screen_rect: pygame.Rect):
         '''Начальная позиция для горизонтально движущейся пилы'''
         # Пилы не могут быть на одной высоте
         while self.rect.centery in Saw.horizontal_positions:
-            self.rect.centery = randrange(25, 
-                    self.screen_rect.height - 25, 25)
+            self.rect.centery = randrange(25, screen_rect.height - 25, 25)
         Saw.horizontal_positions.append(self.rect.centery)
         self.border1 = self.border2 = 0
         while abs(self.border1 - self.border2) < 100:
             self.border1 = randrange(left_border, right_border, 25)
             self.border2 = randrange(left_border, right_border, 25)
-            # Изначально пила идет влево или вправо
+        # Изначально пила идет влево или вправо
         if self.border1 > self.border2:
             # Влево
             self.dir_sign = -1
@@ -410,7 +411,8 @@ class Saw(Sprite, Hollow):
             self.dir_sign = 1
             self.rect.left = self.border1
 
-    def vertical_starting_position(self, left_border, right_border):
+    def vertical_starting_position(self, left_border, right_border, 
+        screen_rect: pygame.Rect):
         '''Начальная позиция для вертикально движущейся пилы'''
         # Пилы не могут быть на одной ширине
         while self.rect.centerx in Saw.vertical_positions:
@@ -419,8 +421,8 @@ class Saw(Sprite, Hollow):
         self.border1 = self.border2 = 0
             # Случайный выбор границ (должны различаться как минимум на 100 пикселей)
         while abs(self.border1 - self.border2) < 100:
-            self.border1 = randrange(0, self.screen_rect.height, 25)
-            self.border2 = randrange(0, self.screen_rect.height, 25)
+            self.border1 = randrange(0, screen_rect.height, 25)
+            self.border2 = randrange(0, screen_rect.height, 25)
             # Изначально пила идет вверх или вниз
         if self.border1 > self.border2:
                 # Вверх
@@ -435,7 +437,7 @@ class Saw(Sprite, Hollow):
 
     def blitme(self):
         '''Отображение пилы'''
-        self.screen.blit(self.image, self.rect)
+        self.mediator.blit_surface(self.image, self.rect)
 
     def update(self, *args) -> None:
         '''Обновление пилы'''
@@ -447,7 +449,7 @@ class Saw(Sprite, Hollow):
 
     def animation(self):
         '''Анимация пилы'''
-        if self.cur_time - self.timer >= self.animation_change:
+        if self.mediator.current_time() - self.timer >= self.animation_change:
             self.image = pygame.image.load(
                 f'images/KZEnemies/boss/saw{int(self.animation_number) + 1}' + 
                 '.png').convert_alpha()
@@ -473,31 +475,28 @@ class Saw(Sprite, Hollow):
                 self.dir_sign *= -1
             self.rect.centerx += self.dir_sign * self.speed
 
-    def play_hit_sound(self):
-        '''Проигрывание звука удара'''
-        self.boss.audio.play_sound('cold_weapon_hit')
+    
 
-class Crack(Sprite, Hollow):
+class Crack(Sprite):
     '''Класс разлома, создаваемого боссом'''
 
-    def __init__(self, centerx: int, centery: int, 
-        screen: pygame.Surface, cur_time: Timer) -> None:
+    def __init__(self, centerx: int, centery: int, mediator: Mediator) -> None:
         super().__init__()
-        self.image = pygame.image.load('images/KZEnemies/boss/crack.png').convert_alpha()
+        self.image = pygame.image.load(
+            'images/KZEnemies/boss/crack.png').convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.centerx = centerx
         self.rect.centery = centery
-        self.screen = screen
-        self.cur_time = cur_time
+        self.mediator = mediator
         self.timer = monotonic()
 
     def blitme(self):
         '''Отображение разлома'''
-        self.screen.blit(self.image, self.rect)
+        self.mediator.blit_surface(self.image, self.rect)
 
     def update(self, *args) -> None:
         '''Обновление разлома'''
-        if self.cur_time - self.timer >= 25:
+        if self.mediator.current_time() - self.timer >= 25:
             self.kill()
 
     

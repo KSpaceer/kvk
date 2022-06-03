@@ -1,5 +1,6 @@
 from enemy import Enemy
 import pygame
+from mediator import Mediator
 from settings import Settings
 from MC import MainCharacter
 from stats import Stats
@@ -8,13 +9,13 @@ from etimer import Timer
 class Ninja(Enemy):
     '''Четвертый тип врагов - ниндзя'''
 
-    def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
-        mc: MainCharacter, st: Stats, timer: Timer, cur_time: Timer):
-        super().__init__(screen, ai_settings, mc, st, timer, cur_time)
+    def __init__(self, mediator: Mediator):
+        super().__init__(mediator)
         # Инициализация имени для подстановки в файлы и имена переменных
         self.name = 'ninja'
         # Инициализация здоровья
-        self.health = 10 * self.ai_settings.h_multiplier
+        self.health = 10 * self.mediator.get_value(
+            'ai_settings', 'h_multiplier')
         # Загрузка изображения
         self.image = pygame.image.load(
             f'images/K{self.surname}Enemies/ninja/standing.png').convert_alpha()
@@ -27,8 +28,10 @@ class Ninja(Enemy):
         self.centerx = self.rect.centerx
         self.centery = self.rect.centery
         # Сохраняем скорость атаки и время перезарядки из настроек
-        self.ats = self.ai_settings.ninja_attack_speed
-        self.cooldown = self.ai_settings.ninja_cooldown
+        self.ats = self.mediator.get_value(
+            'ai_settings', 'ninja_attack_speed')
+        self.cooldown = self.mediator.get_value(
+            'ai_settings', 'ninja_cooldown')
         # Количество кадров атаки
         self.frames = 7
         # Количество кадров, в которых ударной поверхности нет,
@@ -52,27 +55,29 @@ class Ninja(Enemy):
         self.launch_shuriken = True
         self.is_launching = False
         self.shuriken_active = False
-        self.launch_range = self.ai_settings.ninja_launch_range
-        self.launch_cooldown = self.ai_settings.ninja_launch_cooldown
+        self.launch_range = self.mediator.get_value(
+            'ai_settings', 'ninja_launch_range')
+        self.launch_cooldown = self.mediator.get_value(
+            'ai_settings', 'ninja_launch_cooldown')
         
 
-    def death_animation(self, enemies: pygame.sprite.Group):
+    def death_animation(self):
         '''Анимация смерти'''
-    
+        an_change = self.mediator.get_value('ai_settings', 'animation_change')
         if not self.has_played_audio:
-            self.audio.play_sound('ninja_death')
+            self.mediator.call_method('audio', 'play_sound', '"ninja_death"')
             self.has_played_audio = True
-        if self.cur_time - self.timer < 5.5 * self.ai_settings.animation_change:
+        if self.mediator.current_time() - self.timer < 5.5 * an_change:
             for i in range(11):
-                if (i + 1)/2 * self.ai_settings.animation_change > \
-                    self.cur_time -self.timer >= \
-                    i/2 * self.ai_settings.animation_change:
+                if (i + 1)/2 * an_change > \
+                    self.mediator.current_time() -self.timer >= \
+                    i/2 * an_change:
                     self.image = pygame.image.load(
                         f'images/K{self.surname}Enemies/ninja/death{i + 1}' + 
                         '.png').convert_alpha()
                     self.change_rect()
-        elif self.cur_time - self.timer >= 10.5 * self.ai_settings.animation_change:
-            enemies.remove(self)
+        elif self.mediator.current_time() - self.timer >= 10.5 * an_change:
+            self.kill()
 
     def create_new_rect(self):
         '''Создает новый прямоугольник для удобной анимации атаки'''

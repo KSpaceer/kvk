@@ -4,9 +4,11 @@
 from random import randint
 from time import monotonic
 import pygame
+from audiosounds import Audio
 from enemy import Enemy
 from enemy_animation import (going_left_animation, 
 going_right_animation, going_vertical_animation)
+from mediator import Mediator
 from settings import Settings
 from MC import MainCharacter
 from stats import Stats
@@ -16,16 +18,15 @@ from etimer import Timer
 class Eater(Enemy):
     '''Третий тип врагов (С.) - пожиратель(едок)'''
 
-    def __init__(self, screen: pygame.Surface, ai_settings: Settings, 
-        mc: MainCharacter, st: Stats, timer: Timer, cur_time: Timer):
+    def __init__(self, mediator: Mediator):
         '''Инициализация параметров, начального положения и изображения'''
-        super().__init__(screen, ai_settings, mc, st, timer, cur_time)
+        super().__init__(mediator)
         # Инициализация имени для подстановки в файлы и имена переменных
         self.name = 'eater'
         # Название звука атаки
         self.audioname = 'bite'
         # Инициализация здоровья
-        self.health = 10 * self.ai_settings.h_multiplier
+        self.health = 10 * self.mediator.get_value('ai_settings', 'h_multiplier')
         # Загрузка изображения
         self.image = pygame.image.load(
             'images/KSEnemies/eater/standing.png').convert_alpha()
@@ -38,8 +39,10 @@ class Eater(Enemy):
         self.centerx = self.rect.centerx
         self.centery = self.rect.centery
         # Сохраняем скорость атаки и время перезарядки из настроек
-        self.ats = self.ai_settings.eater_attack_speed
-        self.cooldown = self.ai_settings.eater_cooldown
+        self.ats = self.mediator.get_value(
+            'ai_settings', 'eater_attack_speed')
+        self.cooldown = self.mediator.get_value(
+            'ai_settings', 'eater_cooldown')
         # Количество кадров атаки
         self.frames = 10
         # Количество кадров, в которых ударной поверхности нет,
@@ -63,7 +66,7 @@ class Eater(Enemy):
 
    
     
-    def death_animation(self, enemies: pygame.sprite.Group):
+    def death_animation(self):
         '''Анимация смерти'''
         self.initiate_death()
         self.gotta_go_fast()
@@ -71,8 +74,8 @@ class Eater(Enemy):
              f'{self.dir_dict[self.direction][1]}=' +
              '5 * self.ai_settings.eater_speed_factor')
         # Если враг за пределами экрана
-        if not self.rect.colliderect(self.screen_rect):
-            enemies.remove(self)
+        if not self.rect.colliderect(self.mediator.get_value('screen_rect')):
+            self.kill()
 
     def initiate_death(self):
         '''Определяет направление движения во время смерти'''
@@ -91,10 +94,11 @@ class Eater(Enemy):
         # выражение под скобками: (0 ИЛИ 2). Из-за этого начнет проверяться 
         # второе выражение, что приведет к ошибке - значения с таким ключом в словаре
         # до первого проигрывания звука нет. В использующемся выражении, если
-        # НЕ 1 равно True, то второе выражении проверяться уже не будет.
+        # НЕ 1 равно True, то второе выражение проверяться уже не будет.
+        audio: Audio = self.mediator.get_value('audio')
         if not self.has_played_audio or not \
-            self.audio.sounds['eater_death'].get_num_channels():
-            self.audio.play_sound('eater_death')
+            audio.sounds['eater_death'].get_num_channels():
+            audio.play_sound('eater_death')
             self.has_played_audio = True
         if self.direction in (0, 1):
             going_vertical_animation(self)
