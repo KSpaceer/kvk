@@ -32,7 +32,7 @@ class Sumo(Enemy):
         # Сохраняем скорость атаки и время перезарядки из настроек
         self.ats = self.mediator.get_value(
             'ai_settings', 'sumo_attack_speed')
-        self.mediator.get_value(
+        self.cooldown = self.mediator.get_value(
             'ai_settings', 'sumo_cooldown')
         # Дальность атаки
         self.attack_range = self.mediator.get_value(

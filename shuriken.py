@@ -39,16 +39,16 @@ class Shuriken(Sprite):
 
     def blitme(self):
         '''Отображает сюрикен на экране'''
-        self.screen.blit(self.image, self.rect)
         self.mediator.blit_surface(self.image, self.rect)
+    
 
     def update(self, *args) -> None:
         '''Обновляет положение сюрикена'''
         # В какую сторону летит сюрикен
         if self.to_right:
-            self.mediator.get_value('ai_settings', 'shuriken_speed')
+            self.centerx += self.mediator.get_value('ai_settings', 'shuriken_speed')
         else:
-            self.mediator.get_value('ai_settings', 'shuriken_speed')
+            self.centerx -= self.mediator.get_value('ai_settings', 'shuriken_speed')
         # Анимация
         if self.mediator.current_time() - self.timer >= self.mediator.get_value(
             'ai_settings', 'animation_change')/2:

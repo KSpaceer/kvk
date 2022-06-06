@@ -59,4 +59,7 @@ class Audio:
         self.sounds[name].stop()
         self.sounds.pop(name)
         
+    def stop_all_sounds(self):
+        '''Остановка всех звуков'''
+        mix.stop()
         

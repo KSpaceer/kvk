@@ -92,7 +92,8 @@ def stunning_animation(mc, file_endname: str, move_direction: str):
     elif mc.mediator.current_time()  - mc.attack_timer <= mc.mediator.get_value(
         'ai_settings', 'stun_duration'):
         # Откидывание:
-        exec(f'mc.centerx {move_direction}= mc.ai_settings.mc_speed_factor/2')
+        exec(f'mc.centerx {move_direction}= mc.mediator.get_value(' +
+        '"ai_settings", "mc_speed_factor")/2')
     else:
         mc.is_stunned = False
     

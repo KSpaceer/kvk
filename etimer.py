@@ -20,3 +20,9 @@ class Timer():
             return float(other - self.time)
         elif isinstance(other, int):
             return float(float(other) - self.time)
+
+    def __add__(self, other):
+        if isinstance(other, float):
+            return float(self.time + other)
+        if isinstance(other, int):
+            return float(self.time + float(other))

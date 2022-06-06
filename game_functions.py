@@ -1,7 +1,7 @@
 
 
 from os.path import exists
-from time import monotonic
+from time import monotonic, time
 from base64 import b64decode
 import pygame
 import sys
@@ -12,6 +12,7 @@ from eater import Eater
 from etimer import Timer
 import graphic as gr
 from guru import Guru
+from mediator import Mediator
 from ninja import Ninja
 
 from settings import Settings
@@ -32,7 +33,7 @@ from option import Option
 def check_events(mc: MainCharacter, st: Stats, buttons: list[Button], 
     screen: pygame.Surface, cur_time: Timer, timer: Timer, 
     enemies: pygame.sprite.Group, selecticons: list[SelectIcon], 
-    en_fists: pygame.sprite.Group, audio: Audio, ai_settings: Settings):
+    en_fists: pygame.sprite.Group, audio: Audio, mediator: Mediator):
     '''Обрабатывает нажатия клавиш и мыши'''
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -42,9 +43,9 @@ def check_events(mc: MainCharacter, st: Stats, buttons: list[Button],
             # Проверка событий нажатия
             keydown_events(event, mc, st, buttons, 
             screen, cur_time, timer, enemies, selecticons, 
-            en_fists, audio, ai_settings)
+            en_fists, audio, mediator)
             # Если текущее состояние - заставка или проигрыш, меняет состояние
-            change_state(st, buttons, screen, mc)
+            change_state(st, buttons, mediator, mc)
         elif event.type == pygame.KEYUP:
             # Проверка событий отпускания кнопок
             keyup_events(event, mc, st)
@@ -56,22 +57,22 @@ def keydown_events(event, mc: MainCharacter,
     st: Stats, buttons: list[Button], screen: pygame.Surface, 
     cur_time: Timer, timer: Timer, enemies: pygame.sprite.Group, 
     selecticons: list[SelectIcon], en_fists: pygame.sprite.Group, 
-    audio: Audio, ai_settings: Settings):
+    audio: Audio, mediator: Mediator):
     '''Обрабатывает события нажатия клавиш'''
     # В зависимости от состояния игры - различная реакция на нажатия
     if st.state == st.GAMEACTIVE:
-        keydown_in_game(event, mc, st, buttons, screen, audio)
+        keydown_in_game(event, mc, st, buttons, mediator, audio)
     elif st.state == st.MAINMENU:
-        keydown_in_mainmenu(event, st, buttons, screen, selecticons, audio, ai_settings)
+        keydown_in_mainmenu(event, st, buttons, screen, selecticons, audio, mediator)
     elif st.state == st.SELECTMODE:
-        keydown_in_selectmode(event, st, selecticons, mc, buttons, screen, audio)
+        keydown_in_selectmode(event, st, selecticons, mc, buttons, mediator, audio)
     elif st.state == st.SUBMENU:
-        keydown_in_submenu(event, st, buttons, screen, 
+        keydown_in_submenu(event, st, buttons, mediator, 
         cur_time, timer, mc, enemies, en_fists, audio)
     elif st.state in (st.SAVEFILES_SAVEMODE, st.SAVEFILES_LOADMODE):
-        keydown_in_savefiles(event, st, buttons, screen, mc, audio)
+        keydown_in_savefiles(event, st, buttons, mediator, mc, audio)
     elif st.state == st.OPTIONS:
-        keydown_in_options(event, st, buttons, audio, screen)
+        keydown_in_options(event, st, buttons, audio, mediator)
     
 
 def keyup_events(event, mc: MainCharacter, st: Stats):
@@ -103,12 +104,12 @@ def select_button(buttons: list[Button], event: pygame.event.Event,
             break 
 
 def change_state(st: Stats, buttons: list[Button], 
-    screen: pygame.Surface, mc: MainCharacter):
+    mediator: Mediator, mc: MainCharacter):
     '''Изменяет состояние игры'''
     if st.state == st.INTRO:
         # Переход с заставки в главное меню
         buttons.clear()
-        create_mainmenu_buttons(buttons, screen)
+        create_mainmenu_buttons(buttons, mediator)
         st.state = st.MAINMENU
     elif st.state == st.GAMEOVER and monotonic() - mc.timer > 5:
         # Рестарт после проигрыша
@@ -116,17 +117,16 @@ def change_state(st: Stats, buttons: list[Button],
 
 ### БЛОК ГЛАВНОГО МЕНЮ (st.state = Stats.MAINMENU) ###
 
-def create_mainmenu_buttons(buttons: list[Button], screen: pygame.Surface):
+def create_mainmenu_buttons(buttons: list[Button], mediator: Mediator):
     '''Создает кнопки главного меню'''
     for i in range(4):
-        buttons.append(Button(screen, i))
+        buttons.append(Button(mediator, i))
         if i == Button.NEWGAME:
                 # Клавиша начала игры выбрана
             buttons[i].is_chosen = True
         buttons[i].rect.centery = 125 + 2 * i * 90
 
-def update_mainmenu_screen(ai_settings: Settings, screen: pygame.Surface, 
-    buttons: list[Button], bg: Background):
+def update_mainmenu_screen(buttons: list[Button], bg: Background):
     '''Обновляет изображение в главном меню'''
     # Перерисовка экрана
     bg.blitme()
@@ -138,7 +138,7 @@ def update_mainmenu_screen(ai_settings: Settings, screen: pygame.Surface,
 
 def keydown_in_mainmenu(event, st: Stats, buttons: list[Button], 
     screen: pygame.Surface, selecticons: list[SelectIcon], 
-    audio: Audio, ai_settings: Settings):
+    audio: Audio, mediator: Mediator):
     '''Обрабатывает нажатия клавиш в главном меню'''
     if event.key == pygame.K_DOWN or event.key == pygame.K_UP:
         select_button(buttons, event, audio)
@@ -150,21 +150,21 @@ def keydown_in_mainmenu(event, st: Stats, buttons: list[Button],
                 if buttons[i].name_number == Button.NEWGAME:
                     # Переход из главного меню в меню выбора персонажа
                     buttons.clear()
-                    create_selecticons(selecticons, screen)
+                    create_selecticons(selecticons, mediator)
                     st.state = st.SELECTMODE
                     break
                 elif buttons[i].name_number == Button.LOAD:
                     # Переход из главного меню в меню файлов сохранения 
                     # в режиме загрузки
                     buttons.clear()
-                    create_savefiles_buttons(buttons, screen)
+                    create_savefiles_buttons(buttons, mediator)
                     st.state = st.SAVEFILES_LOADMODE
                     st.pr_state = st.MAINMENU
                     break
                 elif buttons[i].name_number == Button.OPTIONS:
                     # Переход в меню опций
                     buttons.clear()
-                    create_option_buttons(buttons, screen, ai_settings)
+                    create_option_buttons(buttons, mediator)
                     st.state = st.OPTIONS
                     break
                 elif buttons[i].name_number == Button.EXIT:
@@ -173,10 +173,10 @@ def keydown_in_mainmenu(event, st: Stats, buttons: list[Button],
 
 ### БЛОК ОПЦИЙ (st.state = Stats.OPTIONS) ###
 
-def create_option_buttons(buttons: list[Option], screen: pygame.Surface, ai_settings: Settings):
+def create_option_buttons(buttons: list[Option], mediator: Mediator):
     '''Создает кнопки опций'''
     for i in range(2):
-        new_option = Option(screen, ai_settings, i)
+        new_option = Option(mediator, i)
         buttons.append(new_option)
         buttons[i].rect.bottom = 350 + i * 200
         if not i:
@@ -193,7 +193,7 @@ def update_options_screen(buttons: list[Option], bg: Background):
     pygame.display.flip()
 
 def keydown_in_options(event, st: Stats, buttons: list[Option], 
-    audio: Audio, screen: pygame.Surface):
+    audio: Audio, mediator: Mediator):
     '''Обрабатывает нажатия клавиш в меню опций'''
     if event.key in (pygame.K_DOWN, pygame.K_UP):
         select_button(buttons, event, audio)
@@ -213,19 +213,19 @@ def keydown_in_options(event, st: Stats, buttons: list[Option],
         # Выход в меню по нажатию ESC
         buttons.clear()
         audio.play_sound('back')
-        create_mainmenu_buttons(buttons, screen)
+        create_mainmenu_buttons(buttons, mediator)
         st.state = st.MAINMENU
     
 
 
 ### БЛОК ВЫБОРА ПЕРСОНАЖА (st.state = Stats.SELECTMODE) ###
 
-def create_selecticons(selecticons: list[SelectIcon], screen: pygame.Surface):
+def create_selecticons(selecticons: list[SelectIcon], mediator: Mediator):
     '''Создает иконки выбора персонажа'''
-    selecticons.extend((SelectIcon('S', screen), SelectIcon('Z', screen)))
+    selecticons.extend((SelectIcon('S', mediator), SelectIcon('Z', mediator)))
 
-def update_selectmode_screen(ai_settings: Settings, 
-    screen: pygame.Surface, selecticons: list[SelectIcon], bg: Background):
+def update_selectmode_screen( screen: pygame.Surface, 
+    selecticons: list[SelectIcon], bg: Background):
     '''Обновляет изображение на экране во время выбора персонажа'''
     # Перерисовка экрана
     bg.blitme()
@@ -238,14 +238,14 @@ def update_selectmode_screen(ai_settings: Settings,
     pygame.display.flip()
 
 def keydown_in_selectmode(event, st: Stats, selecticons: list[SelectIcon], 
-    mc: MainCharacter, buttons: list[Button], screen: pygame.Surface, 
+    mc: MainCharacter, buttons: list[Button], mediator: Mediator, 
     audio: Audio):
     '''Обрабатывает нажатия клавиш в меню выбора персонажа'''
     if event.key == pygame.K_ESCAPE:
         # Выход в меню по нажатию ESC
         selecticons.clear()
         audio.play_sound('back')
-        create_mainmenu_buttons(buttons, screen)
+        create_mainmenu_buttons(buttons, mediator)
         st.state = st.MAINMENU
     # Смена выбранного персонажа по нажатию стрелок
     elif event.key == pygame.K_LEFT:
@@ -271,7 +271,7 @@ def keydown_in_selectmode(event, st: Stats, selecticons: list[SelectIcon],
 
 ### БЛОК ИГРЫ (st.state = Stats.GAMEACTIVE) ###
 
-def update_screen(ai_settings: Settings, screen: pygame.Surface, 
+def update_screen(ai_settings: Settings, 
     mc: MainCharacter, enemies: pygame.sprite.Group, 
     en_fists: pygame.sprite.Group, bg: Background):
     '''Обновляет изображение на экране'''
@@ -291,7 +291,7 @@ def update_screen(ai_settings: Settings, screen: pygame.Surface,
     pygame.display.flip()
 
 def keydown_in_game(event, mc: MainCharacter, st: Stats, 
-    buttons: list[Button], screen: pygame.Surface, audio: Audio):
+    buttons: list[Button], mediator: Mediator, audio: Audio):
     '''Обрабатывает нажатия клавиш во время самой игры'''
     if event.key == pygame.K_RIGHT:
         # Обнуление таймера анимации и включение флага ходьбы
@@ -312,7 +312,7 @@ def keydown_in_game(event, mc: MainCharacter, st: Stats,
     elif event.key == pygame.K_ESCAPE:
         # Переход в меню паузы
         audio.play_sound('pause')
-        create_submenu_buttons(buttons, screen)
+        create_submenu_buttons(buttons, mediator)
         st.state = st.SUBMENU
 
 def keyup_in_game(event, mc: MainCharacter):
@@ -334,8 +334,7 @@ def keyup_in_game(event, mc: MainCharacter):
             # Выключение флага зажатого пробела
         mc.space_active = False
 
-def check_hits(mc: MainCharacter, en_fists: pygame.sprite.Group, 
-    enemies: pygame.sprite.Group):
+def check_hits(mc: MainCharacter, en_fists: pygame.sprite.Group):
     '''Проверка получения удара'''
     if not mc.invincible:
         # Если персонаж неуязвим, проверяет коллизии персонажа с вражескими
@@ -343,56 +342,55 @@ def check_hits(mc: MainCharacter, en_fists: pygame.sprite.Group,
         touching_fist = pygame.sprite.spritecollideany(mc, en_fists)
         if touching_fist:
             # В случае коллизии персонаж получает урон
-            mc.get_damage(touching_fist, en_fists, enemies)
+            mc.get_damage(touching_fist)
 
-def wave(screen: pygame.Surface, ai_settings: Settings, mc: MainCharacter, 
-    enemies: pygame.sprite.Group, timer: Timer, 
-    cur_time: Timer, st: Stats, adversaries: list):
+def wave(mc: MainCharacter, enemies: pygame.sprite.Group, timer: Timer, 
+    cur_time: Timer, mediator: Mediator, adversaries: list):
     '''Создает волну противников'''
     for i in range(len(adversaries)):
         # Враги появляются по времени. 
         if cur_time - timer >= 5 * (i + 1) and len(enemies) == i \
             and Enemy.summons < len(adversaries):
-            enemy_summon(screen, ai_settings, mc, enemies, timer, 
-                cur_time, st, adversaries, i)
+            enemy_summon(mc, enemies, mediator, adversaries, i)
 
-def enemy_summon(screen, ai_settings, mc, enemies, timer, cur_time, st, adversaries, i):
+def enemy_summon(mc: MainCharacter, enemies: pygame.sprite.Group, mediator: Mediator, 
+    adversaries: list, i: int):
     '''Вызывает врага'''
     if adversaries[i] == 0:
-        new_enemy = Bull(screen, ai_settings, mc, st, timer, cur_time)
+        new_enemy = Bull(mediator)
         enemies.add(new_enemy)
     elif adversaries[i] == 1:
-        new_enemy = Sumo(screen, ai_settings, mc, st, timer, cur_time)
+        new_enemy = Sumo(mediator)
         enemies.add(new_enemy)
     elif adversaries[i] == 2:
         if mc.surname == 'Z':
-            new_enemy = Eater(screen, ai_settings, mc, st, timer, cur_time)
+            new_enemy = Eater(mediator)
             enemies.add(new_enemy)
         else:
-            new_enemy = Guru(screen, ai_settings, mc, st, timer, cur_time)
+            new_enemy = Guru(mediator)
             enemies.add(new_enemy)
     elif adversaries[i] == 3:
-        new_enemy = Ninja(screen, ai_settings, mc, st, timer, cur_time)
+        new_enemy = Ninja(mediator)
         enemies.add(new_enemy)
     elif adversaries[i] == 4:
-        new_enemy = Boss(screen, ai_settings, mc, st, timer, cur_time)
+        new_enemy = Boss(mediator)
         enemies.add(new_enemy)
 
-def update_waves(screen: pygame.Surface, ai_settings: Settings, 
+def update_waves(ai_settings: Settings, 
     mc: MainCharacter, enemies: pygame.sprite.Group, 
-        timer: Timer, cur_time: Timer, st: Stats):
+    timer: Timer, cur_time: Timer, st: Stats, mediator: Mediator):
     '''Обновляет волны'''
-    wave(screen, ai_settings, mc, enemies, timer, cur_time, st, 
+    wave(mc, enemies, timer, cur_time, mediator, 
     ai_settings.waves[st.level][st.current_wave])
 
 
 ### БЛОК МЕНЮ ПАУЗЫ (st.state = Stats.SUBMENU) ###
 
 def create_submenu_buttons(buttons: list[Button], 
-    screen: pygame.Surface, selected_button: int = Button.MENU):
+    mediator: Mediator, selected_button: int = Button.MENU):
     '''Создает кнопки меню паузы'''
     for i in range(3, 6):
-        buttons.append(Button(screen, i))
+        buttons.append(Button(mediator, i))
         if i == selected_button:
             # Избранная кнопка
             buttons[i - 3].is_chosen = True
@@ -420,7 +418,7 @@ def update_submenu_screen(screen: pygame.Surface, ai_settings: Settings,
     pygame.display.flip()
 
 def keydown_in_submenu(event, st: Stats, buttons: list[Button], 
-    screen: pygame.Surface, cur_time: Timer, timer: Timer, 
+    mediator: Mediator, cur_time: Timer, timer: Timer, 
     mc: MainCharacter, enemies: pygame.sprite.Group, 
     en_fists: pygame.sprite.Group, audio: Audio):
     '''Обрабатывает нажатия клавиш во время паузы'''
@@ -439,13 +437,13 @@ def keydown_in_submenu(event, st: Stats, buttons: list[Button],
                 if buttons[i].name_number == Button.MENU:
                     # Выход в меню
                     buttons.clear()
-                    create_mainmenu_buttons(buttons, screen)
+                    create_mainmenu_buttons(buttons, mediator)
                     st.state = st.MAINMENU
                     break
                 elif buttons[i].name_number == Button.SAVE:
                     # Переход в меню файлов сохранения
                     buttons.clear()
-                    create_savefiles_buttons(buttons, screen)
+                    create_savefiles_buttons(buttons, mediator)
                     st.state = st.SAVEFILES_SAVEMODE
                     st.pr_state = st.SUBMENU
                     break
@@ -499,23 +497,22 @@ def update_time(cur_time: Timer, timer: Timer,
 
 ### БЛОК МЕНЮ ФАЙЛОВ СОХРАНЕНИЯ (st.state = Stats.SAVEFILES_...) ###
 
-def create_savefiles_buttons(buttons: list[Button], screen: pygame.Surface):
+def create_savefiles_buttons(buttons: list[Button], mediator: Mediator):
     '''Создает кнопки меню сохранения файлов'''
     for i in range(3):
         if exists(f'save/save{i + 1}.txt'):
             # Если файл сохранения имеется
-            buttons.append(Button(screen, Button.SAVEFILE))
+            buttons.append(Button(mediator, Button.SAVEFILE))
             open_savefile(i, buttons)
         else:
             # Если файла сохранения нет
-            buttons.append(Button(screen, Button.EMPTY))
+            buttons.append(Button(mediator, Button.EMPTY))
         if i == 0:
             # Верхняя кнопка изначально выбрана
             buttons[i].is_chosen = True
         buttons[i].rect.centery = 220 + 2 * i * 90
 
-def update_savefiles_screen(screen: pygame.Surface, buttons: list[Button], 
-    bg: Background):
+def update_savefiles_screen(buttons: list[Button], bg: Background):
     '''Обновляет изображение в меню файлов сохранения'''
     # Перерисовка экрана
     bg.blitme()
@@ -526,19 +523,19 @@ def update_savefiles_screen(screen: pygame.Surface, buttons: list[Button],
     pygame.display.flip()
 
 def keydown_in_savefiles(event, st: Stats, buttons: list[Button], 
-    screen: pygame.Surface, mc: MainCharacter, audio: Audio):
+    mediator: Mediator, mc: MainCharacter, audio: Audio):
     '''Обрабатывает нажатия клавиш в меню файлов сохранения'''
     if event.key == pygame.K_ESCAPE:
         audio.play_sound('back')
         if st.pr_state == st.SUBMENU:
             # Если предыдущим состоянием игры было меню паузы, возвращает туда
             buttons.clear()
-            create_submenu_buttons(buttons, screen, Button.SAVE)
+            create_submenu_buttons(buttons, mediator, Button.SAVE)
             st.state = st.SUBMENU
         elif st.pr_state == st.MAINMENU:
             # Если пред. состоянием игры было главное меню, возвращает туда
             buttons.clear()
-            create_mainmenu_buttons(buttons, screen)
+            create_mainmenu_buttons(buttons, mediator)
             st.state = st.MAINMENU
     elif event.key == pygame.K_DOWN or event.key == pygame.K_UP:
         select_button(buttons, event, audio)
@@ -553,7 +550,7 @@ def keydown_in_savefiles(event, st: Stats, buttons: list[Button],
                     break
             # Возвращает в меню паузы
             buttons.clear()
-            create_submenu_buttons(buttons, screen, Button.SAVE)
+            create_submenu_buttons(buttons, mediator, Button.SAVE)
             st.state = st.SUBMENU
         elif st.state == st.SAVEFILES_LOADMODE:
             # Если активен режим загрузки, передает данные файла, сохраненные
@@ -601,7 +598,7 @@ def open_savefile(number: int, buttons: list[Button]):
 ### БЛОК ТИТРОВ (st.state = Stats.CREDITS) ###
 
 def update_credits_screen(bg: Background, cur_y: int, st: Stats, 
-    buttons: list[Button], screen: pygame.Surface) -> int:
+    buttons: list[Button], mediator: Mediator) -> int:
     '''Обновление изображения во время титров'''
     # Прокрутка изображения
     if cur_y <= 4210: # 4210 - разница между высотой титров и высотой экрана
@@ -612,7 +609,8 @@ def update_credits_screen(bg: Background, cur_y: int, st: Stats,
     cur_y += 1
     if cur_y == 5210: # +1000 - выбрал интуитивно (слегка методом тыка)
         buttons.clear()
-        create_mainmenu_buttons(buttons, screen)
+        create_mainmenu_buttons(buttons, mediator)
+        mediator.call_method('audio', 'stop_all_sounds')
         st.state = st.MAINMENU
         cur_y = 0
     return cur_y
@@ -689,6 +687,7 @@ def draw_gameover_text(mc: MainCharacter,
     if monotonic() - mc.timer < 5:
         for i in range(5):
             if (i + 1) > monotonic() - mc.timer >= i:
+                # белый текст
                 text = mc.font.render(f'{5 - i}', True, (255, 255, 255))
     else:
         text = mc.font.render('PRESS ANY KEY', True, (255, 255, 255))
@@ -699,16 +698,17 @@ def draw_gameover_text(mc: MainCharacter,
 
 
 
-def restart(screen: pygame.Surface, ai_settings: Settings, 
+def restart(screen: pygame.Surface, mediator: Mediator,
     enemies: pygame.sprite.Group, en_fists: pygame.sprite.Group, 
-    st: Stats, cur_time: Timer, mc: MainCharacter, audio: Audio) \
+    st: Stats, mc: MainCharacter, audio: Audio) \
     -> tuple[Timer, MainCharacter, Fist]:
     '''Функция рестарта'''
     timer = Timer(monotonic())
     if mc.health < 1:
         audio.play_sound('restart')
-    new_mc = MainCharacter(screen, ai_settings, cur_time, audio, mc.surname)
+    new_mc = MainCharacter(mediator, mc.surname)
     mc_fist = Fist(screen)
+    mediator.add(mc=new_mc, mc_fist=mc_fist, timer=timer)
     enemies.empty()
     en_fists.empty()
     Enemy.deaths = 0

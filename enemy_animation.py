@@ -72,7 +72,7 @@ def stunning_animation(enemy):
         'ai_settings', 'animation_change')/2
     for i in range(8):
         if (i+1) * an_change > \
-            enemy.cur_time - enemy.timer >= i * an_change:
+            enemy.mediator.current_time() - enemy.timer >= i * an_change:
             # Происходит шатание:
             if i % 2 == 0:
                 enemy.rect.centerx = enemy.centerx - 5

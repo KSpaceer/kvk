@@ -5,28 +5,17 @@ from pygame.sprite import Group
 
 
 
+
 class Mediator():
     '''Класс-посредник для объектов игры'''
 
-    def add(self, ai_settings, screen: Surface, bg, audio, timer, cur_time, 
-        mc, st, enemies, mc_fist, en_fists, 
-        tarzan, buttons):
+    def add(self, **kwargs):
         '''Добавление в тело посредника ссылок на все объекты'''
         
-        self._ai_settings = ai_settings
-        self._screen = screen
-        self._screen_rect = screen.get_rect()
-        self._bg = bg
-        self._audio = audio
-        self._timer = timer
-        self._cur_time = cur_time
-        self._mc = mc
-        self._st = st
-        self._enemies = enemies
-        self._mc_fist = mc_fist
-        self._en_fists = en_fists
-        self._tarzan = tarzan
-        self._buttons = buttons
+        for key, value in kwargs.items():
+            setattr(self, f'_{key}', value)
+
+        
         
 
     def get_value(self, obj_name: str, value_name: str = None):
@@ -37,6 +26,7 @@ class Mediator():
 
     def set_value(self, obj_name: str, value_name: str, new_value_name: str):
         '''Позволяет изменить некоторое значение в объекте из посредника'''
+        from stats import Stats
         exec(f'self._{obj_name}.{value_name} = {new_value_name}')
         
 
@@ -63,5 +53,6 @@ class Mediator():
 
     def call_method(self, obj_name: str, method_name: str, *args_names: str):
         '''Вызывает метод объекта с заданными аргументами'''
+        from stats import Stats
         args = ','.join(args_names)
         exec(f'self._{obj_name}.{method_name}({args})')

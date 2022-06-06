@@ -28,7 +28,7 @@ class Tarzan():
                 self.direction = True
         else:
             if self.rect.centery != self.mediator.get_value(
-                'screen_rect', 'center') + 25:
+                'screen_rect', 'centery') + 25:
                 self.rect.centery += 1
             else:
                 self.direction = False

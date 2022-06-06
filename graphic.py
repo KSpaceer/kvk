@@ -16,14 +16,14 @@ def draw_health(mc: MainCharacter, ai_settings: Settings):
     stripe_width = 35 * (1 + 2 * ai_settings.mc_health)
     stripe = pygame.Surface((stripe_width, 55))
     stripe.fill((49, 4, 138))
-    mc.screen.blit(stripe, (0,0))
+    mc.mediator.blit_surface(stripe, (0,0))
     for i in range(mc.health):
         new_healthbar = pygame.image.load(f'images/K{mc.surname}' + 
             '_health.png').convert_alpha()
         rect = new_healthbar.get_rect()
-        rect.top = mc.screen_rect.top
+        rect.top = mc.mediator.get_value('screen_rect', 'top')
         rect.left = rect.width + i * 2 * rect.width
-        mc.screen.blit(new_healthbar, rect)
+        mc.mediator.blit_surface(new_healthbar, rect)
 
 def draw_invincibility(mc: MainCharacter):
     '''Визуальное отображение неуязвимости'''
@@ -31,10 +31,12 @@ def draw_invincibility(mc: MainCharacter):
         # Рисуем прямоугольник вверху для вывода значка неуязвимости
         stripe = pygame.Surface((55,55))
         stripe.fill((49, 4, 138))
-        mc.screen.blit(stripe, (mc.screen_rect.width - 105, 0))
+        mc.mediator.blit_surface(
+            stripe, (mc.mediator.get_value('screen_rect', 'width') - 105, 0))
         inv_bar = pygame.image.load(f'images/K{mc.surname}' + 
             '_invincibility.png').convert_alpha()
-        mc.screen.blit(inv_bar,(mc.screen_rect.width - 100, 2))
+        mc.mediator.blit_surface(
+            inv_bar,(mc.mediator.get_value('screen_rect', 'width') - 100, 2))
 
 class BossHealth:
     '''Здоровье босса'''

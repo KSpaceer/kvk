@@ -5,6 +5,7 @@ import pygame
 from pygame.sprite import Sprite, Group
 from audiosounds import Audio
 import enemy_animation as an
+import enemy_attack_functions as eaf
 from fist import Fist
 from mediator import Mediator
 from settings import Settings
@@ -169,7 +170,7 @@ class Enemy(Sprite):
                     # Сначала идет перемещение по вертикали
                     if not where_am_i_y:
                         self.vertical_movement()
-                    # Затем по горизонтали
+                    # Затем по горизонтали       
                     elif not where_am_i_x:
                         self.horizontal_movement()
                     # Конвертируем вещественное значение в целочисленное
@@ -190,9 +191,9 @@ class Enemy(Sprite):
                             self.initiate_launch()
 
                 elif self.is_punching:
-                   self.attack()
+                   eaf.attack(self)
                 else:
-                    self.launch()
+                    eaf.launch(self)
             else:
                 an.stunning_animation(self)      
         else:
@@ -203,6 +204,7 @@ class Enemy(Sprite):
 
     def check_attack_possibility(self) -> tuple[bool, bool]:
         '''Возвращает флаги возможности атаки'''
+        
         mc_rect: pygame.Rect = self.mediator.get_value('mc', 'rect')
         where_am_i_y = self.rect.centery in range(
                         mc_rect.centery - 5, mc_rect.centery + 6)
@@ -231,7 +233,7 @@ class Enemy(Sprite):
         return where_am_i_y, where_am_i_x
 
 
-    def get_damage(self, fist: Fist):
+    def get_damage(self):
         '''Получение урона и оглушение'''
         if self.surname == 'D':
             # Не надо бить Диану
@@ -246,35 +248,37 @@ class Enemy(Sprite):
         self.image = pygame.image.load(
             f'images/K{self.surname}Enemies/{self.name}' +
             '/stunned.png').convert_alpha()
-        self.change_stun_rect(fist)
+        self.change_stun_rect()
         self.mediator.call_method('audio', 'play_sound', '"punch"')
         self.timer = monotonic()
 
     def vertical_movement(self):
         '''Перемещение врага по вертикали'''
+        ai_settings = self.mediator.get_value('ai_settings')
         if self.rect.centery < self.mediator.get_value('mc', 'rect.centery'):
             an.going_vertical_animation(self)
-            exec(f'self.centery += self.ai_settings.{self.name}_speed_factor')
+            exec(f'self.centery += ai_settings.{self.name}_speed_factor')
         else:
             an.going_vertical_animation(self)
-            exec(f'self.centery -= self.ai_settings.{self.name}_speed_factor')
+            exec(f'self.centery -= ai_settings.{self.name}_speed_factor')
 
     def horizontal_movement(self):
         '''Перемещение врага по горизонтали'''
+        ai_settings = self.mediator.get_value('ai_settings')
         if self.rect.left > self.mediator.get_value('mc', 'rect.right'):
             an.going_left_animation(self)
-            exec(f'self.centerx -= self.ai_settings.{self.name}_speed_factor')
+            exec(f'self.centerx -= ai_settings.{self.name}_speed_factor')
         elif self.rect.right < self.mediator.get_value('mc', 'rect.left'):
             an.going_right_animation(self)
-            exec(f'self.centerx += self.ai_settings.{self.name}_speed_factor')
+            exec(f'self.centerx += ai_settings.{self.name}_speed_factor')
         else:
             # Если враг внутри главного персонажа, он пытается выйти из него
             if self.rect.centerx > self.mediator.get_value('mc','rect.centerx'):
                 an.going_right_animation(self)
-                exec(f'self.centerx += self.ai_settings.{self.name}_speed_factor')
+                exec(f'self.centerx += ai_settings.{self.name}_speed_factor')
             else:
                 an.going_left_animation(self)
-                exec(f'self.centerx -= self.ai_settings.{self.name}_speed_factor')
+                exec(f'self.centerx -= ai_settings.{self.name}_speed_factor')
 
     def initiate_punch(self):
         '''Активирует флаги атаки'''
@@ -294,100 +298,6 @@ class Enemy(Sprite):
             self.right_punch = True
         self.timer = monotonic()
 
-    def launch(self):
-        '''Обработка запуска сюрикена'''
-        if not self.shuriken_active:
-            self.shuriken_active = True
-            file_end_name = self.define_attack_vars()[0]
-            self.image = pygame.image.load(f'images/K{self.surname}Enemies/' +
-            f'{self.name}/launching_{file_end_name}.png').convert_alpha()
-            self.change_rect()
-            from shuriken import Shuriken
-            new_shuriken = Shuriken(self.mediator, self, self.right_punch)
-            self.mediator.extend_collection(new_shuriken)
-            self.mediator.call_method(
-                'audio', 'play_sound', '"launch_shuriken"')
-        if self.mediator.current_time() - self.timer >=\
-            self.mediator.get_value('ai_settings', 'animation_change'):
-            self.is_launching = False
-            self.shuriken_active = False
-            self.launch_cooldown_timer = monotonic()
-    
-    def attack(self):
-        '''Обработка атаки'''
-        file_end_name, sign, rect_side = self.define_attack_vars()
-        # self.frames - количество кадров
-        for i in range(self.frames):
-            # Кадры сменяются по времени:
-            if (i+1) * self.ats >= self.mediator.current_time() - self.timer >\
-                i * self.ats:
-                # Кадров (изображений именно) всего половина от общего количества, 
-                # в случае нечетного кол-ва - с округлением в большую сторону
-                if i in range(int(self.frames/2) + 1):
-                    self.working_stroke(file_end_name, sign, rect_side, i)
-                else:
-                    self.idling(file_end_name, i)
-
-    def idling(self, file_end_name: str, i: int):
-        '''Холостой ход атаки'''
-        en_fists: Group = self.mediator.get_collection('en_fists')
-        if i == round(self.frames/2) + 1 and\
-            self.fist in en_fists:
-            # Удаляем ударную поверхность:
-            self.fist.change_position(-50, -50)
-            en_fists.remove(self.fist)
-        # Кадры идут в обратном порядке
-        self.image = pygame.image.load(
-                        f'images/K{self.surname}Enemies/{self.name}/'+
-                        f'punching{self.frames + 1 - i}_{file_end_name}' + 
-                        '.png').convert_alpha()
-        self.correlate_rect_image(self.right_punch)
-        if i == self.frames - 1:
-            # Атака закончена, начинается перезарядка
-            self.is_punching = False
-            self.shockwave_active = False
-            self.has_played_audio = False
-            self.cooldown_timer = monotonic()
-            if hasattr(self, 'is_new_rect_created'):
-                self.is_new_rect_created = False
-
-    def working_stroke(self, file_end_name: str, sign: str, rect_side: str, i: int):
-        '''Рабочий ход атаки'''
-        if i == 0:
-            self.create_new_rect()
-            self.mediator.extend_collection('en_fists', self.fist)
-        self.image = pygame.image.load(
-                        f'images/K{self.surname}Enemies/{self.name}' +
-                        f'/punching{i + 1}_{file_end_name}.png').convert_alpha()                   
-        if i <= self.noload_fr - 1:
-        # Корректирует изображение на "неатакующих" кадрах, если такое предусмотрено
-            if self.pos_correction != '0':
-                self.correct_position(sign, rect_side)
-            else:
-                self.correlate_rect_image(self.right_punch)
-        else:
-            self.correlate_rect_image(self.right_punch)
-                        # Перемещает ударную поверхность:
-            exec('self.fist.change_position(' +
-                            f'self.an_rect.{rect_side} {sign}' +
-                            f'self.frl_side[i-{self.noload_fr}],' +
-                            f'self.an_rect.top + self.frl_top[i-{self.noload_fr}])')
-            if not self.has_played_audio:
-                self.mediator.call_method(
-                    'audio', 'play_sound', f'"{self.audioname}"')
-                self.has_played_audio = True
-            self.shockwave_check(i)
-
-    def shockwave_check(self, i: int):
-        '''Вызывает ударную волну, 
-        если такое предусмотрено типом врага и другой волны нет'''
-        if self.summon_shockwave and not self.shockwave_active \
-            and i == round(self.frames/2):
-            # Вызывает ударную волну, если такое предусмотрено типом врага
-            self.mediator.call_method('audio', 'play_sound', '"launch_shockwave"')
-            new_shockwave = Shockwave(self.mediator, self.right_punch, en_fist=self.fist)
-            self.mediator.extend_collection('en_fists', new_shockwave)
-            self.shockwave_active = True
 
     def correct_position(self, sign: str, rect_side: str):
         '''Корректирует положение на неатакующих кадрах'''

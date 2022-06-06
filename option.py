@@ -31,7 +31,8 @@ class Option:
     def blitme(self):
         '''Отображение изображения опции на экране'''
         self.mediator.blit_surface(self.image, self.rect)
-        current_value = eval('int(self.ai_settings.' +
+        ai_settings = self.mediator.get_value('ai_settings')
+        current_value = eval('int(ai_settings.' +
             f'{self.number_to_name[self.name_number]})')
         # Рисуем апельсинки-указатели величины
         for i in range(10):
@@ -48,18 +49,19 @@ class Option:
     def vary_parameter(self, is_plus: bool):
         '''Изменяет параметр текущей опции'''
         sign = '+' if is_plus else '-'
-        if eval('10 > self.ai_settings.' +
+        ai_settings = self.mediator.get_value('ai_settings')
+        if eval('10 > ai_settings.' +
             f'{self.number_to_name[self.name_number]} > 0'):
-            exec('self.ai_settings.' + self.number_to_name[self.name_number] 
+            exec('ai_settings.' + self.number_to_name[self.name_number] 
                 + sign + '= 1')
         # Краевые события
-        elif eval('self.ai_settings.' + 
+        elif eval('ai_settings.' + 
             self.number_to_name[self.name_number] + '== 10') and not is_plus:
-            exec('self.ai_settings.' + self.number_to_name[self.name_number] 
+            exec('ai_settings.' + self.number_to_name[self.name_number] 
                 + '-= 1')
-        elif eval('self.ai_settings.' + 
+        elif eval('ai_settings.' + 
             self.number_to_name[self.name_number] + '== 0') and is_plus:
-            exec('self.ai_settings.' + self.number_to_name[self.name_number] 
+            exec('ai_settings.' + self.number_to_name[self.name_number] 
                 + '+= 1')
     
     @property

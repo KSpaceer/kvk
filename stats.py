@@ -78,7 +78,7 @@ class Stats():
             Stats.state_to_audio[Stats.GAMEACTIVE][:-2] + f'{value + 1}' 
             + Stats.state_to_audio[Stats.GAMEACTIVE][-1])
         self.mediator.set_value(
-            'audio', 'current_music', Stats.state_to_audio[Stats.GAMEACTIVE])
+            'audio', 'current_music', 'Stats.state_to_audio[Stats.GAMEACTIVE]')
         self.state = Stats.LOADING
         self.__level = value
 
@@ -97,12 +97,13 @@ class Stats():
     def state(self, value):
         if value in Stats.state_to_bg.keys():
             self.mediator.call_method(
-                'bg', 'change', 'Stats.state_to_bg[value]')
+                'bg', 'change', f'Stats.state_to_bg[{value}]')
         elif value == Stats.SUBMENU:
             self.mediator.call_method(
                 'bg', 'change', 'Stats.state_to_bg[Stats.GAMEACTIVE]')
         if value in Stats.state_to_audio.keys():
-            self.mediator.set_value('audio', 'current_music', 'Stats.state_to_audio[value]')
+            self.mediator.set_value(
+                'audio', 'current_music', f'Stats.state_to_audio[{value}]')
         if value == Stats.MAINMENU:
             self.state_to_audio[Stats.GAMEACTIVE] = f'level{self.level + 1}S'
         self.__state = value

@@ -1,5 +1,7 @@
+from math import floor
 from time import monotonic
 import mc_animation as an
+import mc_movement as mv
 import pygame
 from pygame.sprite import Sprite
 from mediator import Mediator
@@ -50,6 +52,10 @@ class MainCharacter(Sprite):
         self.invincible = False
         # Скорость атаки (для удобства зададим новую переменную)
         self.ats = mediator.get_value('ai_settings', 'attack_speed')
+        # Количество кадров атаки:
+        self.frames = 5
+        # frl - fist relative location
+        self.frl = [-57, 26, 35, -57, -57]
         
         
     @property
@@ -67,14 +73,23 @@ class MainCharacter(Sprite):
     def surname(self):
         del self.__surname
 
-
+    def correlate_rect_image(self, side: bool):
+        '''Соотносит изначальный прямоугольник с измененным изображением
+        True - анимация вправо, т.е. у прямоугольников одинаковое расположение левой стороны.
+        False - влево, соответственно одинаковое расположение правой стороны'''
+        self.an_rect = self.image.get_rect()
+        self.an_rect.top = self.rect.top
+        if side:
+            self.an_rect.left = self.rect.left
+        else:
+            self.an_rect.right = self.rect.right
     
     def blitme(self):
         '''Рисует персонажа в текущей позиции'''
         if not self.is_punching and self.health > 0:
             self.mediator.blit_surface(self.image, self.rect)
         else:
-            self.mediator.blit_surface(self.image, self.rect)
+            self.mediator.blit_surface(self.image, self.an_rect)
     
     def update(self):
         '''Обновляет позицию главного персонажа'''
@@ -99,10 +114,7 @@ class MainCharacter(Sprite):
                         self.movement()
                         
                 else:
-                    if self.right_punch:
-                        self.right_attack()
-                    else:
-                        self.left_attack()
+                    self.attack()
             else:
                 # Удар был справа
                 if self.damaged_from_right:
@@ -120,157 +132,45 @@ class MainCharacter(Sprite):
     def movement(self):
         if self.moving_right and self.rect.right <\
             self.mediator.get_value('screen_rect', 'right'):
-            self.going_right()
+            mv.going_right(self)
                             # Если активен пробел, то начинает атаку:
             self.initiate_punch(True, True)
         if self.moving_left and self.rect.left > 0:
-            self.going_left()
+            mv.going_left(self)
             self.initiate_punch(True, False)
         if self.moving_down and self.rect.bottom <\
-            self.mediator.get_value('screen_rect', 'right'):
-            self.going_down()
+            self.mediator.get_value('screen_rect', 'bottom'):
+            mv.going_down(self)
         if self.moving_up and self.rect.top > 0:
-            self.going_up()
+            mv.going_up(self)
             
 
-    
-
-
-    def right_attack(self):
-        '''Процесс атаки на правую сторону'''
-        if self.attack_timer == 0:
-            # Загружаем изображение
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right1.png').convert_alpha()
-            self.correlate_rect_image(True)
-            self.attack_timer = monotonic() # Обновление таймера
-        elif 2 * self.ats >= self.mediator.current_time() - self.attack_timer \
-                    > self.ats:
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right2.png').convert_alpha()
-            self.correlate_rect_image(True)
-            # Изменение позиции кулака
-            self.mediator.get_value('mc_fist').change_position(
-                self.an_rect.right, self.rect.top + 26) 
-        elif 3 * self.ats >= self.mediator.current_time() - self.attack_timer > \
-                    2 * self.ats:
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right3.png').convert_alpha()
-            self.correlate_rect_image(True)
-            self.mediator.get_value('mc_fist').change_position(
-                self.an_rect.right, self.rect.top + 35)
-            
-        elif 4 * self.ats >= self.mediator.current_time() - self.attack_timer > \
-                    3 * self.ats:
-            self.mediator.get_value('mc_fist').change_position(-50, -50)
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right2.png').convert_alpha()
-            self.correlate_rect_image(True)
-        elif 5 * self.ats >= self.mediator.current_time() - self.attack_timer > \
-                     4 * self.ats:
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_right1.png').convert_alpha()
-            self.correlate_rect_image(True)
-        elif self.mediator.current_time() - self.attack_timer > 5 * self.ats:
-            self.is_punching = False # Атака закончена
-
-    def left_attack(self):                   
-        '''Процесс атаки на левую сторону'''
-        if self.attack_timer == 0:
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left1.png').convert_alpha()
-            self.correlate_rect_image(False)
-            self.attack_timer = monotonic()
-            
-        elif 2 * self.ats >= self.mediator.current_time() - self.attack_timer \
-                    > self.ats:
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left2.png').convert_alpha()
-            self.correlate_rect_image(False)
-            self.mediator.get_value('mc_fist').change_position(
-                self.an_rect.left, self.rect.top + 25) 
-            
-        elif 3 * self.ats >= self.mediator.current_time() - self.attack_timer > \
-                    2 * self.ats:
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left3.png').convert_alpha()
-            self.correlate_rect_image(False)
-            self.mediator.get_value('mc_fist').change_position(
-                self.an_rect.left, self.rect.top + 34)
-           
-            
-        elif 4 * self.ats >= self.mediator.current_time() - self.attack_timer > \
-                    3 * self.ats:
-            self.mediator.get_value('mc_fist').change_position(-50, -50)
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left2.png').convert_alpha()
-            self.correlate_rect_image(False)
-
-        elif 5 * self.ats >= self.mediator.current_time() - self.attack_timer > \
-                     4 * self.ats:
-            self.image = pygame.image.load(
-                        f'images/K{self.surname}Main/punching_left1.png').convert_alpha()
-            self.correlate_rect_image(False)
-
-        elif self.mediator.current_time() - self.attack_timer > 5 * self.ats:
+    def attack(self):
+        '''Обработка атаки'''
+        side = 'right' if self.right_punch else 'left'
+        for i in range(self.frames):
+            if (i + 1) * self.ats >= self.mediator.current_time() \
+                - self.attack_timer > i * self.ats:
+                self.image = pygame.image.load(f'images/K{self.surname}Main/' + 
+                    f'punching_{side}' +
+                    f'{i + 1 if i < floor(self.frames/2) else self.frames - i}' +
+                    '.png').convert_alpha()
+                self.correlate_rect_image(self.right_punch)
+                mc_fist: Fist = self.mediator.get_value('mc_fist')
+                mc_fist.change_position(
+                    eval(f'self.an_rect.{side}'), 
+                    self.rect.top + self.frl[i] if self.frl[i] > 0 else self.frl[i]) 
+        if self.mediator.current_time() - self.attack_timer\
+            >= self.frames * self.ats:
             self.is_punching = False
                     
-    
-    def going_right(self):
-        '''Если персонаж ни с кем не столкнулся из врагов, он делает движение 
-        вправо'''
-        for enemy in self.mediator.get_collection('enemies'):
-            if self.rect.right in range(enemy.rect.left - 10, enemy.rect.left + 10):
-                # Если персонаж расположен намного ниже врага, то он может пройти
-                if self.rect.centery in range(
-                enemy.rect.bottom - enemy.rect.height, 
-                enemy.rect.bottom - int(enemy.rect.height/3)):
-                    return
-        
-        self.centerx += self.speed
-        an.going_right_animation(self)
-
-    def going_left(self):
-        '''Если персонаж ни с кем не столкнулся из врагов, он делает движение 
-        влево'''
-        for enemy in self.mediator.get_collection('enemies'):
-            if self.rect.left in range(enemy.rect.right - 10, enemy.rect.right + 10):
-                # Если персонаж расположен намного ниже врага, то он может пройти
-                if self.rect.centery in range(
-                enemy.rect.bottom - enemy.rect.height, 
-                enemy.rect.bottom - int(enemy.rect.height/3)):
-                    return
-        self.centerx -= self.speed
-        an.going_left_animation(self)
-
-    def going_down(self):
-        '''Если персонаж ни с кем не столкнулся из врагов, он делает движение
-        вниз'''
-        for enemy in self.mediator.get_collection('enemies'):
-            if self.rect.bottom in range(enemy.rect.top - 10, enemy.rect.top + 10):
-                if self.rect.centerx in range(
-                enemy.rect.left, enemy.rect.left + enemy.rect.width):               
-                    return
-        self.centery += self.speed
-        an.going_down_animation(self)
-
-    def going_up(self):
-        '''Если персонаж ни с кем не столкнулся из врагов, он делает движение
-        вверх'''
-        for enemy in self.mediator.get_collection('enemies'):
-            if self.rect.top in range(enemy.rect.bottom - 10, enemy.rect.bottom + 10):
-                if self.rect.centerx in range(
-                enemy.rect.left, enemy.rect.left + enemy.rect.width):                
-                    return
-        self.centery -= self.speed
-        an.going_up_animation(self)
 
     def initiate_punch(self, is_punching: bool, right_punch: bool):
         '''Активирует флаги атаки'''
         if self.space_active:
             self.is_punching = is_punching
             self.right_punch = right_punch
-            self.attack_timer = 0
+            self.attack_timer = monotonic()
 
     def get_damage(self, touching_fist: Fist):
         '''Активирует флаги получения урона'''
@@ -314,19 +214,10 @@ class MainCharacter(Sprite):
         for name in self.mediator.get_value('audio', 'sounds').keys():
             self.mediator.get_value('audio', 'sounds')[name].stop()
         self.font = pygame.font.SysFont('tahoma', 48)
-        self.mediator.set_value('st', 'state', 'st.GAMEOVER') 
+        self.mediator.set_value('st', 'state', 'Stats.GAMEOVER') 
 
     
-    def correlate_rect_image(self, side: bool):
-        '''Соотносит изначальный прямоугольник с измененным изображением
-        True - анимация вправо, т.е. у прямоугольников одинаковое расположение левой стороны.
-        False - влево, соответственно одинаковое расположение правой стороны'''
-        self.an_rect = self.image.get_rect()
-        self.an_rect.top = self.rect.top
-        if side:
-            self.an_rect.left = self.rect.left
-        else:
-            self.an_rect.right = self.rect.right
+    
         
 
     
