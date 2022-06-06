@@ -1,3 +1,4 @@
+
 import pygame
 from pygame.sprite import Group
 from time import monotonic
@@ -83,7 +84,7 @@ def working_stroke(enemy, file_end_name: str, sign: str, rect_side: str, i: int)
             enemy.mediator.call_method(
                 'audio', 'play_sound', f'"{enemy.audioname}"')
             enemy.has_played_audio = True
-        shockwave_check(i)
+        shockwave_check(enemy, i)
 
 def shockwave_check(enemy, i: int):
     '''Вызывает ударную волну, 
