@@ -4,6 +4,7 @@
 import pygame
 from enemy import Enemy
 from mediator import Mediator
+from path_handling import load_image
 from settings import Settings
 from MC import MainCharacter
 from stats import Stats
@@ -22,8 +23,7 @@ class Guru(Enemy):
         self.health = 10 * self.mediator.get_value(
             'ai_settings', 'h_multiplier')
         # Загрузка изображения
-        self.image = pygame.image.load(
-            'images/KZEnemies/guru/standing.png').convert_alpha()
+        self.image = load_image('KZEnemies', 'guru', 'standing.png')
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -55,8 +55,7 @@ class Guru(Enemy):
     def vertical_movement(self):
         '''Перемещение врага по вертикали'''
        # Отличие от одноименного метода класса Enemy - отсутствие анимации
-        self.image = pygame.image.load(
-            'images/KZEnemies/guru/standing.png').convert_alpha()
+        self.image = load_image('KZEnemies', 'guru', 'standing.png')
         self.change_rect()
         speed = self.mediator.get_value(
                 'ai_settings', 'guru_speed_factor')
@@ -92,9 +91,8 @@ class Guru(Enemy):
                 if 2 * (i + 1) * an_change > \
                     self.mediator.current_time() - self.timer >= \
                     2 * i * an_change:
-                    self.image = pygame.image.load(
-                        f'images/KZEnemies/guru/death{i + 1}' + 
-                        '.png').convert_alpha()
+                    self.image = load_image('KZEnemies', 
+                        'guru', f'death{i + 1}.png')
                     self.change_rect()
         elif self.mediator.current_time() - self.timer >= \
             18 * an_change:

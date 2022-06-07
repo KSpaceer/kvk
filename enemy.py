@@ -8,6 +8,7 @@ import enemy_animation as an
 import enemy_attack_functions as eaf
 from fist import Fist
 from mediator import Mediator
+from path_handling import load_image
 from settings import Settings
 from MC import MainCharacter
 from shockwave import Shockwave
@@ -122,7 +123,7 @@ class Enemy(Sprite):
         if not self.is_punching:
             self.mediator.blit_surface(self.image, self.rect)
         else:
-            self.mediator.blit_surface(self.image, self.rect)
+            self.mediator.blit_surface(self.image, self.an_rect)
 
     def change_rect(self):
         '''Заменяет прямоугольник врага, центр нового находится в центре старого'''
@@ -245,9 +246,8 @@ class Enemy(Sprite):
             return
         self.health -= self.mediator.get_value('ai_settings', 'mc_damage')
         self.is_stunned = True
-        self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/{self.name}' +
-            '/stunned.png').convert_alpha()
+        self.image = load_image(f'K{self.surname}Enemies', 
+            f'{self.name}', 'stunned.png')
         self.change_stun_rect()
         self.mediator.call_method('audio', 'play_sound', '"punch"')
         self.timer = monotonic()

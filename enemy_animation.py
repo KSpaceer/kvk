@@ -1,6 +1,6 @@
 import pygame
 from time import monotonic
-
+from path_handling import load_image
 
 
 def going_vertical_animation(enemy):
@@ -13,15 +13,13 @@ def going_vertical_animation(enemy):
         enemy.timer = monotonic()
         if enemy.is_right_leg:
             enemy.is_right_leg = False
-            enemy.image = pygame.image.load(
-                    f'images/K{enemy.surname}Enemies/{enemy.name}' + 
-                    '/going_vertical(left_leg).png').convert_alpha()
+            enemy.image = load_image(f'K{enemy.surname}Enemies', 
+                f'{enemy.name}', 'going_vertical(left_leg).png')
             enemy.change_rect()
         else:
             enemy.is_right_leg = True
-            enemy.image = pygame.image.load(
-                f'images/K{enemy.surname}Enemies/{enemy.name}' +
-                '/going_vertical(right_leg).png').convert_alpha()
+            enemy.image = load_image(f'K{enemy.surname}Enemies', 
+                f'{enemy.name}', 'going_vertical(right_leg).png')
             enemy.change_rect()
 
 def going_right_animation(enemy):
@@ -34,15 +32,13 @@ def going_right_animation(enemy):
         enemy.timer = monotonic()
         if enemy.is_right_leg:
             enemy.is_right_leg = False
-            enemy.image = pygame.image.load(
-                f'images/K{enemy.surname}Enemies/{enemy.name}' +
-                '/going_right(left_leg).png').convert_alpha()
+            enemy.image = load_image(f'K{enemy.surname}Enemies', 
+                f'{enemy.name}', 'going_right(left_leg).png')
             enemy.change_rect()
         else:
             enemy.is_right_leg = True
-            enemy.image = pygame.image.load(
-                f'images/K{enemy.surname}Enemies/{enemy.name}' +
-                '/going_right(right_leg).png').convert_alpha()
+            enemy.image = load_image(f'K{enemy.surname}Enemies', 
+                f'{enemy.name}', 'going_right(right_leg).png')
             enemy.change_rect()
 
 def going_left_animation(enemy):
@@ -55,15 +51,13 @@ def going_left_animation(enemy):
         enemy.timer = monotonic()
         if enemy.is_right_leg:
             enemy.is_right_leg = False
-            enemy.image = pygame.image.load(
-                f'images/K{enemy.surname}Enemies/{enemy.name}' +
-                '/going_left(left_leg).png').convert_alpha()
+            enemy.image = load_image(f'K{enemy.surname}Enemies', 
+                f'{enemy.name}', 'going_left(left_leg).png')
             enemy.change_rect()
         else:
             enemy.is_right_leg = True
-            enemy.image = pygame.image.load(
-                f'images/K{enemy.surname}Enemies/{enemy.name}' +
-                '/going_left(right_leg).png').convert_alpha()
+            enemy.image = load_image(f'K{enemy.surname}Enemies', 
+                f'{enemy.name}', 'going_left(right_leg).png')
             enemy.change_rect()
 
 def stunning_animation(enemy):

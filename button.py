@@ -1,6 +1,7 @@
 import pygame
 
 from mediator import Mediator
+from path_handling import load_image
 
 
 class Button():
@@ -29,9 +30,8 @@ class Button():
         '''Инициализация параметров'''
         self.mediator = mediator
         self.name_number = name_number
-        self.image = pygame.image.load(
-            f'images/Buttons/{Button.image_names_dict[name_number]}' +
-            '.png').convert_alpha()
+        self.image = load_image('Buttons', 
+            f'{Button.image_names_dict[name_number]}.png')
         self.rect = self.image.get_rect()
         # Кнопки находятся по середине экрана (по ширине)
         self.rect.centerx = self.mediator.get_value('screen_rect', 'centerx')

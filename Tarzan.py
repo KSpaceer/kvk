@@ -2,6 +2,7 @@
 import pygame
 from background import Background
 from mediator import Mediator
+from path_handling import load_image
 
 from settings import Settings
 
@@ -10,7 +11,7 @@ class Tarzan():
 
     def __init__(self, mediator: Mediator) -> None:
         '''Инициализирует параметры основные'''
-        self.image = pygame.image.load('images/Tarzan.png').convert_alpha()
+        self.image = load_image('Tarzan.png')
         self.rect = self.image.get_rect()
         self.mediator = mediator
         self.rect.center = self.mediator.get_value('screen_rect', 'center')

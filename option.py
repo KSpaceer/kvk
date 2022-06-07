@@ -2,6 +2,7 @@
 
 import pygame
 from mediator import Mediator
+from path_handling import load_image
 from settings import Settings
 
 
@@ -21,8 +22,8 @@ class Option:
         name_number: int) -> None:
             self.mediator = mediator
             self.name_number = name_number
-            self.image = pygame.image.load('images/buttons/' +
-                f'{Option.number_to_name[self.name_number]}.png').convert_alpha()
+            self.image = load_image('Buttons', 
+                f'{Option.number_to_name[self.name_number]}.png')
             self.rect = self.image.get_rect()
             # Опции находятся по середине экрана
             self.rect.centerx = self.mediator.get_value('screen_rect', 'centerx')
@@ -39,11 +40,9 @@ class Option:
             orange_rect = pygame.Rect(self.rect.left + 87 + 54 * i, 
                 self.rect.bottom - 50, 40, 40)
             if i <= current_value - 1:
-                orange_image = pygame.image.load('images/buttons/' +
-                    'active_orange.png')
+                orange_image = load_image('Buttons', 'active_orange.png')
             else:
-                orange_image = pygame.image.load('images/buttons/' +
-                    'inactive_orange.png')
+                orange_image = load_image('Buttons', 'inactive_orange.png')
             self.mediator.blit_surface(orange_image, orange_rect)
 
     def vary_parameter(self, is_plus: bool):
@@ -71,9 +70,8 @@ class Option:
     @is_chosen.setter
     def is_chosen(self, value: bool):
         addition = '(selected)' if value else ''
-        self.image = pygame.image.load('images/buttons/' 
-        + f'{Option.number_to_name[self.name_number]}' + addition 
-        +'.png').convert_alpha()
+        self.image = load_image('Buttons', 
+            f'{Option.number_to_name[self.name_number]}' + addition + '.png')
         self.__is_chosen = value
 
     @is_chosen.deleter

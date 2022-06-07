@@ -1,14 +1,10 @@
 
 import pygame
 from enemy import Enemy
-from fist import Fist
 from random import randint
 from enemy_animation import going_left_animation, going_right_animation
 from mediator import Mediator
-from settings import Settings
-from MC import MainCharacter
-from stats import Stats
-from etimer import Timer
+from path_handling import load_image
 
 class Bull(Enemy):
     '''Класс первого типа врагов - бугаев'''
@@ -26,8 +22,7 @@ class Bull(Enemy):
         if randint(0, diana_appearance_chance) == diana_appearance_chance:
             self.surname = 'D'
         # Загрузка изображения
-        self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/bull/standing.png').convert_alpha()
+        self.image = load_image(f'K{self.surname}Enemies', 'bull', 'standing.png')
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -83,9 +78,8 @@ class Bull(Enemy):
                     if (i+1) * animation_change > \
                         self.mediator.current_time() - self.timer >= \
                             i * animation_change:
-                        self.image = pygame.image.load(
-                            f'images/K{self.surname}Enemies/bull' + 
-                            f'/death{i + 1}.png').convert_alpha()
+                        self.image = load_image(f'K{self.surname}Enemies', 
+                            'bull', f'death{i + 1}.png')
                         self.change_rect()
             else:
                 # Полетели вверх, если ангел

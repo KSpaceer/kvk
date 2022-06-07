@@ -2,6 +2,7 @@ from time import monotonic
 import pygame
 from random import randint
 from MC import MainCharacter
+from path_handling import load_image
 
 def summon_enemies(boss):
     '''Призывает врагов'''
@@ -145,14 +146,12 @@ def ultimate_animation(boss, ultimate_name: str,
             boss.mediator.current_time() - boss.timer >=\
             number/animation_speed_factor * boss.ats:
             if number < 3:
-                boss.image = pygame.image.load(
-                    f'images/K{boss.surname}Enemies' +
-                    f'/boss/ultimate{number + 1}.png').convert_alpha()
+                boss.image = load_image(f'K{boss.surname}Enemies', 
+                    'boss', f'ultimate{number + 1}.png')
                 boss.change_rect()
             else:
-                boss.image = pygame.image.load(f'images/K{boss.surname}' +
-                    f'Enemies/boss/{ultimate_name}{number - 2}' 
-                    + side_factor + '.png').convert_alpha()
+                boss.image = load_image(f'K{boss.surname}Enemies', 
+                    'boss', f'{ultimate_name}{number - 2}' + side_factor + '.png')
 
 def create_target_surface(boss, mc_rect : pygame.Rect):
     '''Создает поверхность цели, которую главному персонажу

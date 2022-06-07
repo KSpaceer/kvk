@@ -9,6 +9,7 @@ from enemy import Enemy
 from enemy_animation import (going_left_animation, 
 going_right_animation, going_vertical_animation)
 from mediator import Mediator
+from path_handling import load_image
 from settings import Settings
 from MC import MainCharacter
 from stats import Stats
@@ -28,8 +29,7 @@ class Eater(Enemy):
         # Инициализация здоровья
         self.health = 10 * self.mediator.get_value('ai_settings', 'h_multiplier')
         # Загрузка изображения
-        self.image = pygame.image.load(
-            'images/KSEnemies/eater/standing.png').convert_alpha()
+        self.image = load_image('KSEnemies', 'eater', 'standing.png')
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -82,8 +82,7 @@ class Eater(Enemy):
         if self.start_dying:
             self.direction = randint(0, 3)
             self.start_dying = False
-            self.image = pygame.image.load(
-                'images/KSEnemies/eater/standing.png').convert_alpha()
+            self.image = load_image('KSEnemies', 'eater', 'standing.png')
             self.change_rect()
 
     def gotta_go_fast(self):

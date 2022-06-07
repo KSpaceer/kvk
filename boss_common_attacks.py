@@ -3,6 +3,7 @@ import pygame
 from MC import MainCharacter
 from audiosounds import Audio
 from itertools import cycle
+from path_handling import load_image
 
 
 
@@ -86,14 +87,13 @@ def cracking_animation(boss):
         if (i + 1)/2 * boss.ats > boss.mediator.current_time()\
             - boss.timer >= i/2 * boss.ats:
             if i != 5:
-                boss.image = pygame.image.load(
-                        f'images/K{boss.surname}Enemies/' +
-                        f'boss/cracking{i + 1}.png').convert_alpha()
+                boss.image = load_image(f'K{boss.surname}Enemies', 
+                    'boss', f'cracking{i + 1}.png')
+                        
             else:
-                boss.image = pygame.image.load(
-                        f'images/K{boss.surname}Enemies/' +
-                        f'boss/spinning{int(boss.right_punch) + 1}' + 
-                        '.png').convert_alpha()
+                boss.image = load_image(f'K{boss.surname}Enemies', 
+                    'boss', f'spinning{int(boss.right_punch) + 1}.png')
+                        
             boss.change_rect()
 
 def choose_cracking_point(boss):
@@ -111,8 +111,8 @@ def choose_cracking_point(boss):
 def spinning_animation(boss):
     '''Анимация вращения босса во время обычной атаки'''
     if boss.ats/2 >= boss.mediator.current_time() - boss.timer:
-        boss.image = pygame.image.load(f'images/K{boss.surname}Enemies/' +
-            f'boss/spinning{boss.frame_cycler.__next__() + 1}.png').convert_alpha()
+        boss.image = load_image(f'K{boss.surname}Enemies', 
+            'boss', f'spinning{next(boss.frame_cycler) + 1}.png')
         boss.change_rect()
         boss.timer = monotonic()
 

@@ -1,6 +1,7 @@
 from enemy import Enemy
 import pygame
 from mediator import Mediator
+from path_handling import load_image
 from settings import Settings
 from MC import MainCharacter
 from stats import Stats
@@ -17,8 +18,8 @@ class Ninja(Enemy):
         self.health = 10 * self.mediator.get_value(
             'ai_settings', 'h_multiplier')
         # Загрузка изображения
-        self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/ninja/standing.png').convert_alpha()
+        self.image = load_image(f'K{self.surname}Enemies',
+            'ninja', 'standing.png')
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -40,11 +41,10 @@ class Ninja(Enemy):
         # Число для корректировки положения изображения и поверхности
         self.pos_correction = '0'
         # Размеры самого маленького кадра для корректировки анимации атаки
-        self.smallest_frame = (pygame.image.load(
-            f'images/K{self.surname}Enemies/ninja/punching1_right.png'). \
-            get_rect().width, pygame.image.load(
-            f'images/K{self.surname}Enemies/ninja/punching1_right.png'). \
-            get_rect().height)
+        self.smallest_frame = (load_image(f'K{self.surname}Enemies', 
+            'ninja', 'punching1_right.png').get_rect().width, 
+            load_image(f'K{self.surname}Enemies', 
+            'ninja', 'punching1_right.png').get_rect().height)
         # Список координат верха прямоугольника ударной поверхности
         # относительно верха прямоугольника анимаций для последних кадров
         self.frl_top = [101 for i in range(4)] # frl - fist relative location
@@ -72,9 +72,8 @@ class Ninja(Enemy):
                 if (i + 1)/2 * an_change > \
                     self.mediator.current_time() -self.timer >= \
                     i/2 * an_change:
-                    self.image = pygame.image.load(
-                        f'images/K{self.surname}Enemies/ninja/death{i + 1}' + 
-                        '.png').convert_alpha()
+                    self.image = load_image(f'K{self.surname}Enemies', 
+                        'ninja', f'death{i + 1}.png')
                     self.change_rect()
         elif self.mediator.current_time() - self.timer >= 10.5 * an_change:
             self.kill()

@@ -3,10 +3,11 @@ import pygame
 from MC import MainCharacter
 from settings import Settings
 from boss import Boss
+from path_handling import load_image
 
 def set_caption_and_icon():
     '''Устанавливает иконку и название игры'''
-    icon = pygame.image.load('images/icon.png').convert_alpha()
+    icon = load_image('icon.png')
     pygame.display.set_caption('KvK')
     pygame.display.set_icon(icon)
 
@@ -18,8 +19,7 @@ def draw_health(mc: MainCharacter, ai_settings: Settings):
     stripe.fill((49, 4, 138))
     mc.mediator.blit_surface(stripe, (0,0))
     for i in range(mc.health):
-        new_healthbar = pygame.image.load(f'images/K{mc.surname}' + 
-            '_health.png').convert_alpha()
+        new_healthbar = load_image(f'K{mc.surname}_health.png')
         rect = new_healthbar.get_rect()
         rect.top = mc.mediator.get_value('screen_rect', 'top')
         rect.left = rect.width + i * 2 * rect.width
@@ -33,8 +33,7 @@ def draw_invincibility(mc: MainCharacter):
         stripe.fill((49, 4, 138))
         mc.mediator.blit_surface(
             stripe, (mc.mediator.get_value('screen_rect', 'width') - 105, 0))
-        inv_bar = pygame.image.load(f'images/K{mc.surname}' + 
-            '_invincibility.png').convert_alpha()
+        inv_bar = load_image(f'K{mc.surname}_invincibility.png')
         mc.mediator.blit_surface(
             inv_bar,(mc.mediator.get_value('screen_rect', 'width') - 100, 2))
 
@@ -42,7 +41,7 @@ class BossHealth:
     '''Здоровье босса'''
 
     def __init__(self, boss: Boss) -> None:
-        self.bar_image = pygame.image.load('images/boss_health.png').convert_alpha()
+        self.bar_image = load_image('boss_health.png')
         self.rect = self.bar_image.get_rect()
         self.boss = boss
         self.mediator = boss.mediator

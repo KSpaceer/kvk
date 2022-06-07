@@ -3,6 +3,7 @@ import pygame
 from pygame.sprite import Group
 from time import monotonic
 from shockwave import Shockwave
+from path_handling import load_image
 
 
 def define_attack_vars(enemy):
@@ -45,10 +46,8 @@ def idling(enemy, file_end_name: str, i: int):
         enemy.fist.change_position(-50, -50)
         en_fists.remove(enemy.fist)
         # Кадры идут в обратном порядке
-    enemy.image = pygame.image.load(
-        f'images/K{enemy.surname}Enemies/{enemy.name}/'+
-        f'punching{enemy.frames + 1 - i}_{file_end_name}' + 
-        '.png').convert_alpha()
+    enemy.image = load_image(f'K{enemy.surname}Enemies', f'{enemy.name}', 
+        f'punching{enemy.frames + 1 - i}_{file_end_name}.png')
     enemy.correlate_rect_image(enemy.right_punch)
     if i == enemy.frames - 1:
         # Атака закончена, начинается перезарядка
@@ -64,9 +63,8 @@ def working_stroke(enemy, file_end_name: str, sign: str, rect_side: str, i: int)
     if i == 0:
         enemy.create_new_rect()
         enemy.mediator.extend_collection('en_fists', enemy.fist)
-    enemy.image = pygame.image.load(
-        f'images/K{enemy.surname}Enemies/{enemy.name}' +
-        f'/punching{i + 1}_{file_end_name}.png').convert_alpha()                   
+    enemy.image = load_image(f'K{enemy.surname}Enemies', 
+        f'{enemy.name}', f'punching{i + 1}_{file_end_name}.png')                 
     if i <= enemy.noload_fr - 1:
     # Корректирует изображение на "неатакующих" кадрах, если такое предусмотрено
         if enemy.pos_correction != '0':
@@ -102,8 +100,8 @@ def launch(enemy):
     if not enemy.shuriken_active:
         enemy.shuriken_active = True
         file_end_name = enemy.define_attack_vars()[0]
-        enemy.image = pygame.image.load(f'images/K{enemy.surname}Enemies/' +
-            f'{enemy.name}/launching_{file_end_name}.png').convert_alpha()
+        enemy.image = load_image(f'K{enemy.surname}Enemies', 
+            f'{enemy.name}', f'launching_{file_end_name}.png')
         enemy.change_rect()
         from shuriken import Shuriken
         new_shuriken = Shuriken(enemy.mediator, enemy, enemy.right_punch)

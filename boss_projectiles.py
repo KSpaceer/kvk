@@ -9,6 +9,7 @@ from bull import Bull
 from etimer import Timer
 from mediator import Mediator
 from audiosounds import Audio
+from path_handling import load_image
 
 
 class SummoningCircle(Sprite):
@@ -19,9 +20,8 @@ class SummoningCircle(Sprite):
         super().__init__()
         self.mediator = boss.mediator
         self.surname = boss.surname
-        self.image = pygame.image.load(
-            f'images/K{boss.surname}Enemies' + 
-            '/boss/summoning_circle1.png').convert_alpha()
+        self.image = load_image(f'K{boss.surname}Enemies', 
+            'boss', 'summoning_circle1.png')
         self.rect = self.image.get_rect()
         self.rect.center = boss.rect.center
         self.to_right = to_right
@@ -105,10 +105,8 @@ class SummoningCircle(Sprite):
         if self.mediator.current_time() - self.timer >= self.mediator.get_value(
             'ai_settings', 'animation_change'):
             self.animation_flag = not self.animation_flag
-            self.image = pygame.image.load(
-                f'images/K{self.surname}Enemies/boss' +
-                f'/summoning_circle{int(self.animation_flag) + 1}' +
-                '.png').convert_alpha()
+            self.image = load_image(f'K{self.surname}Enemies', 
+                'boss', f'summoning_circle{int(self.animation_flag) + 1}.png')
             self.timer = monotonic()
 
 
@@ -119,8 +117,7 @@ class BallLightning(Sprite):
     def __init__(self, boss: Boss) -> None:
         super().__init__()
         self.mediator = boss.mediator
-        self.image = pygame.image.load('images/KSEnemies/boss/' + 
-        'ball_lightning.png').convert_alpha()
+        self.image = load_image('KSEnemies', 'boss', 'ball_lightning.png')
         self.rect = self.image.get_rect()
         self.rect.centerx = boss.rect.centerx - 9
         self.rect.centery = boss.rect.centery - 127
@@ -173,7 +170,7 @@ class SpearTip(Sprite):
         # 0 - N, 1 - W, 2 - S, 3 - E
         self.cardinal_direction = randint(0, 3)
         self.image = pygame.transform.rotate(
-            pygame.image.load('images/KZEnemies/boss/spear_tip.png').convert_alpha(), 
+            load_image('KZEnemies', 'boss', 'spear_tip.png').convert_alpha(), 
             90 * self.cardinal_direction)
         self.rect = self.image.get_rect()
         # Копье нацеливается на главного персонажа
@@ -247,7 +244,7 @@ class SpearShaft(Sprite):
         self.cardinal_direction = self.spear_tip.cardinal_direction
         self.speed = self.spear_tip.speed
         self.image = pygame.transform.rotate(
-            pygame.image.load('images/KZEnemies/boss/spear_shaft.png').convert_alpha(), 
+            load_image('KZEnemies', 'boss', 'spear_shaft.png').convert_alpha(), 
             90 * self.cardinal_direction)
         self.rect = self.image.get_rect()
         self.define_starting_position()
@@ -305,8 +302,7 @@ class Blade(Sprite):
         super().__init__()
         self.mediator = boss.mediator
         self.speed = self.mediator.get_value('ai_settings', 'blade_speed')
-        self.image = pygame.image.load('images/KSEnemies/boss' +
-            '/blade.png').convert_alpha()
+        self.image = load_image('KSEnemies', 'boss', 'blade.png')
         self.rect = self.image.get_rect()
         self.define_starting_position(boss)
         self.timer = monotonic()
@@ -362,8 +358,7 @@ class Saw(Sprite):
         self.boss = boss
         self.mediator = boss.mediator
         self.speed = self.mediator.get_value('ai_settings', 'saw_speed')
-        self.image = pygame.image.load('images/KZEnemies' + 
-            '/boss/saw1.png').convert_alpha()
+        self.image = load_image('KZEnemies', 'boss', 'saw1.png')
         self.rect = self.image.get_rect()
         self.is_vertical = randint(0, 1) # пила двигается вертикально или горизонтально
         self.define_starting_position()
@@ -450,9 +445,8 @@ class Saw(Sprite):
     def animation(self):
         '''Анимация пилы'''
         if self.mediator.current_time() - self.timer >= self.animation_change:
-            self.image = pygame.image.load(
-                f'images/KZEnemies/boss/saw{int(self.animation_number) + 1}' + 
-                '.png').convert_alpha()
+            self.image = load_image('KZEnemies', 'boss', 
+                f'saw{int(self.animation_number) + 1}.png')
             self.timer = monotonic()
             self.animation_number = not self.animation_number
 
@@ -482,8 +476,7 @@ class Crack(Sprite):
 
     def __init__(self, centerx: int, centery: int, mediator: Mediator) -> None:
         super().__init__()
-        self.image = pygame.image.load(
-            'images/KZEnemies/boss/crack.png').convert_alpha()
+        self.image = load_image('KZEnemies', 'boss', 'crack.png')
         self.rect = self.image.get_rect()
         self.rect.centerx = centerx
         self.rect.centery = centery

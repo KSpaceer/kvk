@@ -14,6 +14,7 @@ import graphic as gr
 from guru import Guru
 from mediator import Mediator
 from ninja import Ninja
+from path_handling import load_image, resource_path
 
 from settings import Settings
 from stats import Stats
@@ -230,7 +231,7 @@ def update_selectmode_screen( screen: pygame.Surface,
     # Перерисовка экрана
     bg.blitme()
     # Вывод надписи 
-    screen.blit(pygame.image.load('images/syf.png').convert_alpha(), (450, 100))
+    screen.blit(load_image('syf.png'), (450, 100))
     # Отображение иконок персонажей
     for selecticon in selecticons:
         selecticon.blitme()
@@ -545,7 +546,7 @@ def keydown_in_savefiles(event, st: Stats, buttons: list[Button],
             # Если активен режим сохранения, сохраняет игровую информацию в выбранный слот
             for i in range(len(buttons)):
                 if buttons[i].is_chosen:
-                    with open(f'save/save{i + 1}.txt', 'w') as f:
+                    with open(resource_path('save', f'save{i + 1}.txt'), 'w') as f:
                         f.write(str(st.level) + '\n' + mc.surname)
                     break
             # Возвращает в меню паузы
@@ -570,11 +571,10 @@ def keydown_in_savefiles(event, st: Stats, buttons: list[Button],
 
 def open_savefile(number: int, buttons: list[Button]):
     '''Открывает файл, передает данные из него кнопке'''
-    with open(f'save/save{number + 1}.txt', 'r') as f:
+    with open(resource_path('save', f'save{number + 1}.txt'), 'r') as f:
         buttons[number].saved_data = f.readlines()
         # Добавляем к изображению номер файла
-        buttons[number].image.blit(
-            pygame.image.load(f'images/Buttons/{number + 1}.png').convert_alpha(), 
+        buttons[number].image.blit(load_image('Buttons', f'{number + 1}.png'), 
             (82, 13))
         # Перевернутая строка значения уровня
         reversed_level = str(int(buttons[number].saved_data[0]) + 1)[::-1]
@@ -582,17 +582,15 @@ def open_savefile(number: int, buttons: list[Button]):
             if i == len(reversed_level):
                 # Добавляем к изображению букву L (level)
                 buttons[number].image.blit(
-                    pygame.image.load('images/Buttons/L.png').convert_alpha(),
-                (179 - 20 * i, 13))
+                    load_image('Buttons', 'L.png'),(179 - 20 * i, 13))
             else:
                 # Добавляем к изображению одну цифру из значения уровня
                 buttons[number].image.blit(
-                    pygame.image.load(
-                        f'images/Buttons/{reversed_level[i]}.png').convert_alpha(),
+                    load_image('Buttons', f'{reversed_level[i]}.png'),
                     (179 - 20 * i, 13))
         # Добавим на кнопку иконку персонажа
-        buttons[number].image.blit(pygame.image.load(
-            f'images/K{buttons[number].saved_data[1]}_health.png').convert_alpha(), 
+        buttons[number].image.blit(load_image(
+            f'K{buttons[number].saved_data[1]}_health.png'), 
             (157, 40))
 
 ### БЛОК ТИТРОВ (st.state = Stats.CREDITS) ###
@@ -648,10 +646,10 @@ def leftbutton_click_in_credits(event, screen: pygame.Surface):
 
 def create_paster_image():
     '''Создает изображение-пасхалку из текстового файла'''
-    with open('some_data.bin', 'rb') as f:
+    with open(resource_path('some_data.bin'), 'rb') as f:
         binary_repr = f.read()
     
-    with open('images/backgrounds/sans.png', 'wb') as img:
+    with open(resource_path('images', 'backgrounds', 'sans.png'), 'wb') as img:
         img.write(b64decode(binary_repr))
                     
 

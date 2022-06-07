@@ -5,6 +5,7 @@ from pygame.sprite import Sprite, Group
 from enemy import Enemy
 from etimer import Timer
 from mediator import Mediator
+from path_handling import load_image
 from settings import Settings
 
 
@@ -19,7 +20,7 @@ class Shuriken(Sprite):
         super().__init__()
         self.mediator = mediator
         self.to_right = to_right
-        self.image = pygame.image.load('images/shuriken1.png').convert_alpha()
+        self.image = load_image('shuriken1.png')
         self.rect = self.image.get_rect()
         self.starting_location(enemy)
         self.current_image_number = False # потом из bool в int
@@ -52,9 +53,7 @@ class Shuriken(Sprite):
         # Анимация
         if self.mediator.current_time() - self.timer >= self.mediator.get_value(
             'ai_settings', 'animation_change')/2:
-            self.image = pygame.image.load(
-                f'images/shuriken{int(self.current_image_number) + 1}' +
-                '.png').convert_alpha()
+            self.image = load_image(f'shuriken{int(self.current_image_number) + 1}.png')
             self.timer.time = monotonic()
             self.current_image_number = not self.current_image_number
         # Действительные значения в целочисленные

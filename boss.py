@@ -14,6 +14,7 @@ from etimer import Timer
 from fist import Fist
 from MC import MainCharacter
 from mediator import Mediator
+from path_handling import load_image
 from settings import Settings
 from stats import Stats
 from audiosounds import Audio
@@ -38,8 +39,7 @@ class Boss(Enemy):
         from graphic import BossHealth
         self.healthbar = BossHealth(self)
         # Загрузка изображения
-        self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/boss/standing.png').convert_alpha() 
+        self.image = load_image(f'K{self.surname}Enemies', 'boss', 'standing.png')
         # Руки на картинке не учитываются, поэтому основной прямоугольник
         # задаем сами 
         self.rect = pygame.Rect(-500, -500, 110, 414)
@@ -325,13 +325,10 @@ class Boss(Enemy):
             self.mediator.call_method('audio', 'play_sound', '"boss_death"')
             self.is_dead = True
             self.timer = monotonic()
-            self.image = pygame.image.load(
-                f'images/K{self.surname}Enemies/boss/death.png').convert_alpha()
+            self.image = load_image(f'K{self.surname}Enemies', 'boss', 'death.png')
             self.change_rect()
-            self.frontlava = pygame.image.load(f'images/' + 
-                'front_lava.png').convert_alpha()
-            self.backlava = pygame.image.load(f'images/' + 
-            'back_lava.png').convert_alpha()
+            self.frontlava = load_image('front_lava.png')
+            self.backlava = load_image('back_lava.png')
             # fl - frontlava, bl - backlava
             self.fl_rect = self.frontlava.get_rect()
             self.bl_rect = self.backlava.get_rect()

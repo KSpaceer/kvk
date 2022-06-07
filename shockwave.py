@@ -5,6 +5,7 @@ from pygame.sprite import Sprite, Group
 from etimer import Timer
 from fist import Fist
 from mediator import Mediator
+from path_handling import load_image
 from settings import Settings
 
 class Shockwave(Sprite):
@@ -21,9 +22,8 @@ class Shockwave(Sprite):
         super().__init__()
         self.mediator = mediator
         self.to_right = to_right
-        self.image = pygame.image.load(
-            f'images/Shockwave/shockwave1_{Shockwave.direction[to_right]}' +
-            '.png').convert_alpha()
+        self.image = load_image('Shockwave', 
+            f'shockwave1_{Shockwave.direction[to_right]}.png')
         self.rect = self.image.get_rect()
         self.starting_location(en_fist=en_fist, boss=boss)
         self.current_image_number = False # потом из bool в int
@@ -68,9 +68,9 @@ class Shockwave(Sprite):
         # Анимация
         if self.mediator.current_time() - self.timer >= self.mediator.get_value(
             'ai_settings', 'animation_change'):
-            self.image = pygame.image.load('images/Shockwave/shockwave' + 
-                f'{int(self.current_image_number) + 1}_' + 
-                f'{Shockwave.direction[self.to_right]}.png').convert_alpha()
+            self.image = load_image('Shockwave', 
+                f'shockwave{int(self.current_image_number) + 1}' 
+                + f'_{Shockwave.direction[self.to_right]}.png')
             self.timer = monotonic()
             self.current_image_number = not self.current_image_number
         # Действительные значения в целочисленные

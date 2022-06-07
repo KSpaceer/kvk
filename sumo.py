@@ -2,6 +2,7 @@ import pygame
 
 from enemy import Enemy
 from mediator import Mediator
+from path_handling import load_image
 from settings import Settings
 from MC import MainCharacter
 from stats import Stats
@@ -19,8 +20,7 @@ class Sumo(Enemy):
         self.health = 15 * self.mediator.get_value(
             'ai_settings', 'h_multiplier')
         # Загрузка изображения
-        self.image = pygame.image.load(
-            f'images/K{self.surname}Enemies/sumo/standing.png').convert_alpha()
+        self.image = load_image(f'K{self.surname}Enemies', 'sumo', 'standing.png')
         self.rect = self.image.get_rect()
         # Враг появляется с отдаленной от главного персонажа стороны экрана
         self.spawning_point()
@@ -68,9 +68,8 @@ class Sumo(Enemy):
                 if (i + 1) * an_change > \
                     self.mediator.current_time() - self.timer >= \
                         i * an_change:
-                    self.image = pygame.image.load(
-                        f'images/K{self.surname}Enemies/sumo/death{i + 1}' +
-                        '.png').convert_alpha()
+                    self.image = load_image(f'K{self.surname}Enemies', 
+                        'sumo', f'death{i + 1}.png')
                     self.change_rect_sumo()
         elif self.mediator.current_time() - self.timer > 18 * an_change:
             self.kill()

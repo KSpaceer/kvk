@@ -1,6 +1,8 @@
 import pygame
 
 from mediator import Mediator
+from base64 import b64decode
+from path_handling import load_image, resource_path
 
 
 
@@ -11,7 +13,8 @@ class Background:
     
     def __init__(self, mediator: Mediator) -> None:
         self.mediator = mediator
-        self.image = pygame.image.load('images/backgrounds/intro.png').convert()
+        self.image = load_image('backgrounds', 'intro.png')
+        
         
     
     def blitme(self) -> None:
@@ -21,9 +24,17 @@ class Background:
     def change(self, name: str) -> None:
         '''Смена заднего фона'''
         if not Background.PASTER_EGG_ACTIVE:
-            self.image = pygame.image.load('images/backgrounds/' + name + '.png').convert()
+            try:
+                self.image = load_image('backgrounds', name + '.png')
+            except FileNotFoundError:
+                with open(resource_path('images', 'backgrounds', name + '.bin'), 'rb') as f:
+                    data = f.read()
+                    data = b64decode(data)
+                with open(resource_path('images', 'backgrounds', name + '.png'), 'wb') as img:
+                    img.write(data)
+                self.image = self.image = load_image('backgrounds', name + '.png')
         else:
-            self.image = pygame.image.load('images/backgrounds/sans.png').convert()
+            self.image = load_image('backgrounds', 'sans.png')
 
     
         

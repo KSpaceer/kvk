@@ -1,6 +1,7 @@
 import pygame
 
 from mediator import Mediator
+from path_handling import load_image
 
 
 
@@ -10,8 +11,7 @@ class SelectIcon():
     def __init__(self, surname: str, mediator: Mediator) -> None:
         '''Инициализация параметров по первой букве фамилии персонажа'''
         # Добавление изображение, прямоугольника, первой буквы фамилии
-        self.image = pygame.image.load(f'images/K{surname}Main/' + 
-        'selection.png').convert_alpha()
+        self.image = load_image(f'K{surname}Main', 'selection.png')
         self.rect = self.image.get_rect()
         self.surname = surname
         self.mediator = mediator
@@ -19,8 +19,7 @@ class SelectIcon():
         screen_rect: pygame.Rect = self.mediator.get_value('screen_rect')
         self.rect.centery = screen_rect.centery
         # Изображение активного выбора (ярко-желтый силуэт):
-        self.a_image = pygame.image.load(
-            f'images/K{surname}Main/selection(active).png').convert_alpha()
+        self.a_image = load_image(f'K{surname}Main', 'selection(active).png')
         # Соотв. прямоугольник, тоже вертикально по центру
         self.a_rect = self.a_image.get_rect()
         self.a_rect.centery = screen_rect.centery

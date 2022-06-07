@@ -10,6 +10,7 @@ from etimer import Timer
 from fist import Fist
 from stats import Stats
 from audiosounds import Audio
+from path_handling import load_image
 
 class MainCharacter(Sprite):
     '''Класс главного персонажа'''
@@ -21,7 +22,7 @@ class MainCharacter(Sprite):
         # Первая буква фамилии персонажа
         self.__surname = surname
         # Загрузка изображения
-        self.image = pygame.image.load('images/KSMain/standing.png').convert_alpha()
+        self.image = load_image('KSMain', 'standing.png')
         self.rect = self.image.get_rect()
         # Прямоугольник для анимаций
         self.an_rect = self.rect
@@ -151,10 +152,8 @@ class MainCharacter(Sprite):
         for i in range(self.frames):
             if (i + 1) * self.ats >= self.mediator.current_time() \
                 - self.attack_timer > i * self.ats:
-                self.image = pygame.image.load(f'images/K{self.surname}Main/' + 
-                    f'punching_{side}' +
-                    f'{i + 1 if i < floor(self.frames/2) else self.frames - i}' +
-                    '.png').convert_alpha()
+                self.image = load_image(f'K{self.surname}Main', f'punching_{side}' 
+                    + f'{i + 1 if i < floor(self.frames/2) else self.frames - i}.png')
                 self.correlate_rect_image(self.right_punch)
                 mc_fist: Fist = self.mediator.get_value('mc_fist')
                 mc_fist.change_position(
@@ -199,11 +198,10 @@ class MainCharacter(Sprite):
                 self.death_side = 'right'
             else:
                 self.death_side = 'left'
-            self.image = pygame.image.load(
-                f'images/K{self.surname}Main/death_{self.death_side}.png').convert_alpha()
+            self.image = load_image(f'K{self.surname}Main', 
+                f'death_{self.death_side}.png')
         else:
-            self.image = pygame.image.load(f'images/K{self.surname}Main' +
-            '/death_right.png').convert_alpha()
+            self.image = load_image(f'K{self.surname}Main', 'death_right.png')
         self.an_rect = self.image.get_rect()
         self.an_rect.bottom = self.rect.bottom
         self.an_rect.centerx = self.rect.centerx
