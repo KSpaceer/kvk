@@ -1,12 +1,7 @@
-import pygame
-
 from enemy import Enemy
 from mediator import Mediator
 from path_handling import load_image
-from settings import Settings
-from MC import MainCharacter
-from stats import Stats
-from etimer import Timer
+
 
 class Sumo(Enemy):
     '''Класс второго типа врагов - сумоистов'''

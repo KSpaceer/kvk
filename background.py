@@ -1,5 +1,3 @@
-import pygame
-
 from mediator import Mediator
 from base64 import b64decode
 from path_handling import load_image, resource_path

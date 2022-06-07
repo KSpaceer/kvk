@@ -1,19 +1,13 @@
-
-
 from time import monotonic
 import pygame
-from pygame.sprite import Sprite, Group
-from audiosounds import Audio
+from pygame.sprite import Sprite
 import enemy_animation as an
 import enemy_attack_functions as eaf
 from fist import Fist
 from mediator import Mediator
 from path_handling import load_image
-from settings import Settings
-from MC import MainCharacter
-from shockwave import Shockwave
 from stats import Stats
-from etimer import Timer
+
 
 class Enemy(Sprite):
 

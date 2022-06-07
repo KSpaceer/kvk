@@ -1,4 +1,3 @@
-import pygame
 from time import monotonic
 from path_handling import load_image
 

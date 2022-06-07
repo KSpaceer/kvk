@@ -1,12 +1,10 @@
 from random import randint
 from time import monotonic
-import pygame
-from pygame.sprite import Sprite, Group
+from pygame.sprite import Sprite
 from etimer import Timer
 from fist import Fist
 from mediator import Mediator
 from path_handling import load_image
-from settings import Settings
 
 class Shockwave(Sprite):
     '''Класс ударной волны, вызываемой врагами'''

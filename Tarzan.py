@@ -1,10 +1,8 @@
-
 import pygame
-from background import Background
 from mediator import Mediator
 from path_handling import load_image
 
-from settings import Settings
+
 
 class Tarzan():
     '''Для заставки'''

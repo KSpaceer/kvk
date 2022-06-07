@@ -1,6 +1,4 @@
-import pygame
 import time
-
 from path_handling import load_image
 
 def going_right_animation(mc):

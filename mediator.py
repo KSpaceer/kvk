@@ -1,5 +1,4 @@
-
-from pygame import Surface, Rect
+from pygame import Surface
 from pygame.sprite import Group
 
 

@@ -1,7 +1,5 @@
-
 import pygame
 from time import monotonic
-
 from settings import Settings
 from MC import MainCharacter
 from fist import Fist

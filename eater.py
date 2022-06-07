@@ -1,19 +1,10 @@
-
-
-
 from random import randint
-from time import monotonic
-import pygame
 from audiosounds import Audio
 from enemy import Enemy
 from enemy_animation import (going_left_animation, 
 going_right_animation, going_vertical_animation)
 from mediator import Mediator
 from path_handling import load_image
-from settings import Settings
-from MC import MainCharacter
-from stats import Stats
-from etimer import Timer
 
 
 class Eater(Enemy):

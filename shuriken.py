@@ -1,12 +1,11 @@
 
 from time import monotonic
-import pygame
-from pygame.sprite import Sprite, Group
+from pygame.sprite import Sprite
 from enemy import Enemy
 from etimer import Timer
 from mediator import Mediator
 from path_handling import load_image
-from settings import Settings
+
 
 
 

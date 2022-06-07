@@ -6,7 +6,6 @@ from pygame.sprite import Sprite
 import pygame
 from boss import Boss
 from bull import Bull
-from etimer import Timer
 from mediator import Mediator
 from audiosounds import Audio
 from path_handling import load_image

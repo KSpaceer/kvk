@@ -2,10 +2,7 @@ from enemy import Enemy
 import pygame
 from mediator import Mediator
 from path_handling import load_image
-from settings import Settings
-from MC import MainCharacter
-from stats import Stats
-from etimer import Timer
+
 
 class Ninja(Enemy):
     '''Четвертый тип врагов - ниндзя'''

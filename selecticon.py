@@ -1,5 +1,4 @@
 import pygame
-
 from mediator import Mediator
 from path_handling import load_image
 

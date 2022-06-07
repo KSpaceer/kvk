@@ -1,6 +1,3 @@
-
-from audiosounds import Audio
-from background import Background
 from mediator import Mediator
 
 

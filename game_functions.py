@@ -1,7 +1,5 @@
-
-
 from os.path import exists
-from time import monotonic, time
+from time import monotonic
 from base64 import b64decode
 import pygame
 import sys
@@ -15,7 +13,6 @@ from guru import Guru
 from mediator import Mediator
 from ninja import Ninja
 from path_handling import load_image, resource_path
-
 from settings import Settings
 from stats import Stats
 from bull import Bull

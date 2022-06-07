@@ -1,21 +1,16 @@
 
 
-from itertools import cycle
 from random import randint
 from time import monotonic
-
-
 import pygame
 import boss_ultimates as bu
 import boss_common_attacks as bac
 import enemy_animation as an
 from enemy import Enemy
-from etimer import Timer
 from fist import Fist
 from MC import MainCharacter
 from mediator import Mediator
 from path_handling import load_image
-from settings import Settings
 from stats import Stats
 from audiosounds import Audio
 

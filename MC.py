@@ -5,11 +5,8 @@ import mc_movement as mv
 import pygame
 from pygame.sprite import Sprite
 from mediator import Mediator
-from settings import Settings
-from etimer import Timer
 from fist import Fist
 from stats import Stats
-from audiosounds import Audio
 from path_handling import load_image
 
 class MainCharacter(Sprite):

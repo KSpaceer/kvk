@@ -1,5 +1,3 @@
-
-import pygame
 from pygame.sprite import Group
 from time import monotonic
 from shockwave import Shockwave
