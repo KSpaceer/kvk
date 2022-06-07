@@ -1,10 +1,8 @@
-
 import pygame as pg
 from MC import MainCharacter
 from fist import Fist
 from mediator import Mediator
 import unittest
-
 from settings import Settings
 
 class Container(pg.sprite.Sprite):
