@@ -8,7 +8,7 @@ from path_handling import load_sound, resource_path
 class Audio:
     '''Класс проигрывания звуков и музыки'''
 
-    list_of_soundfiles = listdir('audio/sounds')
+    list_of_soundfiles = listdir(resource_path('audio', 'sounds'))
     
     PASTER_EGG_ACTIVE = False
     

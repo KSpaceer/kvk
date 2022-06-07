@@ -43,7 +43,7 @@ class Mediator():
         collection_to_return = eval('self._' + collection_name)
         return collection_to_return
 
-    def blit_surface(self, surface: Surface, dest: tuple[int, int] | Rect):
+    def blit_surface(self, surface: Surface, dest):
         '''Отображение поверхности на экране'''
         self._screen.blit(surface, dest)
         

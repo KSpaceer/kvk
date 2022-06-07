@@ -501,7 +501,7 @@ def update_time(cur_time: Timer, timer: Timer,
 def create_savefiles_buttons(buttons: list[Button], mediator: Mediator):
     '''Создает кнопки меню сохранения файлов'''
     for i in range(3):
-        if exists(f'save/save{i + 1}.txt'):
+        if exists(f'save{i + 1}.txt'):
             # Если файл сохранения имеется
             buttons.append(Button(mediator, Button.SAVEFILE))
             open_savefile(i, buttons)
@@ -546,7 +546,7 @@ def keydown_in_savefiles(event, st: Stats, buttons: list[Button],
             # Если активен режим сохранения, сохраняет игровую информацию в выбранный слот
             for i in range(len(buttons)):
                 if buttons[i].is_chosen:
-                    with open(resource_path('save', f'save{i + 1}.txt'), 'w') as f:
+                    with open(f'save{i + 1}.txt', 'w') as f:
                         f.write(str(st.level) + '\n' + mc.surname)
                     break
             # Возвращает в меню паузы
@@ -571,7 +571,7 @@ def keydown_in_savefiles(event, st: Stats, buttons: list[Button],
 
 def open_savefile(number: int, buttons: list[Button]):
     '''Открывает файл, передает данные из него кнопке'''
-    with open(resource_path('save', f'save{number + 1}.txt'), 'r') as f:
+    with open(f'save{number + 1}.txt', 'r') as f:
         buttons[number].saved_data = f.readlines()
         # Добавляем к изображению номер файла
         buttons[number].image.blit(load_image('Buttons', f'{number + 1}.png'), 
@@ -617,7 +617,7 @@ def leftbutton_click_in_credits(event, screen: pygame.Surface):
     '''Обработка нажатия левой клавиши мыши в титрах'''
     x, y = event.pos
     if pygame.PixelArray(screen)[x, y] == screen.map_rgb((255, 0, 0)): 
-        if not exists('images/backgrounds/sans.png'):
+        if not exists(resource_path('images', 'backgrounds', 'sans.png')):
             create_paster_image()
         Background.PASTER_EGG_ACTIVE = True
         Audio.PASTER_EGG_ACTIVE = True
