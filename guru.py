@@ -54,6 +54,7 @@ class Guru(Enemy):
                 'ai_settings', 'guru_speed_factor')
         if self.rect.centery < self.mediator.get_value('mc', 'rect').centery:
             self.centery += speed
+        else:
             self.centery -= speed
 
     def horizontal_movement(self):
