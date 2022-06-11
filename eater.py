@@ -1,5 +1,4 @@
 from random import randint
-from turtle import speed
 from audiosounds import Audio
 from enemy import Enemy
 from enemy_animation import (going_left_animation, 
