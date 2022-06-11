@@ -1,4 +1,5 @@
 from random import randint
+from turtle import speed
 from audiosounds import Audio
 from enemy import Enemy
 from enemy_animation import (going_left_animation, 
@@ -61,9 +62,10 @@ class Eater(Enemy):
         '''Анимация смерти'''
         self.initiate_death()
         self.gotta_go_fast()
+        speed = self.mediator.get_value('ai_settings', 'eater_speed_factor')
         exec(f'self.center{self.dir_dict[self.direction][0]}' +
              f'{self.dir_dict[self.direction][1]}=' +
-             '5 * self.ai_settings.eater_speed_factor')
+             '5 * speed')
         # Если враг за пределами экрана
         if not self.rect.colliderect(self.mediator.get_value('screen_rect')):
             self.kill()
